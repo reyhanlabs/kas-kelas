@@ -484,6 +484,10 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3h9l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M15 3v5h5"/><path d="M8 13h8"/><path d="M8 17h5"/></svg>
         Expense Ledger
       </button>
+      <button class="tab-btn" data-tab="saldoKas">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2.5" y="6" width="19" height="13" rx="2"/><path d="M2.5 10h19"/><circle cx="17" cy="14.5" r="1.6"/></svg>
+        Cash Balance
+      </button>
       <button class="tab-btn" data-tab="users" id="navUsersBtn" style="display:none;">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8.5" cy="7" r="4"/><path d="M2 21v-2a6 6 0 0 1 6-6h1a6 6 0 0 1 6 6v2"/><path d="M17 11l2 2 4-4"/></svg>
         Manage Users
@@ -717,6 +721,44 @@
         <div id="ledgerReportBody"></div>
       </section>
 
+      <!-- ================= CASH BALANCE ================= -->
+      <section id="tab-saldoKas" class="tab-panel" style="display:none;">
+        <div class="topbar">
+          <div>
+            <h1>Cash Balance (Bank Mandiri)</h1>
+            <div class="sub">One running account across all school years: opening balance + all cash in − all cash out</div>
+          </div>
+        </div>
+
+        <div class="grid-stats" id="saldoKasStatGrid"></div>
+
+        <div class="card">
+          <h2>Opening Balance</h2>
+          <p class="helper">Set this once to the balance that was already in the account before you started using this app. Every payment and expense recorded (in any school year) will be added to or subtracted from this starting point automatically &mdash; you don't need to update it again later.</p>
+          <div class="field-row">
+            <div class="field">
+              <label>Opening Balance Amount</label>
+              <input type="number" id="saldoAwalNominal" placeholder="e.g. 500000">
+            </div>
+            <div class="field">
+              <label>As of Date</label>
+              <input type="date" id="saldoAwalTanggal">
+            </div>
+          </div>
+          <div class="field">
+            <label>Notes (optional)</label>
+            <input type="text" id="saldoAwalKeterangan" placeholder="e.g. Bank Mandiri balance carried over from the previous treasurer">
+          </div>
+          <button class="btn btn-primary" onclick="simpanSaldoAwalBank()">Save Opening Balance</button>
+        </div>
+
+        <div class="card">
+          <h2>Cash Flow Mutation</h2>
+          <p class="helper">Every payment (cash in) and expense (cash out) across all school years, in chronological order, with a running balance.</p>
+          <div id="mutasiBankTable"></div>
+        </div>
+      </section>
+
       <!-- ================= MANAGE USERS ================= -->
       <section id="tab-users" class="tab-panel" style="display:none;">
         <div class="topbar">
@@ -861,6 +903,10 @@ service cloud.firestore {
     match /siswa/{doc} { allow read, write: if isSignedIn(); }
     match /pembayaran/{doc} { allow read, write: if isSignedIn(); }
     match /pengaturan/{doc} { allow read, write: if isSignedIn(); }
+    match /akun/{doc} { allow read, write: if isSignedIn(); }
+    match /kegiatan/{doc} { allow read, write: if isSignedIn(); }
+    match /pengeluaran/{doc} { allow read, write: if isSignedIn(); }
+    match /globalSettings/{doc} { allow read, write: if isSignedIn(); }
   }
 }</pre>
         </div>
@@ -1139,6 +1185,9 @@ let unsubscribers = [];        // school year + student + payment listeners
 let tahunAjaranList = [];
 let currentTahunAjaranId = null;
 
+// Single running bank account (Bank Mandiri) — carries over across school years, NOT scoped per tahunAjaranId
+let saldoBank = { saldoAwal: 0, tanggalSaldoAwal: '', keterangan: '' };
+
 let state = {
   siswa: [],       // {id, tahunAjaranId, noAbsen, nama, nominalKhusus}
   pembayaran: [],  // {id, tahunAjaranId, studentId, tahun, bulanList:[..], nominalPerBulan, total, tanggal, metode, keterangan, createdAt}
@@ -1224,6 +1273,7 @@ function switchTab(tab){
   if(tab==='laporan') renderLaporanTab();
   if(tab==='pengeluaran') renderPengeluaranTab();
   if(tab==='laporanPengeluaran') renderLaporanPengeluaranTab();
+  if(tab==='saldoKas') renderSaldoKasTab();
   if(tab==='users') renderUsersTable();
   if(tab==='pengaturan') renderPengaturanTab();
 }
@@ -1303,13 +1353,15 @@ function loadLocal(){
       state.akun = parsed.akun || [];
       state.kegiatan = parsed.kegiatan || [];
       state.pengeluaran = parsed.pengeluaran || [];
+      saldoBank = parsed.saldoBank || { saldoAwal:0, tanggalSaldoAwal:'', keterangan:'' };
     }
   }catch(e){ console.error(e); }
 }
 function saveLocal(){
   localStorage.setItem(LS_KEY, JSON.stringify({
     tahunAjaranList, siswa: state.siswa, pembayaran: state.pembayaran,
-    akun: state.akun, kegiatan: state.kegiatan, pengeluaran: state.pengeluaran
+    akun: state.akun, kegiatan: state.kegiatan, pengeluaran: state.pengeluaran,
+    saldoBank
   }));
 }
 function setConnLabel(){
@@ -1388,6 +1440,11 @@ async function bootAppData(){
       state.pengeluaran = snap.docs.map(d=>({id:d.id, ...d.data()}));
       refreshCurrentTab();
     }, err=>toast('Failed to load expense data: '+err.message,'err')));
+
+    unsubscribers.push(DB.collection('globalSettings').doc('saldoBank').onSnapshot(doc=>{
+      saldoBank = doc.exists ? doc.data() : { saldoAwal:0, tanggalSaldoAwal:'', keterangan:'' };
+      refreshCurrentTab();
+    }, err=>toast('Failed to load bank balance data: '+err.message,'err')));
   }else{
     loadLocal();
     afterTahunAjaranListLoaded();
@@ -1697,6 +1754,45 @@ async function dbDeletePengeluaran(id){
   }
 }
 
+/* ---- Bank Balance (single running account, carries over across school years) ---- */
+async function saveSaldoBankAwal(saldoAwal, tanggalSaldoAwal, keterangan){
+  const obj = { saldoAwal, tanggalSaldoAwal, keterangan, updatedAt: Date.now() };
+  if(USE_FIRESTORE){
+    await DB.collection('globalSettings').doc('saldoBank').set(obj, {merge:true});
+  }else{
+    saldoBank = obj;
+    saveLocal();
+  }
+}
+/* These total across ALL school years on purpose — the bank balance carries over and is not scoped per tahunAjaranId */
+function totalKasMasukSemuaTahun(){ return state.pembayaran.reduce((sum,p)=> sum + Number(p.total||0), 0); }
+function totalKasKeluarSemuaTahun(){ return state.pengeluaran.reduce((sum,p)=> sum + Number(p.nominal||0), 0); }
+function saldoBankSaatIni(){ return Number(saldoBank.saldoAwal||0) + totalKasMasukSemuaTahun() - totalKasKeluarSemuaTahun(); }
+/* Chronological list of every cash-in (payment) and cash-out (expense) transaction across all school years, with a running balance starting from saldoAwal */
+function buildMutasiBank(){
+  const masuk = state.pembayaran.map(p=>{
+    const s = findSiswa(p.studentId);
+    return {
+      tanggal: p.tanggal, arah:'in', jumlah: Number(p.total||0),
+      keterangan: `Payment — ${s?.nama || '(student deleted)'} (${formatBulanTahunText(p, false)})`,
+      ref: p.id, createdAt: p.createdAt||0
+    };
+  });
+  const keluar = state.pengeluaran.map(p=>({
+    tanggal: p.tanggal, arah:'out', jumlah: Number(p.nominal||0),
+    keterangan: p.keterangan||'Expense', ref: p.noRef||p.id, createdAt: p.createdAt||0
+  }));
+  const all = masuk.concat(keluar).sort((a,b)=>{
+    const d = new Date(a.tanggal) - new Date(b.tanggal);
+    return d !== 0 ? d : (a.createdAt||0)-(b.createdAt||0);
+  });
+  let saldo = Number(saldoBank.saldoAwal||0);
+  return all.map(row=>{
+    saldo += row.arah==='in' ? row.jumlah : -row.jumlah;
+    return { ...row, saldo };
+  });
+}
+
 /* ---- Shared helpers for accounts / activities / expenses ---- */
 function currentAkunList(){ return state.akun.filter(a=>a.tahunAjaranId===currentTahunAjaranId).sort((a,b)=> (a.kode||'').localeCompare(b.kode||'')); }
 function currentKegiatanList(){ return state.kegiatan.filter(k=>k.tahunAjaranId===currentTahunAjaranId); }
@@ -1734,6 +1830,7 @@ function renderDashboard(){
     <div class="stat"><div class="label">Paid This Month</div><div class="value green">${paidThisMonth.length} / ${totalSiswa}</div></div>
     <div class="stat"><div class="label">Collected This Month</div><div class="value mono">${rupiah(totalTerkumpulBulanIni)}</div></div>
     <div class="stat"><div class="label">Total Cash This School Year</div><div class="value mono green">${rupiah(totalSemuaWaktu)}</div></div>
+    <div class="stat"><div class="label">Bank Balance (Bank Mandiri)</div><div class="value mono">${rupiah(saldoBankSaatIni())}</div></div>
   `;
 
   if(totalSiswa===0){
@@ -2741,6 +2838,58 @@ function cetakLaporanPengeluaran(){
   const ta = currentTA();
   document.getElementById('printArea').innerHTML = `<div style="padding:6mm;">${buildLedgerReportHTML(groups, grandTotal, ta, true)}</div>`;
   setTimeout(()=> window.print(), 80);
+}
+
+/* ============================================================
+   CASH BALANCE (single Bank Mandiri account, carries over across school years)
+   ============================================================ */
+function renderSaldoKasTab(){
+  document.getElementById('saldoAwalNominal').value = saldoBank.saldoAwal || '';
+  document.getElementById('saldoAwalTanggal').value = saldoBank.tanggalSaldoAwal || '';
+  document.getElementById('saldoAwalKeterangan').value = saldoBank.keterangan || '';
+
+  const totalMasuk = totalKasMasukSemuaTahun();
+  const totalKeluar = totalKasKeluarSemuaTahun();
+  const saldoSekarang = saldoBankSaatIni();
+
+  document.getElementById('saldoKasStatGrid').innerHTML = `
+    <div class="stat"><div class="label">Opening Balance</div><div class="value mono">${rupiah(saldoBank.saldoAwal||0)}</div></div>
+    <div class="stat"><div class="label">Total Cash In (All Time)</div><div class="value mono green">${rupiah(totalMasuk)}</div></div>
+    <div class="stat"><div class="label">Total Cash Out (All Time)</div><div class="value mono maroon">${rupiah(totalKeluar)}</div></div>
+    <div class="stat"><div class="label">Current Balance</div><div class="value mono" style="font-size:24px;">${rupiah(saldoSekarang)}</div></div>
+  `;
+
+  renderMutasiBankTable();
+}
+async function simpanSaldoAwalBank(){
+  const saldoAwal = Number(document.getElementById('saldoAwalNominal').value)||0;
+  const tanggalSaldoAwal = document.getElementById('saldoAwalTanggal').value;
+  const keterangan = document.getElementById('saldoAwalKeterangan').value.trim();
+  try{
+    await saveSaldoBankAwal(saldoAwal, tanggalSaldoAwal, keterangan);
+    toast('Opening balance saved','ok');
+    if(!USE_FIRESTORE) renderSaldoKasTab();
+  }catch(e){ toast('Failed to save: '+e.message,'err'); }
+}
+function renderMutasiBankTable(){
+  const rows = buildMutasiBank();
+  if(rows.length===0){
+    document.getElementById('mutasiBankTable').innerHTML = emptyState('No cash-in or cash-out transactions recorded yet.');
+    return;
+  }
+  const trs = rows.map(r=>`
+    <tr>
+      <td>${esc(r.tanggal)}</td>
+      <td class="center">${r.arah==='in' ? '<span class="pill lunas">Cash In</span>' : '<span class="pill belum" style="background:var(--maroon-soft); color:var(--maroon);">Cash Out</span>'}</td>
+      <td>${esc(r.keterangan)}</td>
+      <td class="right num" style="color:${r.arah==='in' ? 'var(--green)' : 'var(--maroon)'};">${r.arah==='in' ? '+' : '−'}${rupiah(r.jumlah)}</td>
+      <td class="right num" style="font-weight:600;">${rupiah(r.saldo)}</td>
+    </tr>`).join('');
+  document.getElementById('mutasiBankTable').innerHTML = `
+    <div class="table-scroll">
+      <table><thead><tr><th>Date</th><th class="center">Type</th><th>Description</th><th class="right">Amount</th><th class="right">Balance</th></tr></thead>
+      <tbody>${trs}</tbody></table>
+    </div>`;
 }
 
 /* ============================================================
