@@ -769,6 +769,10 @@
             <h1>Cash Balance (Bank Mandiri)</h1>
             <div class="sub">One running account across all school years: opening balance + all cash in − all cash out</div>
           </div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button class="btn btn-outline" onclick="cetakLaporanSaldoKas()">🖨 Print Report</button>
+            <button class="btn btn-outline" onclick="unduhLaporanSaldoKasGambar()">🖼️ Save as Image (HD)</button>
+          </div>
         </div>
 
         <div class="grid-stats" id="saldoKasStatGrid"></div>
@@ -2727,10 +2731,11 @@ function renderKegiatanTable(){
     const a = findAkun(k.akunId);
     const jmlPengeluaran = state.pengeluaran.filter(p=>p.kegiatanId===k.id).length;
     return `<tr>
-      <td>${esc(k.nama)}</td>
+      <td>${esc(k.nama)} ${k.isDefault ? '<span class="pill lunas">Default</span>' : ''}</td>
       <td class="mono">${a ? esc(a.kode)+' — '+esc(a.nama) : '<span class="helper">(account deleted)</span>'}</td>
       <td class="center">${jmlPengeluaran}</td>
       <td class="center">
+        ${k.isDefault ? '' : `<button class="icon-btn" title="Set as Default for Expense Entry" onclick='setKegiatanDefault("${k.id}")'>⭐</button>`}
         <button class="icon-btn" title="Edit" onclick='editKegiatan("${k.id}")'>✎</button>
         <button class="icon-btn" title="Delete" onclick='deleteKegiatanConfirm("${k.id}")'>🗑</button>
       </td>
@@ -2739,6 +2744,16 @@ function renderKegiatanTable(){
   document.getElementById('kegiatanTable').innerHTML = `
     <table><thead><tr><th>Activity</th><th>Linked Account</th><th class="center">Expenses</th><th class="center">Action</th></tr></thead>
     <tbody>${rows}</tbody></table>`;
+}
+function findDefaultKegiatan(){ return currentKegiatanList().find(k=>k.isDefault) || null; }
+async function setKegiatanDefault(id){
+  try{
+    const others = currentKegiatanList().filter(k=>k.isDefault && k.id!==id);
+    for(const k of others){ await dbUpdateKegiatan(k.id, {isDefault:false}); }
+    await dbUpdateKegiatan(id, {isDefault:true});
+    toast('Default activity updated — it will be pre-selected in Expense Entry','ok');
+    if(!USE_FIRESTORE) renderKegiatanTable();
+  }catch(e){ toast('Failed to set default: '+e.message,'err'); }
 }
 function populateAkunSelect(selectEl, selectedId){
   const list = currentAkunList();
@@ -2774,7 +2789,12 @@ async function saveKegiatan(){
   const obj = { nama, akunId };
   try{
     if(id){ await dbUpdateKegiatan(id, obj); toast('Activity updated','ok'); }
-    else{ await dbAddKegiatan(obj); toast('Activity added','ok'); }
+    else{
+      // The very first activity in a school year becomes the default automatically
+      if(currentKegiatanList().length===0) obj.isDefault = true;
+      await dbAddKegiatan(obj);
+      toast('Activity added','ok');
+    }
     closeModal('modalKegiatan');
     if(!USE_FIRESTORE) renderKegiatanTable();
   }catch(e){ toast('Failed to save: '+e.message,'err'); }
@@ -2797,7 +2817,8 @@ function deleteKegiatanConfirm(id){
 function renderPengeluaranTab(){
   const sel = document.getElementById('pengeluaranKegiatanId');
   const hasKegiatan = currentKegiatanList().length>0;
-  populateKegiatanSelect(sel);
+  const defaultKegiatan = findDefaultKegiatan();
+  populateKegiatanSelect(sel, defaultKegiatan?.id || null);
   document.getElementById('pengeluaranNoKegiatanWarning').style.display = hasKegiatan ? 'none' : 'block';
   document.getElementById('pengeluaranSaveBtn').disabled = !hasKegiatan;
   document.getElementById('pengeluaranTanggal').value = new Date().toISOString().slice(0,10);
@@ -3079,6 +3100,74 @@ function renderMutasiBankTable(){
       <table><thead><tr><th>Date</th><th class="center">Type</th><th>Description</th><th class="right">Amount</th><th class="right">Balance</th></tr></thead>
       <tbody>${trs}</tbody></table>
     </div>`;
+}
+
+/* Buku Besar style ledger for the single Bank Mandiri account, matching the look of the Expense Ledger report */
+function buildBankLedgerHTML(forPrint){
+  const rows = buildMutasiBank();
+  const saldoAkhir = saldoBankSaatIni();
+  const head = forPrint ? `
+    <div class="ledger-report-head">
+      <h2>Buku Besar Kas — Bank Mandiri</h2>
+      <div class="sub2">Opening balance ${saldoBank.tanggalSaldoAwal ? 'as of '+esc(saldoBank.tanggalSaldoAwal) : ''} &middot; Printed ${new Date().toLocaleString('en-US', {dateStyle:'long', timeStyle:'short'})}</div>
+    </div>` : '';
+  const trs = rows.map(r=>`
+    <tr>
+      <td>${esc(r.tanggal)}</td>
+      <td>${esc(r.keterangan)}</td>
+      <td class="right num">${r.arah==='in' ? rupiah(r.jumlah) : '-'}</td>
+      <td class="right num">${r.arah==='out' ? rupiah(r.jumlah) : '-'}</td>
+      <td class="right num">${rupiah(r.saldo)}</td>
+    </tr>`).join('');
+  const body = `
+    <div class="ledger-account">
+      <div class="ledger-account-head">
+        <span>Bank Mandiri</span>
+        <span>${rupiah(saldoAkhir)}</span>
+      </div>
+      <table>
+        <thead><tr><th>Date</th><th>Description</th><th class="right">Cash In</th><th class="right">Cash Out</th><th class="right">Balance</th></tr></thead>
+        <tbody>
+          <tr><td colspan="4" class="helper">Opening Balance:</td><td class="right num">${rupiah(saldoBank.saldoAwal||0)}</td></tr>
+          ${trs}
+        </tbody>
+        <tfoot><tr><td colspan="4">Current Balance</td><td class="right num">${rupiah(saldoAkhir)}</td></tr></tfoot>
+      </table>
+    </div>`;
+  return head + body;
+}
+function cetakLaporanSaldoKas(){
+  const rows = buildMutasiBank();
+  if(rows.length===0){ toast('No transactions to print yet','err'); return; }
+  document.getElementById('printArea').innerHTML = `<div style="padding:6mm;">${buildBankLedgerHTML(true)}</div>`;
+  setTimeout(()=> window.print(), 80);
+}
+async function unduhLaporanSaldoKasGambar(){
+  const rows = buildMutasiBank();
+  if(rows.length===0){ toast('No transactions to save as image yet','err'); return; }
+  if(typeof html2canvas === 'undefined'){
+    toast('Image export library not loaded yet. Check your internet connection then reload the page.','err');
+    return;
+  }
+  const holder = document.createElement('div');
+  holder.style.cssText = 'position:fixed; left:-9999px; top:0; width:900px; background:#fff; padding:24px;';
+  holder.innerHTML = buildBankLedgerHTML(true);
+  document.body.appendChild(holder);
+  await new Promise(r=>setTimeout(r, 60));
+  let canvas;
+  try{
+    canvas = await html2canvas(holder, {scale:2.5, backgroundColor:'#ffffff', useCORS:true});
+  }catch(e){
+    document.body.removeChild(holder);
+    toast('Failed to generate image: '+e.message, 'err');
+    return;
+  }
+  document.body.removeChild(holder);
+  const link = document.createElement('a');
+  link.download = 'bank-mandiri-ledger.png';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+  toast('Bank ledger image downloaded','ok');
 }
 
 /* ============================================================
