@@ -759,6 +759,54 @@ service cloud.firestore {
   </div>
 </div>
 
+<!-- Modal Edit Pembayaran -->
+<div class="overlay" id="modalEditBayar">
+  <div class="modal wide">
+    <div class="modal-head">
+      <h3>Edit Pembayaran</h3>
+      <button class="icon-btn" onclick="closeModal('modalEditBayar')">✕</button>
+    </div>
+    <input type="hidden" id="editBayarId">
+    <div class="helper" id="editBayarSiswaNama" style="margin-bottom:10px; font-weight:600; color:var(--navy);"></div>
+    <div class="field">
+      <label>Pilih Bulan yang Dibayar (klik untuk memilih, hijau = sudah lunas di transaksi lain)</label>
+      <div class="month-grid" id="editBayarMonthGrid"></div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Nominal per Bulan</label>
+        <input type="number" id="editBayarNominal" oninput="updateEditBayarTotal()">
+      </div>
+      <div class="field">
+        <label>Tanggal Bayar</label>
+        <input type="date" id="editBayarTanggal">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Metode</label>
+        <select id="editBayarMetode">
+          <option value="Tunai">Tunai</option>
+          <option value="Transfer">Transfer</option>
+          <option value="QRIS">QRIS</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Total</label>
+        <div class="helper" id="editBayarTotalPreview" style="margin-top:9px; font-weight:700; font-family:'JetBrains Mono';">Rp 0</div>
+      </div>
+    </div>
+    <div class="field">
+      <label>Keterangan (opsional)</label>
+      <input type="text" id="editBayarKeterangan" placeholder="mis. dibayar oleh orang tua langsung">
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeModal('modalEditBayar')">Batal</button>
+      <button class="btn btn-primary" onclick="simpanEditPembayaran()">Simpan Perubahan</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal Tahun Ajaran -->
 <div class="overlay" id="modalTahunAjaran">
   <div class="modal">
@@ -1264,6 +1312,15 @@ async function dbAddPembayaran(obj){
     return id;
   }
 }
+async function dbUpdatePembayaran(id, obj){
+  if(USE_FIRESTORE){
+    await DB.collection('pembayaran').doc(id).update(obj);
+  }else{
+    const idx = state.pembayaran.findIndex(p=>p.id===id);
+    if(idx>-1) state.pembayaran[idx] = {...state.pembayaran[idx], ...obj};
+    saveLocal();
+  }
+}
 async function dbDeletePembayaran(id){
   if(USE_FIRESTORE){
     await DB.collection('pembayaran').doc(id).delete();
@@ -1365,9 +1422,10 @@ function formatBulanTahunText(p, full){
   });
   return groups.map(g=> g.names.join(', ') + ' ' + g.tahun).join(', ');
 }
-function isBulanLunas(studentId, bulan, tahun){
+function isBulanLunas(studentId, bulan, tahun, excludeId){
   return state.pembayaran.some(p => {
     if(p.tahunAjaranId!==currentTahunAjaranId || p.studentId!==studentId) return false;
+    if(excludeId && p.id===excludeId) return false;
     return getBulanTahunPairs(p).some(it=> it.bulan===Number(bulan) && it.tahun===Number(tahun));
   });
 }
@@ -1548,6 +1606,7 @@ function renderRiwayatTable(){
       <td>${esc(p.metode)}</td>
       <td class="center">
         <button class="icon-btn" title="Cetak Bukti" onclick='cetakBukti("${p.id}")'>🖨</button>
+        <button class="icon-btn" title="Edit" onclick='editPembayaran("${p.id}")'>✎</button>
         <button class="icon-btn" title="Hapus" onclick='deletePembayaranConfirm("${p.id}")'>🗑</button>
       </td>
     </tr>`;
@@ -1561,6 +1620,74 @@ function deletePembayaranConfirm(id){
     try{ await dbDeletePembayaran(id); toast('Pembayaran dihapus','ok'); if(!USE_FIRESTORE){ renderRiwayatTable(); } }
     catch(e){ toast('Gagal menghapus: '+e.message,'err'); }
   });
+}
+
+/* ---- Edit Pembayaran ---- */
+let editBayarSelectedMonths = new Set();
+function editPembayaran(id){
+  const p = state.pembayaran.find(x=>x.id===id);
+  if(!p){ toast('Data pembayaran tidak ditemukan','err'); return; }
+  const s = findSiswa(p.studentId);
+  const ta = currentTA();
+  document.getElementById('editBayarId').value = p.id;
+  document.getElementById('editBayarSiswaNama').textContent = s ? `${s.noAbsen ? '#'+s.noAbsen+' — ' : ''}${s.nama}` : '(siswa dihapus)';
+  document.getElementById('editBayarNominal').value = p.nominalPerBulan || 0;
+  document.getElementById('editBayarTanggal').value = p.tanggal || '';
+  document.getElementById('editBayarMetode').value = p.metode || 'Tunai';
+  document.getElementById('editBayarKeterangan').value = p.keterangan || '';
+  editBayarSelectedMonths = new Set(getBulanTahunPairs(p).map(it=>it.bulan));
+  const grid = document.getElementById('editBayarMonthGrid');
+  grid.innerHTML = PERIODE_URUT.map(bulanNum=>{
+    const b = BULAN[bulanNum-1];
+    const tahun = tahunUntukBulan(ta?.label, bulanNum);
+    const lockedByOther = isBulanLunas(p.studentId, bulanNum, tahun, p.id);
+    const selected = editBayarSelectedMonths.has(bulanNum);
+    return `<div class="month-chip ${lockedByOther?'paid':''} ${selected?'selected':''}" data-bulan="${bulanNum}" onclick="toggleEditBulanChip(${bulanNum}, ${lockedByOther})">
+      ${b.slice(0,3)} <span style="opacity:.55; font-weight:400;">'${String(tahun).slice(-2)}</span><span class="amt">${lockedByOther ? '✓ Lunas' : ''}</span>
+    </div>`;
+  }).join('');
+  updateEditBayarTotal();
+  openModal('modalEditBayar');
+}
+function toggleEditBulanChip(bulan, lockedByOther){
+  if(lockedByOther) return;
+  if(editBayarSelectedMonths.has(bulan)) editBayarSelectedMonths.delete(bulan);
+  else editBayarSelectedMonths.add(bulan);
+  document.querySelectorAll('#editBayarMonthGrid .month-chip').forEach(el=>{
+    if(Number(el.dataset.bulan)===bulan) el.classList.toggle('selected', editBayarSelectedMonths.has(bulan));
+  });
+  updateEditBayarTotal();
+}
+function updateEditBayarTotal(){
+  const nominal = Number(document.getElementById('editBayarNominal').value)||0;
+  const total = nominal * editBayarSelectedMonths.size;
+  document.getElementById('editBayarTotalPreview').textContent = rupiah(total);
+}
+async function simpanEditPembayaran(){
+  const id = document.getElementById('editBayarId').value;
+  const ta = currentTA();
+  const tanggal = document.getElementById('editBayarTanggal').value;
+  const metode = document.getElementById('editBayarMetode').value;
+  const keterangan = document.getElementById('editBayarKeterangan').value.trim();
+  const nominal = Number(document.getElementById('editBayarNominal').value)||0;
+  if(editBayarSelectedMonths.size===0){ toast('Pilih minimal satu bulan yang dibayar','err'); return; }
+  if(!tanggal){ toast('Tanggal bayar wajib diisi','err'); return; }
+  if(nominal<=0){ toast('Nominal per bulan harus lebih dari 0','err'); return; }
+  const bulanList = Array.from(editBayarSelectedMonths)
+    .map(bulan => ({ bulan, tahun: tahunUntukBulan(ta?.label, bulan) }))
+    .sort((a,b)=> PERIODE_URUT.indexOf(a.bulan) - PERIODE_URUT.indexOf(b.bulan));
+  const obj = {
+    bulanList,
+    nominalPerBulan: nominal,
+    total: nominal * bulanList.length,
+    tanggal, metode, keterangan
+  };
+  try{
+    await dbUpdatePembayaran(id, obj);
+    toast('Pembayaran diperbarui','ok');
+    closeModal('modalEditBayar');
+    if(!USE_FIRESTORE) renderRiwayatTable();
+  }catch(e){ toast('Gagal menyimpan perubahan: '+e.message,'err'); }
 }
 
 /* ============================================================
