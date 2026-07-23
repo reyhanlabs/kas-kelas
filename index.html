@@ -1422,6 +1422,28 @@ function formatBulanTahunText(p, full){
   });
   return groups.map(g=> g.names.join(', ') + ' ' + g.tahun).join(', ');
 }
+/* Versi ringkas: bulan-bulan berurutan (kronologis, boleh lintas tahun) digabung jadi rentang
+   "BulanAwal Tahun - BulanAkhir Tahun". Kelompok yang tidak berurutan (ada bulan yang dilewati)
+   dipisah dengan koma. Contoh: Juli 2026 - Juni 2027 | Desember 2026 - Januari 2027 */
+function formatBulanTahunRingkas(p){
+  const pairs = getBulanTahunPairs(p);
+  if(!pairs.length) return '-';
+  const runs = [];
+  let current = [pairs[0]];
+  for(let i=1;i<pairs.length;i++){
+    const prevIdx = PERIODE_URUT.indexOf(pairs[i-1].bulan);
+    const curIdx = PERIODE_URUT.indexOf(pairs[i].bulan);
+    if(curIdx === prevIdx+1) current.push(pairs[i]);
+    else { runs.push(current); current = [pairs[i]]; }
+  }
+  runs.push(current);
+  return runs.map(run=>{
+    const first = run[0], last = run[run.length-1];
+    const firstLabel = BULAN[first.bulan-1] + ' ' + first.tahun;
+    if(run.length===1) return firstLabel;
+    return firstLabel + ' - ' + BULAN[last.bulan-1] + ' ' + last.tahun;
+  }).join(', ');
+}
 function isBulanLunas(studentId, bulan, tahun, excludeId){
   return state.pembayaran.some(p => {
     if(p.tahunAjaranId!==currentTahunAjaranId || p.studentId!==studentId) return false;
@@ -1722,7 +1744,7 @@ function renderCetakTable(){
     <tbody>${rows}</tbody></table>`;
 }
 function buildReceiptHTML(p, s, ta){
-  const bulanText = formatBulanTahunText(p, true);
+  const bulanText = formatBulanTahunRingkas(p);
   const noKwitansi = 'KK-' + tahunAwalPembayaran(p) + '-' + String(p.id).slice(-6).toUpperCase();
   const tgl = p.tanggal ? new Date(p.tanggal).toLocaleDateString('id-ID', {day:'numeric', month:'long', year:'numeric'}) : '-';
   const lunasPenuh = isTahunAjaranLunasPenuh(s?.id, ta?.label);
@@ -1797,7 +1819,7 @@ function normalizeWaNumber(noHp){
   return n;
 }
 function pesanBuktiWA(p, s){
-  const bulanText = formatBulanTahunText(p, true);
+  const bulanText = formatBulanTahunRingkas(p);
   return `Assalamu'alaikum, berikut bukti pembayaran kas kelas a.n. *${s?.nama || '-'}* untuk bulan ${bulanText} sebesar ${rupiah(p.total)}. Terima kasih.`;
 }
 async function unduhBuktiGambar(paymentId){
