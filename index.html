@@ -108,7 +108,10 @@
   }
   .ta-add-btn:hover{background:rgba(255,255,255,0.06); color:#fff;}
 
-  nav.tabs{display:flex; flex-direction:column; gap:3px; flex:1;}
+  nav.tabs{display:flex; flex-direction:column; gap:3px; flex:1; min-height:0; overflow-y:auto; padding-right:2px;}
+  nav.tabs::-webkit-scrollbar{width:6px;}
+  nav.tabs::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15); border-radius:10px;}
+  nav.tabs::-webkit-scrollbar-track{background:transparent;}
   .tab-btn{
     display:flex; align-items:center; gap:10px;
     padding:10px 12px; border-radius:8px; cursor:pointer;
