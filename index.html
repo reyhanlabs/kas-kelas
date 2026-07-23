@@ -345,6 +345,9 @@
     body *{visibility:hidden;}
     #printArea, #printArea *{visibility:visible;}
     #printArea{display:block; position:absolute; top:0; left:0; width:100%; background:#fff;}
+    /* visibility:hidden alone still reserves layout space, which was pushing out a trailing blank page —
+       fully remove the app shell, modals, and toasts from layout during print instead */
+    #app, .overlay, .toast-wrap, #loginScreen, #noAccessScreen, #publicViewScreen{display:none !important;}
     @page{ size:A4; margin:10mm; }
   }
   .receipt{
@@ -1260,6 +1263,16 @@ function rupiah(n){
 function esc(s){
   return String(s??"").replace(/[&<>"']/g, m => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
 }
+/* Formats a plain "YYYY-MM-DD" date input value as "23 July 2026" — parsed manually (not via `new Date()`)
+   to avoid timezone off-by-one-day bugs, and reuses BULAN so the month name always matches the rest of the app. */
+function formatTanggalPanjang(dateStr){
+  if(!dateStr) return '-';
+  const parts = String(dateStr).split('-');
+  if(parts.length!==3) return esc(dateStr);
+  const [y,m,d] = parts.map(Number);
+  if(!y || !m || !d || !BULAN[m-1]) return esc(dateStr);
+  return `${d} ${BULAN[m-1]} ${y}`;
+}
 function toast(msg, type=""){
   const wrap = document.getElementById('toastWrap');
   const el = document.createElement('div');
@@ -1958,7 +1971,7 @@ function renderDashboard(){
         <td>${esc(s?.nama || '(student deleted)')}</td>
         <td>${esc(formatBulanTahunText(p, false))}</td>
         <td class="right num">${rupiah(p.total)}</td>
-        <td>${esc(p.tanggal)}</td>
+        <td>${formatTanggalPanjang(p.tanggal)}</td>
       </tr>`;
     }).join('');
     document.getElementById('dashRecentTable').innerHTML = `
@@ -2208,7 +2221,7 @@ function renderRiwayatTable(){
       <td>${esc(s?.nama || '(student deleted)')}</td>
       <td>${esc(formatBulanTahunText(p, false))}</td>
       <td class="right num">${rupiah(p.total)}</td>
-      <td>${esc(p.tanggal)}</td>
+      <td>${formatTanggalPanjang(p.tanggal)}</td>
       <td>${esc(p.metode)}</td>
       <td class="center">
         <button class="icon-btn" title="Print Receipt" onclick='cetakBukti("${p.id}")'>🖨</button>
@@ -2314,7 +2327,7 @@ function renderCetakTable(){
       <td>${esc(s?.nama || '(student deleted)')}</td>
       <td>${esc(formatBulanTahunText(p, false))}</td>
       <td class="right num">${rupiah(p.total)}</td>
-      <td>${esc(p.tanggal)}</td>
+      <td>${formatTanggalPanjang(p.tanggal)}</td>
       <td class="center" style="white-space:nowrap;">
         <button class="btn btn-sm btn-gold" onclick='cetakBukti("${p.id}")' title="Print">🖨 Print</button>
         <button class="btn btn-sm btn-outline" onclick='unduhBuktiGambar("${p.id}")' title="Download as image (PNG)">🖼️ Image</button>
@@ -2330,7 +2343,7 @@ function renderCetakTable(){
 function buildReceiptHTML(p, s, ta){
   const bulanText = formatBulanTahunRingkas(p);
   const noKwitansi = 'KK-' + tahunAwalPembayaran(p) + '-' + String(p.id).slice(-6).toUpperCase();
-  const tgl = p.tanggal ? new Date(p.tanggal).toLocaleDateString('id-ID', {day:'numeric', month:'long', year:'numeric'}) : '-';
+  const tgl = formatTanggalPanjang(p.tanggal);
   const lunasPenuh = isTahunAjaranLunasPenuh(s?.id, ta?.label);
   return `
     <div class="receipt">
@@ -2966,7 +2979,7 @@ function renderRiwayatPengeluaranTable(){
     const a = k ? findAkun(k.akunId) : null;
     return `<tr>
       <td class="mono">${esc(p.noRef||'-')}</td>
-      <td>${esc(p.tanggal)}</td>
+      <td>${formatTanggalPanjang(p.tanggal)}</td>
       <td>${esc(k?.nama || '(activity deleted)')}</td>
       <td class="mono">${a ? esc(a.kode) : '-'}</td>
       <td>${esc(p.keterangan)}</td>
@@ -3072,7 +3085,7 @@ function buildLedgerReportHTML(groups, grandTotal, ta, forPrint){
   const sections = groups.map(g=>{
     const rows = g.rows.map(r=>`
       <tr>
-        <td>${esc(r.tanggal)}</td>
+        <td>${formatTanggalPanjang(r.tanggal)}</td>
         <td class="mono">${esc(r.noRef||'-')}</td>
         <td>${esc(r.keterangan)}${r.kegiatanNama && r.kegiatanNama!=='-' ? ` <span class="helper">(${esc(r.kegiatanNama)})</span>` : ''}</td>
         <td class="right num">${rupiah(r.nominal)}</td>
@@ -3179,7 +3192,7 @@ function renderMutasiBankTable(){
   }
   const trs = rows.map(r=>`
     <tr>
-      <td>${esc(r.tanggal)}</td>
+      <td>${formatTanggalPanjang(r.tanggal)}</td>
       <td class="center">${r.arah==='in' ? '<span class="pill lunas">Cash In</span>' : '<span class="pill belum" style="background:var(--maroon-soft); color:var(--maroon);">Cash Out</span>'}</td>
       <td>${esc(r.keterangan)}</td>
       <td class="right num" style="color:${r.arah==='in' ? 'var(--green)' : 'var(--maroon)'};">${r.arah==='in' ? '+' : '−'}${rupiah(r.jumlah)}</td>
@@ -3199,11 +3212,11 @@ function buildBankLedgerHTML(forPrint){
   const head = forPrint ? `
     <div class="ledger-report-head">
       <h2>Buku Besar Kas — Bank Mandiri</h2>
-      <div class="sub2">Opening balance ${saldoBank.tanggalSaldoAwal ? 'as of '+esc(saldoBank.tanggalSaldoAwal) : ''} &middot; Printed ${new Date().toLocaleString('en-US', {dateStyle:'long', timeStyle:'short'})}</div>
+      <div class="sub2">Opening balance ${saldoBank.tanggalSaldoAwal ? 'as of '+formatTanggalPanjang(saldoBank.tanggalSaldoAwal) : ''} &middot; Printed ${new Date().toLocaleString('en-US', {dateStyle:'long', timeStyle:'short'})}</div>
     </div>` : '';
   const trs = rows.map(r=>`
     <tr>
-      <td>${esc(r.tanggal)}</td>
+      <td>${formatTanggalPanjang(r.tanggal)}</td>
       <td>${esc(r.keterangan)}</td>
       <td class="right num">${r.arah==='in' ? rupiah(r.jumlah) : '-'}</td>
       <td class="right num">${r.arah==='out' ? rupiah(r.jumlah) : '-'}</td>
