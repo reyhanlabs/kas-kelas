@@ -289,9 +289,10 @@
   /* ===== Print receipt ===== */
   #printArea{display:none;}
   @media print{
+    html, body{background:#fff !important; height:auto !important;}
     body *{visibility:hidden;}
     #printArea, #printArea *{visibility:visible;}
-    #printArea{display:block; position:absolute; top:0; left:0; width:100%;}
+    #printArea{display:block; position:absolute; top:0; left:0; width:100%; background:#fff;}
     @page{ size:A5; margin:10mm; }
   }
   .receipt{
@@ -484,8 +485,8 @@
               <select id="bayarSiswaSelect" onchange="onBayarSiswaChange()"></select>
             </div>
             <div class="field">
-              <label>Tahun</label>
-              <select id="bayarTahunSelect" class="tahun-select" onchange="onBayarSiswaChange()"></select>
+              <label>Periode Tahun Ajaran</label>
+              <div class="helper" id="bayarPeriodeBadge" style="margin-top:9px; font-weight:600; color:var(--ink);">-</div>
             </div>
           </div>
 
@@ -558,8 +559,8 @@
             <h1>Rekap Laporan</h1>
             <div class="sub">Rekapitulasi status pembayaran kas seluruh siswa dalam tahun ajaran ini</div>
           </div>
-          <div style="display:flex; gap:8px; align-items:center;">
-            <select id="rekapTahunSelect" class="tahun-select" onchange="renderRekapTable()"></select>
+          <div style="display:flex; gap:10px; align-items:center;">
+            <span class="pill" id="rekapPeriodeBadge" style="background:var(--gold-soft); color:#6b5217;">-</span>
             <button class="btn btn-outline" onclick="window.print()">🖨 Cetak Laporan</button>
           </div>
         </div>
@@ -809,6 +810,25 @@ service cloud.firestore {
    ============================================================ */
 
 const BULAN = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
+// Urutan periode Tahun Ajaran Indonesia: Juli -> Juni (bukan Januari -> Desember)
+const PERIODE_URUT = [7,8,9,10,11,12,1,2,3,4,5,6];
+/* Ambil tahun mulai & tahun selesai dari label Tahun Ajaran, mis. "2026/2027" -> {start:2026, end:2027}.
+   Fallback ke tahun berjalan kalau label tidak sesuai format standar. */
+function parseTahunAjaranYears(label){
+  const m = String(label||'').match(/(\d{4})\s*\/\s*(\d{4})/);
+  if(m) return { start:Number(m[1]), end:Number(m[2]) };
+  const y = new Date().getFullYear();
+  return { start:y, end:y+1 };
+}
+/* Bulan Juli-Desember masuk tahun kalender awal TA, Januari-Juni masuk tahun kalender akhir TA. */
+function tahunUntukBulan(taLabel, bulan){
+  const { start, end } = parseTahunAjaranYears(taLabel);
+  return bulan >= 7 ? start : end;
+}
+function periodeLabelTA(taLabel){
+  const { start, end } = parseTahunAjaranYears(taLabel);
+  return `Juli ${start} – Juni ${end}`;
+}
 const LS_KEY = "kaskelas_data_v2";
 const LS_FBCONFIG = "kaskelas_fbconfig_v1";
 const LS_FORCE_LOCAL = "kaskelas_force_local_v1";
@@ -1318,6 +1338,10 @@ function emptyState(msg){
     <div>${esc(msg)}</div>
   </div>`;
 }
+/* Cek apakah siswa sudah lunas seluruh 12 bulan periode Tahun Ajaran (Juli-Juni) berjalan */
+function isTahunAjaranLunasPenuh(studentId, taLabel){
+  return PERIODE_URUT.every(bulan => isBulanLunas(studentId, bulan, tahunUntukBulan(taLabel, bulan)));
+}
 function isBulanLunas(studentId, bulan, tahun){
   return state.pembayaran.some(p => p.tahunAjaranId===currentTahunAjaranId && p.studentId===studentId && Number(p.tahun)===Number(tahun) && (p.bulanList||[]).includes(bulan));
 }
@@ -1407,9 +1431,8 @@ function renderPembayaranTab(){
   const sel = document.getElementById('bayarSiswaSelect');
   sel.innerHTML = currentSiswaList().slice().sort((a,b)=>(a.noAbsen||0)-(b.noAbsen||0))
     .map(s=>`<option value="${s.id}">${esc(s.noAbsen?('#'+s.noAbsen+' — '):'')}${esc(s.nama)}</option>`).join('');
-  const tahunSel = document.getElementById('bayarTahunSelect');
-  const nowY = new Date().getFullYear();
-  tahunSel.innerHTML = [nowY-1, nowY, nowY+1].map(y=>`<option value="${y}" ${y===nowY?'selected':''}>${y}</option>`).join('');
+  const ta = currentTA();
+  document.getElementById('bayarPeriodeBadge').textContent = periodeLabelTA(ta?.label);
   document.getElementById('bayarTanggal').value = new Date().toISOString().slice(0,10);
   bayarSelectedMonths = new Set();
   onBayarSiswaChange();
@@ -1418,15 +1441,16 @@ function renderPembayaranTab(){
 function onBayarSiswaChange(){
   bayarSelectedMonths = new Set();
   const studentId = document.getElementById('bayarSiswaSelect').value;
-  const tahun = Number(document.getElementById('bayarTahunSelect').value);
+  const ta = currentTA();
   const s = findSiswa(studentId);
   const nominal = nominalUntukSiswa(s);
   const grid = document.getElementById('bayarMonthGrid');
-  grid.innerHTML = BULAN.map((b,i)=>{
-    const bulanNum = i+1;
+  grid.innerHTML = PERIODE_URUT.map(bulanNum=>{
+    const b = BULAN[bulanNum-1];
+    const tahun = tahunUntukBulan(ta?.label, bulanNum);
     const paid = isBulanLunas(studentId, bulanNum, tahun);
     return `<div class="month-chip ${paid?'paid':''}" data-bulan="${bulanNum}" onclick="toggleBulanChip(${bulanNum}, ${paid})">
-      ${b.slice(0,3)}<span class="amt">${paid ? '✓ Lunas' : rupiah(nominal)}</span>
+      ${b.slice(0,3)} <span style="opacity:.55; font-weight:400;">'${String(tahun).slice(-2)}</span><span class="amt">${paid ? '✓ Lunas' : rupiah(nominal)}</span>
     </div>`;
   }).join('');
   updateBayarTotal();
@@ -1449,7 +1473,7 @@ function updateBayarTotal(){
 }
 async function simpanPembayaran(){
   const studentId = document.getElementById('bayarSiswaSelect').value;
-  const tahun = Number(document.getElementById('bayarTahunSelect').value);
+  const ta = currentTA();
   const tanggal = document.getElementById('bayarTanggal').value;
   const metode = document.getElementById('bayarMetode').value;
   const keterangan = document.getElementById('bayarKeterangan').value.trim();
@@ -1458,16 +1482,24 @@ async function simpanPembayaran(){
   if(bayarSelectedMonths.size===0){ toast('Pilih minimal satu bulan yang dibayar','err'); return; }
   if(!tanggal){ toast('Tanggal bayar wajib diisi','err'); return; }
   const nominal = nominalUntukSiswa(s);
-  const bulanList = Array.from(bayarSelectedMonths).sort((a,b)=>a-b);
-  const obj = {
-    studentId, tahun, bulanList,
-    nominalPerBulan: nominal,
-    total: nominal * bulanList.length,
-    tanggal, metode, keterangan,
-    createdAt: Date.now()
-  };
+  // Kelompokkan bulan terpilih per tahun kalender (periode Juli-Juni bisa lintas 2 tahun kalender)
+  const grup = {};
+  bayarSelectedMonths.forEach(bulan=>{
+    const tahun = tahunUntukBulan(ta?.label, bulan);
+    (grup[tahun] = grup[tahun] || []).push(bulan);
+  });
   try{
-    await dbAddPembayaran(obj);
+    for(const tahun of Object.keys(grup)){
+      const bulanList = grup[tahun].sort((a,b)=>a-b);
+      const obj = {
+        studentId, tahun:Number(tahun), bulanList,
+        nominalPerBulan: nominal,
+        total: nominal * bulanList.length,
+        tanggal, metode, keterangan,
+        createdAt: Date.now()
+      };
+      await dbAddPembayaran(obj);
+    }
     toast('Pembayaran berhasil dicatat','ok');
     bayarSelectedMonths = new Set();
     document.getElementById('bayarKeterangan').value = '';
@@ -1544,9 +1576,10 @@ function buildReceiptHTML(p, s, ta){
   const bulanText = (p.bulanList||[]).map(b=>BULAN[b-1]).join(', ');
   const noKwitansi = 'KK-' + p.tahun + '-' + String(p.id).slice(-6).toUpperCase();
   const tgl = p.tanggal ? new Date(p.tanggal).toLocaleDateString('id-ID', {day:'numeric', month:'long', year:'numeric'}) : '-';
+  const lunasPenuh = isTahunAjaranLunasPenuh(s?.id, ta?.label);
   return `
     <div class="receipt">
-      <div class="stamp">LUNAS<br>KAS<br>KELAS</div>
+      ${lunasPenuh ? `<div class="stamp">LUNAS<br>1 TAHUN<br>KELAS</div>` : ''}
       <div class="receipt-head">
         <div class="sekolah">${esc(ta?.namaSekolah || 'Nama Sekolah')}</div>
         <div class="kelas">${esc(ta?.namaKelas || 'Nama Kelas')} &middot; Tahun Ajaran ${esc(ta?.label || '-')}</div>
@@ -1673,16 +1706,12 @@ async function kirimBuktiWA(paymentId){
    LAPORAN / REKAP
    ============================================================ */
 function renderLaporanTab(){
-  const sel = document.getElementById('rekapTahunSelect');
-  const nowY = new Date().getFullYear();
-  const years = new Set([nowY-1, nowY, nowY+1]);
-  state.pembayaran.filter(p=>p.tahunAjaranId===currentTahunAjaranId).forEach(p=>years.add(Number(p.tahun)));
-  const sorted = Array.from(years).sort((a,b)=>a-b);
-  sel.innerHTML = sorted.map(y=>`<option value="${y}" ${y===nowY?'selected':''}>${y}</option>`).join('');
+  const ta = currentTA();
+  document.getElementById('rekapPeriodeBadge').textContent = periodeLabelTA(ta?.label);
   renderRekapTable();
 }
 function renderRekapTable(){
-  const tahun = Number(document.getElementById('rekapTahunSelect').value);
+  const ta = currentTA();
   const siswaSorted = currentSiswaList().slice().sort((a,b)=>(a.noAbsen||0)-(b.noAbsen||0));
 
   if(siswaSorted.length===0){
@@ -1694,12 +1723,12 @@ function renderRekapTable(){
   let grandTotal = 0;
   const colTotals = new Array(12).fill(0);
 
-  const headerCols = BULAN.map(b=>`<th class="center">${b.slice(0,3)}</th>`).join('');
+  const headerCols = PERIODE_URUT.map(bulanNum=>`<th class="center">${BULAN[bulanNum-1].slice(0,3)}</th>`).join('');
   const rows = siswaSorted.map(s=>{
     const nominal = nominalUntukSiswa(s);
     let rowTotal = 0;
-    const cells = BULAN.map((b,i)=>{
-      const bulanNum = i+1;
+    const cells = PERIODE_URUT.map((bulanNum,i)=>{
+      const tahun = tahunUntukBulan(ta?.label, bulanNum);
       const paid = isBulanLunas(s.id, bulanNum, tahun);
       if(paid){ rowTotal += nominal; colTotals[i] += nominal; }
       return `<td class="cell-${paid?'paid':'unpaid'}">${paid ? '✓' : '·'}</td>`;
@@ -1733,13 +1762,12 @@ function renderRekapTable(){
   const totalSiswa = siswaSorted.length;
   const totalSlotBulan = totalSiswa * 12;
   let slotLunas = 0;
-  siswaSorted.forEach(s=> BULAN.forEach((b,i)=>{ if(isBulanLunas(s.id, i+1, tahun)) slotLunas++; }));
+  siswaSorted.forEach(s=> PERIODE_URUT.forEach(bulanNum=>{ if(isBulanLunas(s.id, bulanNum, tahunUntukBulan(ta?.label, bulanNum))) slotLunas++; }));
   const persen = totalSlotBulan ? Math.round((slotLunas/totalSlotBulan)*100) : 0;
 
-  const ta = currentTA();
   document.getElementById('rekapStatGrid').innerHTML = `
     <div class="stat"><div class="label">Tahun Ajaran</div><div class="value" style="font-size:16px;">${esc(ta?.label||'-')}</div></div>
-    <div class="stat"><div class="label">Total Terkumpul (${tahun})</div><div class="value mono green">${rupiah(grandTotal)}</div></div>
+    <div class="stat"><div class="label">Total Terkumpul (${periodeLabelTA(ta?.label)})</div><div class="value mono green">${rupiah(grandTotal)}</div></div>
     <div class="stat"><div class="label">Kelengkapan Pembayaran</div><div class="value">${persen}%</div></div>
     <div class="stat"><div class="label">Slot Lunas</div><div class="value">${slotLunas} / ${totalSlotBulan}</div></div>
   `;
