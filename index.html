@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Buku Kas Kelas</title>
+<title>Class Cash Book</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
@@ -132,6 +132,46 @@
   .logout-btn{background:none;border:none;color:#e0a23e;font-size:11px;cursor:pointer; text-decoration:underline;}
   .role-badge{font-size:9.5px; text-transform:uppercase; letter-spacing:.05em; background:rgba(201,154,62,0.2); color:var(--gold); padding:1px 6px; border-radius:10px; margin-left:5px;}
 
+  /* ===== Mobile topbar + off-canvas sidebar ===== */
+  .mobile-topbar{
+    display:none; align-items:center; gap:10px; padding:0 14px; height:52px;
+    background:var(--navy); color:#fff; position:sticky; top:0; z-index:120;
+    box-shadow:0 2px 10px rgba(0,0,0,.15);
+  }
+  .mobile-menu-btn{
+    background:none; border:none; color:#fff; padding:6px; margin:0 -6px 0 -8px;
+    cursor:pointer; display:flex; align-items:center; justify-content:center;
+  }
+  .mobile-menu-btn svg{width:22px; height:22px;}
+  .mobile-topbar-title{font-family:'Fraunces',serif; font-size:15px; font-weight:600;}
+  .sidebar-backdrop{
+    display:none; position:fixed; inset:0; background:rgba(20,29,49,0.5); z-index:130;
+  }
+  .sidebar-backdrop.show{display:block;}
+
+  @media(max-width:860px){
+    .mobile-topbar{display:flex;}
+    #app.show{display:block;}
+    .sidebar{
+      position:fixed; top:0; left:0; height:100vh; width:82vw; max-width:300px;
+      z-index:140; transform:translateX(-100%); transition:transform .22s ease;
+    }
+    .sidebar.mobile-open{transform:translateX(0); box-shadow:0 0 40px rgba(0,0,0,.4);}
+    main{width:100%; overflow-x:hidden;}
+    .content-wrap{padding:18px 14px 50px 14px;}
+    .topbar h1{font-size:21px;}
+    .grid-stats{grid-template-columns:repeat(2,1fr); gap:10px;}
+    .field-row{grid-template-columns:1fr;}
+    .modal{padding:18px 16px;}
+    .receipt{width:100%; padding:5mm;}
+  }
+  @media(max-width:480px){
+    .grid-stats{grid-template-columns:1fr;}
+  }
+  /* Tables that overflow their card get their own horizontal scrollbar
+     instead of being clipped by main's overflow-x:hidden. */
+  .card div:has(> table){overflow-x:auto; -webkit-overflow-scrolling:touch;}
+
   main{
     flex:1;
     background: var(--paper);
@@ -195,6 +235,11 @@
   .num{font-family:'JetBrains Mono'; }
   .right{text-align:right;}
   .center{text-align:center;}
+
+  .table-scroll{max-height:480px; overflow-y:auto; border:1px solid var(--paper-line); border-radius:8px;}
+  .table-scroll table{border-collapse:separate; border-spacing:0;}
+  .table-scroll thead th{position:sticky; top:0; background:#fff; z-index:1; box-shadow:0 1px 0 var(--paper-line);}
+  .table-scroll tr:last-child td{border-bottom:none;}
 
   .btn{
     display:inline-flex; align-items:center; gap:6px; cursor:pointer;
@@ -341,8 +386,8 @@
 <!-- ================= LOGIN SCREEN ================= -->
 <div class="auth-screen" id="loginScreen">
   <div class="auth-card">
-    <div class="auth-brand"><div class="mark">K</div><div class="txt">Buku Kas Kelas</div></div>
-    <div class="auth-sub">Masuk dengan akun yang sudah didaftarkan oleh admin kelas. Belum punya akun? Hubungi admin/bendahara kelas Anda.</div>
+    <div class="auth-brand"><div class="mark">K</div><div class="txt">Class Cash Book</div></div>
+    <div class="auth-sub">Log in with an account already registered by the class admin. Don't have an account yet? Contact your class admin/treasurer.</div>
     <div class="field">
       <label>Email</label>
       <input type="email" id="loginEmail" placeholder="nama@sekolah.com" autocomplete="username">
@@ -351,38 +396,45 @@
       <label>Password</label>
       <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password">
     </div>
-    <button class="btn btn-primary btn-block" onclick="doLogin()">Masuk</button>
+    <button class="btn btn-primary btn-block" onclick="doLogin()">Log In</button>
     <div class="auth-error" id="loginError"></div>
-    <button class="auth-foot-link" onclick="doResetPassword()">Lupa password? Kirim tautan reset ke email di atas</button>
+    <button class="auth-foot-link" onclick="doResetPassword()">Forgot password? Send a reset link to the email above</button>
   </div>
 </div>
 
 <!-- ================= NO ACCESS SCREEN ================= -->
 <div class="auth-screen" id="noAccessScreen" style="display:none;">
   <div class="auth-card">
-    <div class="auth-brand"><div class="mark">K</div><div class="txt">Buku Kas Kelas</div></div>
+    <div class="auth-brand"><div class="mark">K</div><div class="txt">Class Cash Book</div></div>
     <p style="font-size:13.5px; color:var(--ink-soft); line-height:1.6;">
-      Akun <b id="noAccessEmail"></b> berhasil masuk, tapi belum diberi akses ke data kas kelas.
-      Minta admin menambahkan email ini di menu <b>Kelola User</b>.
+      The account <b id="noAccessEmail"></b> has logged in successfully, but has not been given access to the class cash data.
+      Ask the admin to add this email in the <b>Manage Users</b> menu.
     </p>
-    <button class="btn btn-outline btn-block" onclick="doLogout()">Keluar</button>
+    <button class="btn btn-outline btn-block" onclick="doLogout()">Log Out</button>
   </div>
 </div>
 
 <div id="app">
-  <aside class="sidebar">
+  <div class="mobile-topbar" id="mobileTopbar">
+    <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open menu" onclick="toggleMobileSidebar()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M3 12h18"/><path d="M3 18h18"/></svg>
+    </button>
+    <div class="mobile-topbar-title" id="mobileTopbarTitle">Class Cash Book</div>
+  </div>
+  <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="toggleMobileSidebar(false)"></div>
+  <aside class="sidebar" id="sidebarEl">
     <div class="brand">
       <div class="brand-mark">K</div>
       <div class="brand-text">
-        <div class="t1">Buku Kas Kelas</div>
-        <div class="t2" id="sbNamaKelas">Kas Kelas</div>
+        <div class="t1">Class Cash Book</div>
+        <div class="t2" id="sbNamaKelas">Class Cash</div>
       </div>
     </div>
 
     <div class="ta-switcher">
-      <label>Tahun Ajaran</label>
+      <label>School Year</label>
       <select id="tahunAjaranSelect" onchange="onTahunAjaranSwitch()"></select>
-      <button class="ta-add-btn" onclick="openTahunAjaranModal()">+ Tahun Ajaran Baru</button>
+      <button class="ta-add-btn" onclick="openTahunAjaranModal()">+ New School Year</button>
     </div>
 
     <nav class="tabs" id="tabsNav">
@@ -392,36 +444,36 @@
       </button>
       <button class="tab-btn" data-tab="siswa">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.5 2.7-6 6-6s6 2.5 6 6"/><circle cx="17.5" cy="8.5" r="2.6"/><path d="M15.5 14.2c2.6.3 4.7 2.5 4.7 5.8"/></svg>
-        Master Siswa
+        Student Records
       </button>
       <button class="tab-btn" data-tab="pembayaran">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="M2.5 10h19"/><path d="M6 14.5h4"/></svg>
-        Pencatatan Pembayaran
+        Payment Entry
       </button>
       <button class="tab-btn" data-tab="cetak">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V3h12v6"/><rect x="4" y="9" width="16" height="8" rx="1.5"/><path d="M6 14h12v7H6z"/></svg>
-        Cetak Bukti Bayar
+        Print Receipt
       </button>
       <button class="tab-btn" data-tab="laporan">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19V5"/><path d="M4 19h16"/><rect x="7" y="12" width="3" height="7"/><rect x="12.5" y="8" width="3" height="11"/><rect x="18" y="4" width="3" height="15"/></svg>
-        Rekap Laporan
+        Report Summary
       </button>
       <button class="tab-btn" data-tab="users" id="navUsersBtn" style="display:none;">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8.5" cy="7" r="4"/><path d="M2 21v-2a6 6 0 0 1 6-6h1a6 6 0 0 1 6 6v2"/><path d="M17 11l2 2 4-4"/></svg>
-        Kelola User
+        Manage Users
       </button>
       <button class="tab-btn" data-tab="pengaturan">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
-        Pengaturan
+        Settings
       </button>
     </nav>
     <div class="sidebar-foot">
-      <div><span class="conn-dot off" id="connDot"></span><span id="connLabel">Mode lokal (belum tersambung)</span></div>
+      <div><span class="conn-dot off" id="connDot"></span><span id="connLabel">Local mode (not connected)</span></div>
       <div class="who-row">
         <span class="email" id="whoEmail"></span>
-        <button class="logout-btn" onclick="doLogout()">Keluar</button>
+        <button class="logout-btn" onclick="doLogout()">Log Out</button>
       </div>
-      <div style="margin-top:5px;">Buku Kas Kelas v2.0</div>
+      <div style="margin-top:5px;">Class Cash Book v2.0</div>
     </div>
   </aside>
 
@@ -433,7 +485,7 @@
         <div class="topbar">
           <div>
             <h1>Dashboard</h1>
-            <div class="sub" id="dashSub">Ringkasan kas kelas bulan berjalan</div>
+            <div class="sub" id="dashSub">Class cash summary for the current month</div>
           </div>
           <div class="topbar-right" id="todayLabel"></div>
         </div>
@@ -441,73 +493,73 @@
         <div class="grid-stats" id="statGrid"></div>
 
         <div class="card">
-          <h2>Status Pembayaran Bulan Ini <span class="badge" id="badgeBulanIni"></span></h2>
+          <h2>Payment Status This Month <span class="badge" id="badgeBulanIni"></span></h2>
           <div id="dashBulanIniTable"></div>
         </div>
 
         <div class="card">
-          <h2>Pembayaran Terbaru</h2>
+          <h2>Recent Payments</h2>
           <div id="dashRecentTable"></div>
         </div>
       </section>
 
-      <!-- ================= MASTER SISWA ================= -->
+      <!-- ================= STUDENT RECORDS ================= -->
       <section id="tab-siswa" class="tab-panel" style="display:none;">
         <div class="topbar">
           <div>
-            <h1>Master Siswa</h1>
-            <div class="sub">Data siswa &amp; nominal iuran kas kelas per bulan &mdash; tahun ajaran berjalan</div>
+            <h1>Student Records</h1>
+            <div class="sub">Student data &amp; monthly class cash dues &mdash; current school year</div>
           </div>
-          <button class="btn btn-primary" onclick="openSiswaModal()">+ Tambah Siswa</button>
+          <button class="btn btn-primary" onclick="openSiswaModal()">+ Add Student</button>
         </div>
 
         <div class="card">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:10px;">
             <div class="search-box">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-              <input type="text" id="searchSiswa" placeholder="Cari nama siswa..." oninput="renderSiswaTable()">
+              <input type="text" id="searchSiswa" placeholder="Search student name..." oninput="renderSiswaTable()">
             </div>
-            <div class="helper">Nominal default (jika siswa tidak punya nominal khusus): <b class="mono" id="nominalDefaultLabel"></b></div>
+            <div class="helper">Default amount (if the student has no special amount): <b class="mono" id="nominalDefaultLabel"></b></div>
           </div>
           <div id="siswaTable"></div>
         </div>
       </section>
 
-      <!-- ================= PEMBAYARAN ================= -->
+      <!-- ================= PAYMENTS ================= -->
       <section id="tab-pembayaran" class="tab-panel" style="display:none;">
         <div class="topbar">
           <div>
-            <h1>Pencatatan Pembayaran</h1>
-            <div class="sub">Catat pembayaran kas kelas per siswa, bisa untuk beberapa bulan sekaligus</div>
+            <h1>Payment Entry</h1>
+            <div class="sub">Record class cash payments per student, for one or several months at once</div>
           </div>
         </div>
 
         <div class="card">
           <div class="field-row">
             <div class="field">
-              <label>Pilih Siswa</label>
+              <label>Select Student</label>
               <select id="bayarSiswaSelect" onchange="onBayarSiswaChange()"></select>
             </div>
             <div class="field">
-              <label>Periode Tahun Ajaran</label>
+              <label>School Year Period</label>
               <div class="helper" id="bayarPeriodeBadge" style="margin-top:9px; font-weight:600; color:var(--ink);">-</div>
             </div>
           </div>
 
           <div class="field">
-            <label>Pilih Bulan yang Dibayar (klik untuk memilih, hijau = sudah lunas)</label>
+            <label>Select the Month(s) Paid (click to select, green = already paid)</label>
             <div class="month-grid" id="bayarMonthGrid"></div>
           </div>
 
           <div class="field-row">
             <div class="field">
-              <label>Tanggal Bayar</label>
+              <label>Payment Date</label>
               <input type="date" id="bayarTanggal">
             </div>
             <div class="field">
-              <label>Metode</label>
+              <label>Method</label>
               <select id="bayarMetode">
-                <option value="Tunai">Tunai</option>
+                <option value="Tunai">Cash</option>
                 <option value="Transfer">Transfer</option>
                 <option value="QRIS">QRIS</option>
               </select>
@@ -515,159 +567,159 @@
           </div>
 
           <div class="field">
-            <label>Keterangan (opsional)</label>
-            <input type="text" id="bayarKeterangan" placeholder="mis. dibayar oleh orang tua langsung">
+            <label>Notes (optional)</label>
+            <input type="text" id="bayarKeterangan" placeholder="e.g. paid directly by parent">
           </div>
 
           <div class="field">
-            <label>Total Nominal</label>
+            <label>Total Amount</label>
             <div class="mono" id="bayarTotalPreview" style="font-size:20px; font-weight:700; color:var(--navy);">Rp 0</div>
           </div>
 
-          <button class="btn btn-primary" onclick="simpanPembayaran()">Simpan Pembayaran</button>
+          <button class="btn btn-primary" onclick="simpanPembayaran()">Save Payment</button>
         </div>
 
         <div class="card">
-          <h2>Riwayat Pembayaran</h2>
+          <h2>Payment History</h2>
           <div style="display:flex; gap:10px; margin-bottom:12px; flex-wrap:wrap;">
             <div class="search-box">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-              <input type="text" id="searchRiwayat" placeholder="Cari nama siswa..." oninput="renderRiwayatTable()">
+              <input type="text" id="searchRiwayat" placeholder="Search student name..." oninput="renderRiwayatTable()">
             </div>
           </div>
           <div id="riwayatTable"></div>
         </div>
       </section>
 
-      <!-- ================= CETAK BUKTI ================= -->
+      <!-- ================= PRINT RECEIPT ================= -->
       <section id="tab-cetak" class="tab-panel" style="display:none;">
         <div class="topbar">
           <div>
-            <h1>Cetak Bukti Bayar</h1>
-            <div class="sub">Pilih transaksi pembayaran untuk dicetak sebagai bukti bayar orang tua</div>
+            <h1>Print Receipt</h1>
+            <div class="sub">Select a payment transaction to print as a receipt for parents</div>
           </div>
         </div>
         <div class="card">
           <div class="search-box" style="margin-bottom:14px;">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-            <input type="text" id="searchCetak" placeholder="Cari nama siswa..." oninput="renderCetakTable()">
+            <input type="text" id="searchCetak" placeholder="Search student name..." oninput="renderCetakTable()">
           </div>
           <div id="cetakTable"></div>
         </div>
       </section>
 
-      <!-- ================= LAPORAN ================= -->
+      <!-- ================= REPORT ================= -->
       <section id="tab-laporan" class="tab-panel" style="display:none;">
         <div class="topbar">
           <div>
-            <h1>Rekap Laporan</h1>
-            <div class="sub">Rekapitulasi status pembayaran kas seluruh siswa dalam tahun ajaran ini</div>
+            <h1>Report Summary</h1>
+            <div class="sub">Summary of cash payment status for all students in this school year</div>
           </div>
           <div style="display:flex; gap:10px; align-items:center;">
             <span class="pill" id="rekapPeriodeBadge" style="background:var(--gold-soft); color:#6b5217;">-</span>
-            <button class="btn btn-outline" onclick="window.print()">🖨 Cetak Laporan</button>
+            <button class="btn btn-outline" onclick="window.print()">🖨 Print Report</button>
           </div>
         </div>
 
         <div class="grid-stats" id="rekapStatGrid"></div>
 
         <div class="card">
-          <h2>Matriks Pembayaran per Bulan</h2>
+          <h2>Monthly Payment Matrix</h2>
           <div class="rekap-scroll" id="rekapTable"></div>
         </div>
       </section>
 
-      <!-- ================= KELOLA USER ================= -->
+      <!-- ================= MANAGE USERS ================= -->
       <section id="tab-users" class="tab-panel" style="display:none;">
         <div class="topbar">
           <div>
-            <h1>Kelola User</h1>
-            <div class="sub">Tambah akun untuk guru/bendahara lain &mdash; hanya admin yang bisa mengakses menu ini</div>
+            <h1>Manage Users</h1>
+            <div class="sub">Add accounts for other teachers/treasurers &mdash; only admins can access this menu</div>
           </div>
         </div>
 
         <div class="card">
-          <h2>Tambah User Baru</h2>
+          <h2>Add New User</h2>
           <div class="field-row">
             <div class="field">
               <label>Email</label>
               <input type="email" id="newUserEmail" placeholder="nama@sekolah.com">
             </div>
             <div class="field">
-              <label>Password Sementara</label>
-              <input type="text" id="newUserPassword" placeholder="min. 6 karakter">
+              <label>Temporary Password</label>
+              <input type="text" id="newUserPassword" placeholder="min. 6 characters">
             </div>
           </div>
           <div class="field">
-            <label>Peran</label>
+            <label>Role</label>
             <select id="newUserRole">
-              <option value="bendahara">Bendahara (bisa input &amp; lihat data)</option>
-              <option value="admin">Admin (bisa kelola user lain)</option>
+              <option value="bendahara">Treasurer (can enter &amp; view data)</option>
+              <option value="admin">Admin (can manage other users)</option>
             </select>
           </div>
-          <button class="btn btn-primary" onclick="addNewUser()">+ Tambah User</button>
-          <p class="helper">Sampaikan email &amp; password sementara ini secara pribadi ke yang bersangkutan. Mereka bisa menggantinya lewat "Lupa password" di layar login.</p>
+          <button class="btn btn-primary" onclick="addNewUser()">+ Add User</button>
+          <p class="helper">Share this email &amp; temporary password privately with the person concerned. They can change it via "Forgot password" on the login screen.</p>
         </div>
 
         <div class="card">
-          <h2>Daftar User</h2>
+          <h2>User List</h2>
           <div id="usersTable"></div>
         </div>
       </section>
 
-      <!-- ================= PENGATURAN ================= -->
+      <!-- ================= SETTINGS ================= -->
       <section id="tab-pengaturan" class="tab-panel" style="display:none;">
         <div class="topbar">
           <div>
-            <h1>Pengaturan</h1>
-            <div class="sub">Identitas kelas untuk tahun ajaran ini &amp; koneksi database</div>
+            <h1>Settings</h1>
+            <div class="sub">Class identity for this school year &amp; database connection</div>
           </div>
         </div>
 
         <div class="card">
-          <h2>Identitas Kelas &mdash; Tahun Ajaran Ini</h2>
+          <h2>Class Identity &mdash; This School Year</h2>
           <div class="field-row">
             <div class="field">
-              <label>Nama Sekolah</label>
-              <input type="text" id="setNamaSekolah" placeholder="SD Negeri 01 Contoh">
+              <label>School Name</label>
+              <input type="text" id="setNamaSekolah" placeholder="Example Elementary School 01">
             </div>
             <div class="field">
-              <label>Nama Kelas</label>
-              <input type="text" id="setNamaKelas" placeholder="Kelas 5A">
+              <label>Class Name</label>
+              <input type="text" id="setNamaKelas" placeholder="Class 5A">
             </div>
           </div>
           <div class="field-row">
             <div class="field">
-              <label>Nominal Iuran Default / Bulan</label>
+              <label>Default Dues Amount / Month</label>
               <input type="number" id="setNominalDefault" placeholder="10000">
             </div>
             <div class="field">
-              <label>Nama Wali Kelas</label>
-              <input type="text" id="setWaliKelas" placeholder="Bu Sari, S.Pd.">
+              <label>Homeroom Teacher Name</label>
+              <input type="text" id="setWaliKelas" placeholder="Mrs. Sari, S.Pd.">
             </div>
           </div>
           <div class="field">
-            <label>Nama Bendahara Kas</label>
-            <input type="text" id="setBendahara" placeholder="Siti Aminah (Bendahara)">
+            <label>Class Treasurer Name</label>
+            <input type="text" id="setBendahara" placeholder="Siti Aminah (Treasurer)">
           </div>
-          <button class="btn btn-primary" onclick="saveIdentitas()">Simpan Identitas</button>
+          <button class="btn btn-primary" onclick="saveIdentitas()">Save Identity</button>
         </div>
 
         <div class="card">
-          <h2>Kelola Tahun Ajaran</h2>
-          <p class="helper">Setiap tahun ajaran adalah "buku" terpisah: daftar siswa &amp; rekap pembayarannya tidak tercampur dengan tahun ajaran lain. Data lama tetap tersimpan dan bisa dilihat kapan saja lewat pemilih di sidebar.</p>
+          <h2>Manage School Years</h2>
+          <p class="helper">Each school year is a separate "book": the student list &amp; payment summary are not mixed with other school years. Old data stays saved and can be viewed anytime via the selector in the sidebar.</p>
           <div id="taManageTable"></div>
-          <button class="btn btn-outline" style="margin-top:10px;" onclick="openTahunAjaranModal()">+ Tambah Tahun Ajaran</button>
+          <button class="btn btn-outline" style="margin-top:10px;" onclick="openTahunAjaranModal()">+ Add School Year</button>
         </div>
 
         <div class="card">
-          <h2>Koneksi Firebase <span class="badge" id="badgeKoneksi">Opsional</span></h2>
+          <h2>Firebase Connection <span class="badge" id="badgeKoneksi">Optional</span></h2>
           <div class="config-box">
-            Aplikasi ini sudah tertanam konfigurasi Firebase project <code class="inl">kas-kelas-9d42b</code> secara bawaan.
-            Kolom di bawah hanya diperlukan jika Anda ingin <b>mengganti</b> ke project Firebase lain milik Anda sendiri.
+            This app already has the Firebase project <code class="inl">kas-kelas-9d42b</code> built in by default.
+            The field below is only needed if you want to <b>switch</b> to your own separate Firebase project.
           </div>
           <div class="field">
-            <label>Ganti ke firebaseConfig lain (opsional, format JSON)</label>
+            <label>Switch to a different firebaseConfig (optional, JSON format)</label>
             <textarea id="fbConfigInput" rows="7" placeholder='{
   "apiKey": "...",
   "authDomain": "...",
@@ -678,16 +730,16 @@
 }'></textarea>
           </div>
           <div style="display:flex; gap:8px; flex-wrap:wrap;">
-            <button class="btn btn-primary" onclick="saveFirebaseConfig()">Sambungkan ke Config Ini</button>
-            <button class="btn btn-outline" onclick="clearFirebaseConfig()">Kembalikan ke Config Bawaan</button>
-            <button class="btn btn-danger" onclick="forceLocalMode()">Paksa Mode Lokal (uji coba, tanpa login)</button>
+            <button class="btn btn-primary" onclick="saveFirebaseConfig()">Connect to This Config</button>
+            <button class="btn btn-outline" onclick="clearFirebaseConfig()">Restore Default Config</button>
+            <button class="btn btn-danger" onclick="forceLocalMode()">Force Local Mode (testing, no login)</button>
           </div>
           <p class="helper" id="fbStatusText" style="margin-top:10px;"></p>
         </div>
 
         <div class="card">
-          <h2>Contoh Aturan Keamanan Firestore (wajib untuk mode online)</h2>
-          <p class="helper">Salin ke Firestore &rarr; Rules. Aturan ini mewajibkan login sebelum bisa membaca/menulis data apa pun, dan membatasi menu Kelola User hanya untuk admin.</p>
+          <h2>Example Firestore Security Rules (required for online mode)</h2>
+          <p class="helper">Copy this into Firestore &rarr; Rules. These rules require login before reading/writing any data, and restrict the Manage Users menu to admins only.</p>
           <pre class="mono" style="background:#f7f3e8; padding:12px 14px; border-radius:8px; font-size:11.5px; overflow-x:auto;">rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -712,15 +764,15 @@ service cloud.firestore {
         </div>
 
         <div class="card">
-          <h2>Cadangkan / Pulihkan Data (mode lokal)</h2>
+          <h2>Back Up / Restore Data (local mode)</h2>
           <div style="display:flex; gap:8px; flex-wrap:wrap;">
-            <button class="btn btn-outline" onclick="exportBackup()">⬇ Unduh Backup (.json)</button>
+            <button class="btn btn-outline" onclick="exportBackup()">⬇ Download Backup (.json)</button>
             <label class="btn btn-outline" style="cursor:pointer;">
-              ⬆ Pulihkan dari Backup
+              ⬆ Restore from Backup
               <input type="file" accept=".json" style="display:none;" onchange="importBackup(event)">
             </label>
           </div>
-          <p class="helper">Tombol ini hanya relevan untuk mode lokal (tanpa Firebase). Kalau sedang tersambung Firebase, backup terbaik dilakukan lewat Firebase Console (Firestore &rarr; Export).</p>
+          <p class="helper">This button is only relevant for local mode (without Firebase). If connected to Firebase, the best backup method is via the Firebase Console (Firestore &rarr; Export).</p>
         </div>
       </section>
 
@@ -728,69 +780,69 @@ service cloud.firestore {
   </main>
 </div>
 
-<!-- Modal Siswa -->
+<!-- Student Modal -->
 <div class="overlay" id="modalSiswa">
   <div class="modal">
     <div class="modal-head">
-      <h3 id="modalSiswaTitle">Tambah Siswa</h3>
+      <h3 id="modalSiswaTitle">Add Student</h3>
       <button class="icon-btn" onclick="closeModal('modalSiswa')">✕</button>
     </div>
     <input type="hidden" id="siswaId">
     <div class="field">
-      <label>Nomor Absen</label>
+      <label>Roll Number</label>
       <input type="number" id="siswaNoAbsen" placeholder="1">
     </div>
     <div class="field">
-      <label>Nama Lengkap</label>
-      <input type="text" id="siswaNama" placeholder="Nama siswa">
+      <label>Full Name</label>
+      <input type="text" id="siswaNama" placeholder="Student name">
     </div>
     <div class="field">
-      <label>Nama Orang Tua / Wali</label>
-      <input type="text" id="siswaNamaOrtu" placeholder="mis. Bapak/Ibu ...">
+      <label>Parent / Guardian Name</label>
+      <input type="text" id="siswaNamaOrtu" placeholder="e.g. Mr./Mrs. ...">
     </div>
     <div class="field">
-      <label>No. HP / WhatsApp Orang Tua</label>
-      <input type="tel" id="siswaNoHp" placeholder="mis. 081234567890">
+      <label>Parent's Phone / WhatsApp No.</label>
+      <input type="tel" id="siswaNoHp" placeholder="e.g. 081234567890">
     </div>
     <div class="field">
-      <label>Nominal Iuran Khusus (kosongkan jika ikut nominal default)</label>
-      <input type="number" id="siswaNominalKhusus" placeholder="mis. 10000">
+      <label>Special Dues Amount (leave blank to use the default)</label>
+      <input type="number" id="siswaNominalKhusus" placeholder="e.g. 10000">
     </div>
     <div class="modal-foot">
-      <button class="btn btn-outline" onclick="closeModal('modalSiswa')">Batal</button>
-      <button class="btn btn-primary" onclick="saveSiswa()">Simpan</button>
+      <button class="btn btn-outline" onclick="closeModal('modalSiswa')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveSiswa()">Save</button>
     </div>
   </div>
 </div>
 
-<!-- Modal Edit Pembayaran -->
+<!-- Edit Payment Modal -->
 <div class="overlay" id="modalEditBayar">
   <div class="modal wide">
     <div class="modal-head">
-      <h3>Edit Pembayaran</h3>
+      <h3>Edit Payment</h3>
       <button class="icon-btn" onclick="closeModal('modalEditBayar')">✕</button>
     </div>
     <input type="hidden" id="editBayarId">
     <div class="helper" id="editBayarSiswaNama" style="margin-bottom:10px; font-weight:600; color:var(--navy);"></div>
     <div class="field">
-      <label>Pilih Bulan yang Dibayar (klik untuk memilih, hijau = sudah lunas di transaksi lain)</label>
+      <label>Select the Month(s) Paid (click to select, green = already paid in another transaction)</label>
       <div class="month-grid" id="editBayarMonthGrid"></div>
     </div>
     <div class="field-row">
       <div class="field">
-        <label>Nominal per Bulan</label>
+        <label>Amount per Month</label>
         <input type="number" id="editBayarNominal" oninput="updateEditBayarTotal()">
       </div>
       <div class="field">
-        <label>Tanggal Bayar</label>
+        <label>Payment Date</label>
         <input type="date" id="editBayarTanggal">
       </div>
     </div>
     <div class="field-row">
       <div class="field">
-        <label>Metode</label>
+        <label>Method</label>
         <select id="editBayarMetode">
-          <option value="Tunai">Tunai</option>
+          <option value="Tunai">Cash</option>
           <option value="Transfer">Transfer</option>
           <option value="QRIS">QRIS</option>
         </select>
@@ -801,50 +853,50 @@ service cloud.firestore {
       </div>
     </div>
     <div class="field">
-      <label>Keterangan (opsional)</label>
-      <input type="text" id="editBayarKeterangan" placeholder="mis. dibayar oleh orang tua langsung">
+      <label>Notes (optional)</label>
+      <input type="text" id="editBayarKeterangan" placeholder="e.g. paid directly by parent">
     </div>
     <div class="modal-foot">
-      <button class="btn btn-outline" onclick="closeModal('modalEditBayar')">Batal</button>
-      <button class="btn btn-primary" onclick="simpanEditPembayaran()">Simpan Perubahan</button>
+      <button class="btn btn-outline" onclick="closeModal('modalEditBayar')">Cancel</button>
+      <button class="btn btn-primary" onclick="simpanEditPembayaran()">Save Changes</button>
     </div>
   </div>
 </div>
 
-<!-- Modal Tahun Ajaran -->
+<!-- School Year Modal -->
 <div class="overlay" id="modalTahunAjaran">
   <div class="modal">
     <div class="modal-head">
-      <h3>Tambah Tahun Ajaran Baru</h3>
+      <h3>Add New School Year</h3>
       <button class="icon-btn" onclick="closeModal('modalTahunAjaran')">✕</button>
     </div>
     <div class="field">
-      <label>Label Tahun Ajaran</label>
+      <label>School Year Label</label>
       <input type="text" id="taLabel" placeholder="2027/2028">
     </div>
     <div class="field">
-      <label>Salin Daftar Siswa dari Tahun Ajaran Lain (opsional)</label>
+      <label>Copy Student List from Another School Year (optional)</label>
       <select id="taCopyFrom"></select>
     </div>
-    <p class="helper">Siswa hasil salinan bisa langsung diedit/dihapus/ditambah di menu Master Siswa. Data pembayaran <b>tidak</b> ikut disalin — tahun ajaran baru selalu mulai dari nol.</p>
+    <p class="helper">Copied students can be edited/deleted/added directly in the Student Records menu. Payment data is <b>not</b> copied — a new school year always starts from zero.</p>
     <div class="modal-foot">
-      <button class="btn btn-outline" onclick="closeModal('modalTahunAjaran')">Batal</button>
-      <button class="btn btn-primary" onclick="createNewTahunAjaranFromModal()">Buat Tahun Ajaran</button>
+      <button class="btn btn-outline" onclick="closeModal('modalTahunAjaran')">Cancel</button>
+      <button class="btn btn-primary" onclick="createNewTahunAjaranFromModal()">Create School Year</button>
     </div>
   </div>
 </div>
 
-<!-- Modal Konfirmasi -->
+<!-- Confirmation Modal -->
 <div class="overlay" id="modalConfirm">
   <div class="modal" style="max-width:380px;">
     <div class="modal-head">
-      <h3>Konfirmasi</h3>
+      <h3>Confirmation</h3>
       <button class="icon-btn" onclick="closeModal('modalConfirm')">✕</button>
     </div>
     <p id="confirmText" style="font-size:13.5px; color:var(--ink-soft);"></p>
     <div class="modal-foot">
-      <button class="btn btn-outline" onclick="closeModal('modalConfirm')">Batal</button>
-      <button class="btn btn-danger" id="confirmActionBtn">Hapus</button>
+      <button class="btn btn-outline" onclick="closeModal('modalConfirm')">Cancel</button>
+      <button class="btn btn-danger" id="confirmActionBtn">Delete</button>
     </div>
   </div>
 </div>
@@ -856,37 +908,37 @@ service cloud.firestore {
 
 <script>
 /* ============================================================
-   BUKU KAS KELAS v2 — single file app
-   Firebase Auth (login wajib) + Firestore, scoped per Tahun Ajaran
-   Fallback: mode lokal (localStorage) untuk uji coba tanpa login
+   CLASS CASH BOOK v2 — single file app
+   Firebase Auth (login required) + Firestore, scoped per School Year
+   Fallback: local mode (localStorage) for testing without login
    ============================================================ */
 
-const BULAN = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
-// Urutan periode Tahun Ajaran Indonesia: Juli -> Juni (bukan Januari -> Desember)
+const BULAN = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+// Indonesian School Year period order: July -> June (not January -> December)
 const PERIODE_URUT = [7,8,9,10,11,12,1,2,3,4,5,6];
-/* Ambil tahun mulai & tahun selesai dari label Tahun Ajaran, mis. "2026/2027" -> {start:2026, end:2027}.
-   Fallback ke tahun berjalan kalau label tidak sesuai format standar. */
+/* Get the start & end year from the School Year label, e.g. "2026/2027" -> {start:2026, end:2027}.
+   Falls back to the current year if the label doesn't match the standard format. */
 function parseTahunAjaranYears(label){
   const m = String(label||'').match(/(\d{4})\s*\/\s*(\d{4})/);
   if(m) return { start:Number(m[1]), end:Number(m[2]) };
   const y = new Date().getFullYear();
   return { start:y, end:y+1 };
 }
-/* Bulan Juli-Desember masuk tahun kalender awal TA, Januari-Juni masuk tahun kalender akhir TA. */
+/* Months July-December fall in the school year's starting calendar year, January-June fall in the ending calendar year. */
 function tahunUntukBulan(taLabel, bulan){
   const { start, end } = parseTahunAjaranYears(taLabel);
   return bulan >= 7 ? start : end;
 }
 function periodeLabelTA(taLabel){
   const { start, end } = parseTahunAjaranYears(taLabel);
-  return `Juli ${start} – Juni ${end}`;
+  return `July ${start} – June ${end}`;
 }
 const LS_KEY = "kaskelas_data_v2";
 const LS_FBCONFIG = "kaskelas_fbconfig_v1";
 const LS_FORCE_LOCAL = "kaskelas_force_local_v1";
 const LS_CURRENT_TA = "kaskelas_current_ta_v1";
 
-// Konfigurasi Firebase bawaan aplikasi ini (project: kas-kelas-9d42b)
+// This app's default Firebase configuration (project: kas-kelas-9d42b)
 const DEFAULT_FIREBASE_CONFIG = {
   apiKey: "AIzaSyAxhnpqcadvu7WuOc3_6ghKAP6YlCE3FuM",
   authDomain: "kas-kelas-9d42b.firebaseapp.com",
@@ -901,7 +953,7 @@ let AUTH = null;
 let USE_FIRESTORE = false;
 let REQUIRE_AUTH = false;      // true only when actually running against Firestore
 let currentUser = null;        // {uid, email, role}
-let unsubscribers = [];        // tahunAjaran + siswa + pembayaran listeners
+let unsubscribers = [];        // school year + student + payment listeners
 
 let tahunAjaranList = [];
 let currentTahunAjaranId = null;
@@ -949,15 +1001,15 @@ function confirmAction(text, fn){
 }
 function translateAuthError(code){
   const map = {
-    'auth/invalid-email':'Format email tidak valid.',
-    'auth/user-not-found':'Email tidak terdaftar.',
-    'auth/wrong-password':'Password salah.',
-    'auth/invalid-credential':'Email atau password salah.',
-    'auth/too-many-requests':'Terlalu banyak percobaan, coba lagi nanti.',
-    'auth/email-already-in-use':'Email ini sudah terdaftar.',
-    'auth/weak-password':'Password terlalu lemah (minimal 6 karakter).'
+    'auth/invalid-email':'Invalid email format.',
+    'auth/user-not-found':'Email is not registered.',
+    'auth/wrong-password':'Incorrect password.',
+    'auth/invalid-credential':'Incorrect email or password.',
+    'auth/too-many-requests':'Too many attempts, try again later.',
+    'auth/email-already-in-use':'This email is already registered.',
+    'auth/weak-password':'Password too weak (minimum 6 characters).'
   };
-  return map[code] || ('Terjadi kesalahan (' + (code||'tidak diketahui') + ')');
+  return map[code] || ('An error occurred (' + (code||'unknown') + ')');
 }
 
 /* ---------------- Tabs ---------------- */
@@ -965,11 +1017,22 @@ document.getElementById('tabsNav').addEventListener('click', (e)=>{
   const btn = e.target.closest('.tab-btn');
   if(!btn) return;
   switchTab(btn.dataset.tab);
+  toggleMobileSidebar(false);
 });
+function toggleMobileSidebar(force){
+  const sb = document.getElementById('sidebarEl');
+  const bd = document.getElementById('sidebarBackdrop');
+  const open = typeof force==='boolean' ? force : !sb.classList.contains('mobile-open');
+  sb.classList.toggle('mobile-open', open);
+  bd.classList.toggle('show', open);
+}
 function switchTab(tab){
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
   document.querySelectorAll('.tab-panel').forEach(p=>p.style.display='none');
   document.getElementById('tab-'+tab).style.display='block';
+  const activeLabel = document.querySelector(`.tab-btn[data-tab="${tab}"]`)?.textContent.trim();
+  const titleEl = document.getElementById('mobileTopbarTitle');
+  if(titleEl && activeLabel) titleEl.textContent = activeLabel;
   if(tab==='dashboard') renderDashboard();
   if(tab==='siswa') renderSiswaTable();
   if(tab==='pembayaran') renderPembayaranTab();
@@ -987,7 +1050,7 @@ async function doLogin(){
   const pass = document.getElementById('loginPassword').value;
   const errEl = document.getElementById('loginError');
   errEl.textContent = '';
-  if(!email || !pass){ errEl.textContent = 'Isi email dan password.'; return; }
+  if(!email || !pass){ errEl.textContent = 'Enter your email and password.'; return; }
   try{
     await AUTH.signInWithEmailAndPassword(email, pass);
   }catch(e){
@@ -1000,11 +1063,11 @@ function doLogout(){
 async function doResetPassword(){
   const email = document.getElementById('loginEmail').value.trim();
   const errEl = document.getElementById('loginError');
-  if(!email){ errEl.textContent = 'Isi email dulu untuk mengirim tautan reset.'; return; }
+  if(!email){ errEl.textContent = 'Enter your email first to send the reset link.'; return; }
   try{
     await AUTH.sendPasswordResetEmail(email);
     errEl.style.color = 'var(--green)';
-    errEl.textContent = 'Email reset password terkirim, cek inbox/spam.';
+    errEl.textContent = 'Password reset email sent, check your inbox/spam.';
   }catch(e){
     errEl.style.color = 'var(--maroon)';
     errEl.textContent = translateAuthError(e.code);
@@ -1035,7 +1098,7 @@ async function onAuthReady(user){
       showScreen('noaccess');
     }
   }catch(e){
-    toast('Gagal memuat data akun: '+e.message, 'err');
+    toast('Failed to load account data: '+e.message, 'err');
     showScreen('login');
   }
 }
@@ -1062,10 +1125,10 @@ function setConnLabel(){
   const label = document.getElementById('connLabel');
   if(USE_FIRESTORE){
     dot.className = 'conn-dot on';
-    label.textContent = 'Tersambung ke Firebase';
+    label.textContent = 'Connected to Firebase';
   }else{
     dot.className = 'conn-dot off';
-    label.textContent = 'Mode lokal (belum tersambung)';
+    label.textContent = 'Local mode (not connected)';
   }
 }
 
@@ -1074,22 +1137,22 @@ async function initFirebase(){
   const raw = localStorage.getItem(LS_FBCONFIG);
   let cfg = DEFAULT_FIREBASE_CONFIG;
   if(raw){
-    try{ cfg = JSON.parse(raw); }catch(e){ console.error('Config tersimpan tidak valid, memakai config bawaan.', e); }
+    try{ cfg = JSON.parse(raw); }catch(e){ console.error('Saved config is invalid, using default config.', e); }
   }
   if(!cfg || !cfg.apiKey || !cfg.projectId){ setConnLabel(); return false; }
   try{
     if(!firebase.apps.length){ firebase.initializeApp(cfg); }
     DB = firebase.firestore();
     AUTH = firebase.auth();
-    // Catatan: tidak melakukan tes-baca ke Firestore di sini, karena Firestore Rules
-    // mewajibkan login (isSignedIn()) — baca sebelum auth siap akan selalu ditolak
-    // walau config sudah benar. Validasi koneksi sesungguhnya terjadi saat login/baca data nanti.
+    // Note: no read-test against Firestore here, because Firestore Rules
+    // require login (isSignedIn()) — reading before auth is ready would always be rejected
+    // even if the config is correct. Real connection validation happens at login/data read later.
     USE_FIRESTORE = true;
     setConnLabel();
     return true;
   }catch(e){
     console.error(e);
-    toast('Gagal terhubung ke Firebase, memakai mode lokal sementara.', 'err');
+    toast('Failed to connect to Firebase, using local mode for now.', 'err');
     DB = null; AUTH = null; USE_FIRESTORE = false;
     setConnLabel();
     return false;
@@ -1107,17 +1170,17 @@ async function bootAppData(){
     unsubscribers.push(DB.collection('tahunAjaran').orderBy('createdAt','asc').onSnapshot(snap=>{
       tahunAjaranList = snap.docs.map(d=>({id:d.id, ...d.data()}));
       afterTahunAjaranListLoaded();
-    }, err=>toast('Gagal memuat data tahun ajaran: '+err.message,'err')));
+    }, err=>toast('Failed to load school year data: '+err.message,'err')));
 
     unsubscribers.push(DB.collection('siswa').onSnapshot(snap=>{
       state.siswa = snap.docs.map(d=>({id:d.id, ...d.data()}));
       refreshCurrentTab();
-    }, err=>toast('Gagal memuat data siswa: '+err.message,'err')));
+    }, err=>toast('Failed to load student data: '+err.message,'err')));
 
     unsubscribers.push(DB.collection('pembayaran').onSnapshot(snap=>{
       state.pembayaran = snap.docs.map(d=>({id:d.id, ...d.data()}));
       refreshCurrentTab();
-    }, err=>toast('Gagal memuat data pembayaran: '+err.message,'err')));
+    }, err=>toast('Failed to load payment data: '+err.message,'err')));
   }else{
     loadLocal();
     afterTahunAjaranListLoaded();
@@ -1128,13 +1191,13 @@ async function afterTahunAjaranListLoaded(){
   if(tahunAjaranList.length===0){
     const y = new Date().getFullYear();
     await createTahunAjaran({label:`${y}/${y+1}`, namaSekolah:'', namaKelas:'', waliKelas:'', bendahara:'', nominalDefault:10000});
-    return; // akan ter-trigger ulang lewat listener / local reload
+    return; // will be re-triggered via listener / local reload
   }
   const saved = localStorage.getItem(LS_CURRENT_TA);
   if(saved && tahunAjaranList.find(t=>t.id===saved)){
     currentTahunAjaranId = saved;
   }else{
-    // default ke tahun ajaran yang paling baru dibuat
+    // default to the most recently created school year
     const sorted = tahunAjaranList.slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
     currentTahunAjaranId = sorted[0].id;
   }
@@ -1149,7 +1212,7 @@ function refreshCurrentTab(){
   if(activeBtn) switchTab(activeBtn.dataset.tab);
 }
 
-/* ---- Tahun Ajaran CRUD ---- */
+/* ---- School Year CRUD ---- */
 async function createTahunAjaran(obj){
   const payload = {createdAt: Date.now(), ...obj};
   if(USE_FIRESTORE){
@@ -1193,7 +1256,7 @@ function renderTahunAjaranSelect(){
   const sorted = tahunAjaranList.slice().sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
   sel.innerHTML = sorted.map(t=>`<option value="${t.id}" ${t.id===currentTahunAjaranId?'selected':''}>${esc(t.label)}</option>`).join('');
   const ta = currentTA();
-  document.getElementById('sbNamaKelas').textContent = ta ? (ta.namaKelas || ta.label) : 'Kas Kelas';
+  document.getElementById('sbNamaKelas').textContent = ta ? (ta.namaKelas || ta.label) : 'Class Cash';
 }
 function onTahunAjaranSwitch(){
   currentTahunAjaranId = document.getElementById('tahunAjaranSelect').value;
@@ -1204,13 +1267,13 @@ function openTahunAjaranModal(){
   document.getElementById('taLabel').value = '';
   const sel = document.getElementById('taCopyFrom');
   const sorted = tahunAjaranList.slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
-  sel.innerHTML = '<option value="">— Mulai kosong —</option>' +
-    sorted.map(t=>`<option value="${t.id}">${esc(t.label)} (salin ${state.siswa.filter(s=>s.tahunAjaranId===t.id).length} siswa)</option>`).join('');
+  sel.innerHTML = '<option value="">— Start empty —</option>' +
+    sorted.map(t=>`<option value="${t.id}">${esc(t.label)} (copy ${state.siswa.filter(s=>s.tahunAjaranId===t.id).length} students)</option>`).join('');
   openModal('modalTahunAjaran');
 }
 async function createNewTahunAjaranFromModal(){
   const label = document.getElementById('taLabel').value.trim();
-  if(!label){ toast('Isi label tahun ajaran, mis. 2027/2028','err'); return; }
+  if(!label){ toast('Enter a school year label, e.g. 2027/2028','err'); return; }
   const copyFromId = document.getElementById('taCopyFrom').value;
   const source = copyFromId ? tahunAjaranList.find(t=>t.id===copyFromId) : null;
   const identity = source ? {
@@ -1224,15 +1287,15 @@ async function createNewTahunAjaranFromModal(){
       for(const s of toCopy){
         await dbAddSiswa({ noAbsen:s.noAbsen||0, nama:s.nama, namaOrtu:(s.namaOrtu||''), noHp:(s.noHp||''), nominalKhusus:(s.nominalKhusus??null) }, newId);
       }
-      toast(`Tahun ajaran "${label}" dibuat, ${toCopy.length} siswa disalin`, 'ok');
+      toast(`School year "${label}" created, ${toCopy.length} students copied`, 'ok');
     }else{
-      toast(`Tahun ajaran "${label}" dibuat`, 'ok');
+      toast(`School year "${label}" created`, 'ok');
     }
     currentTahunAjaranId = newId;
     localStorage.setItem(LS_CURRENT_TA, newId);
     closeModal('modalTahunAjaran');
     refreshCurrentTab();
-  }catch(e){ toast('Gagal membuat tahun ajaran: '+e.message, 'err'); }
+  }catch(e){ toast('Failed to create school year: '+e.message, 'err'); }
 }
 function renderTaManageTable(){
   const sorted = tahunAjaranList.slice().sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
@@ -1241,18 +1304,18 @@ function renderTaManageTable(){
     const jmlBayar = state.pembayaran.filter(p=>p.tahunAjaranId===t.id).length;
     const isActive = t.id===currentTahunAjaranId;
     return `<tr ${isActive?'style="background:#faf6ec;"':''}>
-      <td>${esc(t.label)} ${isActive?'<span class="pill lunas">sedang dilihat</span>':''}</td>
+      <td>${esc(t.label)} ${isActive?'<span class="pill lunas">currently viewing</span>':''}</td>
       <td class="center">${jmlSiswa}</td>
       <td class="center">${jmlBayar}</td>
       <td class="center">
-        ${isActive?'' : `<button class="btn btn-sm btn-outline" onclick="switchToTA('${t.id}')">Lihat</button>`}
-        <button class="icon-btn" title="Ganti label" onclick='renameTA("${t.id}")'>✎</button>
-        ${(jmlSiswa===0 && jmlBayar===0 && sorted.length>1) ? `<button class="icon-btn" title="Hapus" onclick='deleteTAConfirm("${t.id}")'>🗑</button>` : ''}
+        ${isActive?'' : `<button class="btn btn-sm btn-outline" onclick="switchToTA('${t.id}')">View</button>`}
+        <button class="icon-btn" title="Rename" onclick='renameTA("${t.id}")'>✎</button>
+        ${(jmlSiswa===0 && jmlBayar===0 && sorted.length>1) ? `<button class="icon-btn" title="Delete" onclick='deleteTAConfirm("${t.id}")'>🗑</button>` : ''}
       </td>
     </tr>`;
   }).join('');
   document.getElementById('taManageTable').innerHTML = `
-    <table><thead><tr><th>Label</th><th class="center">Siswa</th><th class="center">Transaksi</th><th class="center">Aksi</th></tr></thead>
+    <table><thead><tr><th>Label</th><th class="center">Students</th><th class="center">Transactions</th><th class="center">Action</th></tr></thead>
     <tbody>${rows}</tbody></table>`;
 }
 function switchToTA(id){
@@ -1262,19 +1325,19 @@ function switchToTA(id){
 }
 function renameTA(id){
   const t = tahunAjaranList.find(x=>x.id===id);
-  const label = prompt('Label baru untuk tahun ajaran ini:', t?.label||'');
+  const label = prompt('New label for this school year:', t?.label||'');
   if(label && label.trim()){
-    updateTahunAjaran(id, {label:label.trim()}).then(()=>toast('Label diperbarui','ok'));
+    updateTahunAjaran(id, {label:label.trim()}).then(()=>toast('Label updated','ok'));
   }
 }
 function deleteTAConfirm(id){
-  confirmAction('Hapus tahun ajaran ini? Hanya bisa dilakukan jika belum ada siswa/transaksi di dalamnya.', async ()=>{
-    try{ await deleteTahunAjaran(id); toast('Tahun ajaran dihapus','ok'); }
-    catch(e){ toast('Gagal menghapus: '+e.message,'err'); }
+  confirmAction('Delete this school year? This can only be done if it has no students/transactions yet.', async ()=>{
+    try{ await deleteTahunAjaran(id); toast('School year deleted','ok'); }
+    catch(e){ toast('Failed to delete: '+e.message,'err'); }
   });
 }
 
-/* ---- Siswa CRUD ---- */
+/* ---- Student CRUD ---- */
 async function dbAddSiswa(obj, tahunAjaranIdOverride){
   const payload = {tahunAjaranId: tahunAjaranIdOverride || currentTahunAjaranId, ...obj};
   if(USE_FIRESTORE){
@@ -1351,14 +1414,14 @@ function renderDashboard(){
   const totalSemuaWaktu = state.pembayaran.filter(p=>p.tahunAjaranId===currentTahunAjaranId).reduce((sum,p)=> sum + Number(p.total||0), 0);
 
   document.getElementById('statGrid').innerHTML = `
-    <div class="stat"><div class="label">Total Siswa</div><div class="value">${totalSiswa}</div></div>
-    <div class="stat"><div class="label">Lunas Bulan Ini</div><div class="value green">${paidThisMonth.length} / ${totalSiswa}</div></div>
-    <div class="stat"><div class="label">Terkumpul Bulan Ini</div><div class="value mono">${rupiah(totalTerkumpulBulanIni)}</div></div>
-    <div class="stat"><div class="label">Total Kas Tahun Ajaran Ini</div><div class="value mono green">${rupiah(totalSemuaWaktu)}</div></div>
+    <div class="stat"><div class="label">Total Students</div><div class="value">${totalSiswa}</div></div>
+    <div class="stat"><div class="label">Paid This Month</div><div class="value green">${paidThisMonth.length} / ${totalSiswa}</div></div>
+    <div class="stat"><div class="label">Collected This Month</div><div class="value mono">${rupiah(totalTerkumpulBulanIni)}</div></div>
+    <div class="stat"><div class="label">Total Cash This School Year</div><div class="value mono green">${rupiah(totalSemuaWaktu)}</div></div>
   `;
 
   if(totalSiswa===0){
-    document.getElementById('dashBulanIniTable').innerHTML = emptyState('Belum ada data siswa di tahun ajaran ini. Tambahkan di menu Master Siswa.');
+    document.getElementById('dashBulanIniTable').innerHTML = emptyState('No student data yet in this school year. Add some in the Student Records menu.');
   }else{
     const rows = siswaTA.slice().sort((a,b)=> (a.noAbsen||0)-(b.noAbsen||0)).map(s=>{
       const lunas = isBulanLunas(s.id, bulanIdx, tahun);
@@ -1366,23 +1429,23 @@ function renderDashboard(){
         <td class="num">${esc(s.noAbsen||'-')}</td>
         <td>${esc(s.nama)}</td>
         <td class="right num">${rupiah(nominalUntukSiswa(s))}</td>
-        <td class="center">${lunas ? '<span class="pill lunas">✓ Lunas</span>' : '<span class="pill belum">Belum</span>'}</td>
+        <td class="center">${lunas ? '<span class="pill lunas">✓ Paid</span>' : '<span class="pill belum">Unpaid</span>'}</td>
       </tr>`;
     }).join('');
     document.getElementById('dashBulanIniTable').innerHTML = `
-      <table><thead><tr><th>No</th><th>Nama</th><th class="right">Iuran</th><th class="center">Status</th></tr></thead>
+      <table><thead><tr><th>No</th><th>Name</th><th class="right">Dues</th><th class="center">Status</th></tr></thead>
       <tbody>${rows}</tbody></table>`;
   }
 
   const recent = state.pembayaran.filter(p=>p.tahunAjaranId===currentTahunAjaranId)
     .slice().sort((a,b)=> (b.createdAt||0)-(a.createdAt||0)).slice(0,8);
   if(recent.length===0){
-    document.getElementById('dashRecentTable').innerHTML = emptyState('Belum ada transaksi pembayaran di tahun ajaran ini.');
+    document.getElementById('dashRecentTable').innerHTML = emptyState('No payment transactions yet in this school year.');
   }else{
     const rows = recent.map(p=>{
       const s = findSiswa(p.studentId);
       return `<tr>
-        <td>${esc(s?.nama || '(siswa dihapus)')}</td>
+        <td>${esc(s?.nama || '(student deleted)')}</td>
         <td>${esc(formatBulanTahunText(p, false))}</td>
         <td class="right num">${rupiah(p.total)}</td>
         <td>${esc(p.tanggal)}</td>
@@ -1399,13 +1462,13 @@ function emptyState(msg){
     <div>${esc(msg)}</div>
   </div>`;
 }
-/* Cek apakah siswa sudah lunas seluruh 12 bulan periode Tahun Ajaran (Juli-Juni) berjalan */
+/* Check whether the student has paid in full for all 12 months of the current School Year period (July-June) */
 function isTahunAjaranLunasPenuh(studentId, taLabel){
   return PERIODE_URUT.every(bulan => isBulanLunas(studentId, bulan, tahunUntukBulan(taLabel, bulan)));
 }
-/* Normalisasi bulanList satu record pembayaran jadi array {bulan,tahun}.
-   Format baru: bulanList berisi object {bulan,tahun} (bisa lintas 2 tahun kalender dalam 1 transaksi).
-   Format lama (sebelum periode Juli-Juni): bulanList berisi angka polos + field p.tahun di level record. */
+/* Normalize one payment record's bulanList into an array of {bulan,tahun}.
+   New format: bulanList contains {bulan,tahun} objects (can span 2 calendar years in 1 transaction).
+   Old format (before the July-June period): bulanList contains plain numbers + a p.tahun field at the record level. */
 function getBulanTahunPairs(p){
   return (p.bulanList||[]).map(item=>{
     if(item && typeof item==='object') return { bulan:Number(item.bulan), tahun:Number(item.tahun) };
@@ -1426,9 +1489,9 @@ function formatBulanTahunText(p, full){
   });
   return groups.map(g=> g.names.join(', ') + ' ' + g.tahun).join(', ');
 }
-/* Versi ringkas: bulan-bulan berurutan (kronologis, boleh lintas tahun) digabung jadi rentang
-   "BulanAwal Tahun - BulanAkhir Tahun". Kelompok yang tidak berurutan (ada bulan yang dilewati)
-   dipisah dengan koma. Contoh: Juli 2026 - Juni 2027 | Desember 2026 - Januari 2027 */
+/* Compact version: consecutive months (chronological, may span years) are merged into a range
+   "StartMonth Year - EndMonth Year". Groups that are not consecutive (a month was skipped)
+   are separated by commas. Example: July 2026 - June 2027 | December 2026 - January 2027 */
 function formatBulanTahunRingkas(p){
   const pairs = getBulanTahunPairs(p);
   if(!pairs.length) return '-';
@@ -1457,7 +1520,7 @@ function isBulanLunas(studentId, bulan, tahun, excludeId){
 }
 
 /* ============================================================
-   MASTER SISWA
+   STUDENT RECORDS
    ============================================================ */
 function renderSiswaTable(){
   const ta = currentTA();
@@ -1465,7 +1528,7 @@ function renderSiswaTable(){
   const q = (document.getElementById('searchSiswa').value||'').toLowerCase();
   const list = currentSiswaList().filter(s=> s.nama.toLowerCase().includes(q)).sort((a,b)=>(a.noAbsen||0)-(b.noAbsen||0));
   if(list.length===0){
-    document.getElementById('siswaTable').innerHTML = emptyState('Belum ada siswa di tahun ajaran ini. Klik "+ Tambah Siswa" untuk mulai.');
+    document.getElementById('siswaTable').innerHTML = emptyState('No students yet in this school year. Click "+ Add Student" to begin.');
     return;
   }
   const rows = list.map(s=>`
@@ -1477,15 +1540,17 @@ function renderSiswaTable(){
       <td class="right num">${rupiah(nominalUntukSiswa(s))} ${ (s.nominalKhusus===undefined||s.nominalKhusus===null||s.nominalKhusus==='') ? '<span class="helper">(default)</span>' : ''}</td>
       <td class="center">
         <button class="icon-btn" title="Edit" onclick='editSiswa("${s.id}")'>✎</button>
-        <button class="icon-btn" title="Hapus" onclick='deleteSiswaConfirm("${s.id}", "${esc(s.nama)}")'>🗑</button>
+        <button class="icon-btn" title="Delete" onclick='deleteSiswaConfirm("${s.id}", "${esc(s.nama)}")'>🗑</button>
       </td>
     </tr>`).join('');
   document.getElementById('siswaTable').innerHTML = `
-    <table><thead><tr><th>No</th><th>Nama</th><th>Orang Tua/Wali</th><th>No. HP</th><th class="right">Nominal Iuran</th><th class="center">Aksi</th></tr></thead>
-    <tbody>${rows}</tbody></table>`;
+    <div class="table-scroll">
+      <table><thead><tr><th>No</th><th>Name</th><th>Parent/Guardian</th><th>Phone No.</th><th class="right">Dues Amount</th><th class="center">Action</th></tr></thead>
+      <tbody>${rows}</tbody></table>
+    </div>`;
 }
 function openSiswaModal(){
-  document.getElementById('modalSiswaTitle').textContent = 'Tambah Siswa';
+  document.getElementById('modalSiswaTitle').textContent = 'Add Student';
   document.getElementById('siswaId').value = '';
   const list = currentSiswaList();
   document.getElementById('siswaNoAbsen').value = (list.length ? Math.max(...list.map(s=>Number(s.noAbsen)||0))+1 : 1);
@@ -1498,7 +1563,7 @@ function openSiswaModal(){
 function editSiswa(id){
   const s = findSiswa(id);
   if(!s) return;
-  document.getElementById('modalSiswaTitle').textContent = 'Edit Siswa';
+  document.getElementById('modalSiswaTitle').textContent = 'Edit Student';
   document.getElementById('siswaId').value = s.id;
   document.getElementById('siswaNoAbsen').value = s.noAbsen||'';
   document.getElementById('siswaNama').value = s.nama||'';
@@ -1510,7 +1575,7 @@ function editSiswa(id){
 async function saveSiswa(){
   const id = document.getElementById('siswaId').value;
   const nama = document.getElementById('siswaNama').value.trim();
-  if(!nama){ toast('Nama siswa wajib diisi','err'); return; }
+  if(!nama){ toast('Student name is required','err'); return; }
   const obj = {
     noAbsen: Number(document.getElementById('siswaNoAbsen').value)||0,
     nama,
@@ -1519,21 +1584,26 @@ async function saveSiswa(){
     nominalKhusus: document.getElementById('siswaNominalKhusus').value === '' ? null : Number(document.getElementById('siswaNominalKhusus').value)
   };
   try{
-    if(id){ await dbUpdateSiswa(id, obj); toast('Data siswa diperbarui','ok'); }
-    else{ await dbAddSiswa(obj); toast('Siswa ditambahkan','ok'); }
+    if(id){ await dbUpdateSiswa(id, obj); toast('Student data updated','ok'); }
+    else{ await dbAddSiswa(obj); toast('Student added','ok'); }
     closeModal('modalSiswa');
     if(!USE_FIRESTORE) renderSiswaTable();
-  }catch(e){ toast('Gagal menyimpan: '+e.message, 'err'); }
+  }catch(e){ toast('Failed to save: '+e.message, 'err'); }
 }
 function deleteSiswaConfirm(id, nama){
-  confirmAction(`Hapus siswa "${nama}"? Riwayat pembayarannya tidak ikut terhapus.`, async ()=>{
-    try{ await dbDeleteSiswa(id); toast('Siswa dihapus','ok'); if(!USE_FIRESTORE) renderSiswaTable(); }
-    catch(e){ toast('Gagal menghapus: '+e.message,'err'); }
+  const jmlPembayaran = state.pembayaran.filter(p=>p.studentId===id).length;
+  if(jmlPembayaran > 0){
+    toast(`Student "${nama}" cannot be deleted because they already have ${jmlPembayaran} payment record(s). Delete their payment history in the History/Print menu first if you really want to delete this student.`, 'err');
+    return;
+  }
+  confirmAction(`Delete student "${nama}"?`, async ()=>{
+    try{ await dbDeleteSiswa(id); toast('Student deleted','ok'); if(!USE_FIRESTORE) renderSiswaTable(); }
+    catch(e){ toast('Failed to delete: '+e.message,'err'); }
   });
 }
 
 /* ============================================================
-   PEMBAYARAN
+   PAYMENTS
    ============================================================ */
 let bayarSelectedMonths = new Set();
 
@@ -1560,7 +1630,7 @@ function onBayarSiswaChange(){
     const tahun = tahunUntukBulan(ta?.label, bulanNum);
     const paid = isBulanLunas(studentId, bulanNum, tahun);
     return `<div class="month-chip ${paid?'paid':''}" data-bulan="${bulanNum}" onclick="toggleBulanChip(${bulanNum}, ${paid})">
-      ${b.slice(0,3)} <span style="opacity:.55; font-weight:400;">'${String(tahun).slice(-2)}</span><span class="amt">${paid ? '✓ Lunas' : rupiah(nominal)}</span>
+      ${b.slice(0,3)} <span style="opacity:.55; font-weight:400;">'${String(tahun).slice(-2)}</span><span class="amt">${paid ? '✓ Paid' : rupiah(nominal)}</span>
     </div>`;
   }).join('');
   updateBayarTotal();
@@ -1588,12 +1658,12 @@ async function simpanPembayaran(){
   const metode = document.getElementById('bayarMetode').value;
   const keterangan = document.getElementById('bayarKeterangan').value.trim();
   const s = findSiswa(studentId);
-  if(!s){ toast('Pilih siswa terlebih dahulu','err'); return; }
-  if(bayarSelectedMonths.size===0){ toast('Pilih minimal satu bulan yang dibayar','err'); return; }
-  if(!tanggal){ toast('Tanggal bayar wajib diisi','err'); return; }
+  if(!s){ toast('Please select a student first','err'); return; }
+  if(bayarSelectedMonths.size===0){ toast('Select at least one month to pay','err'); return; }
+  if(!tanggal){ toast('Payment date is required','err'); return; }
   const nominal = nominalUntukSiswa(s);
-  // Simpan sebagai satu transaksi, tiap bulan membawa tahun kalendernya sendiri
-  // (periode Juli-Juni bisa mencakup 2 tahun kalender sekaligus, tapi tetap 1 catatan riwayat)
+  // Save as a single transaction, each month carries its own calendar year
+  // (the July-June period can span 2 calendar years at once, but stays 1 history record)
   const bulanList = Array.from(bayarSelectedMonths)
     .map(bulan => ({ bulan, tahun: tahunUntukBulan(ta?.label, bulan) }))
     .sort((a,b)=> PERIODE_URUT.indexOf(a.bulan) - PERIODE_URUT.indexOf(b.bulan));
@@ -1606,12 +1676,12 @@ async function simpanPembayaran(){
   };
   try{
     await dbAddPembayaran(obj);
-    toast('Pembayaran berhasil dicatat','ok');
+    toast('Payment recorded successfully','ok');
     bayarSelectedMonths = new Set();
     document.getElementById('bayarKeterangan').value = '';
     onBayarSiswaChange();
     renderRiwayatTable();
-  }catch(e){ toast('Gagal menyimpan pembayaran: '+e.message,'err'); }
+  }catch(e){ toast('Failed to save payment: '+e.message,'err'); }
 }
 function renderRiwayatTable(){
   const q = (document.getElementById('searchRiwayat').value||'').toLowerCase();
@@ -1619,44 +1689,44 @@ function renderRiwayatTable(){
     .filter(p=>{ const s = findSiswa(p.studentId); return (s?.nama||'').toLowerCase().includes(q); })
     .sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
   if(list.length===0){
-    document.getElementById('riwayatTable').innerHTML = emptyState('Belum ada riwayat pembayaran di tahun ajaran ini.');
+    document.getElementById('riwayatTable').innerHTML = emptyState('No payment history yet in this school year.');
     return;
   }
   const rows = list.map(p=>{
     const s = findSiswa(p.studentId);
     return `<tr>
-      <td>${esc(s?.nama || '(siswa dihapus)')}</td>
+      <td>${esc(s?.nama || '(student deleted)')}</td>
       <td>${esc(formatBulanTahunText(p, false))}</td>
       <td class="right num">${rupiah(p.total)}</td>
       <td>${esc(p.tanggal)}</td>
       <td>${esc(p.metode)}</td>
       <td class="center">
-        <button class="icon-btn" title="Cetak Bukti" onclick='cetakBukti("${p.id}")'>🖨</button>
+        <button class="icon-btn" title="Print Receipt" onclick='cetakBukti("${p.id}")'>🖨</button>
         <button class="icon-btn" title="Edit" onclick='editPembayaran("${p.id}")'>✎</button>
-        <button class="icon-btn" title="Hapus" onclick='deletePembayaranConfirm("${p.id}")'>🗑</button>
+        <button class="icon-btn" title="Delete" onclick='deletePembayaranConfirm("${p.id}")'>🗑</button>
       </td>
     </tr>`;
   }).join('');
   document.getElementById('riwayatTable').innerHTML = `
-    <table><thead><tr><th>Nama</th><th>Bulan Dibayar</th><th class="right">Nominal</th><th>Tanggal</th><th>Metode</th><th class="center">Aksi</th></tr></thead>
+    <table><thead><tr><th>Name</th><th>Month(s) Paid</th><th class="right">Amount</th><th>Date</th><th>Method</th><th class="center">Action</th></tr></thead>
     <tbody>${rows}</tbody></table>`;
 }
 function deletePembayaranConfirm(id){
-  confirmAction('Hapus catatan pembayaran ini? Status bulan terkait akan kembali menjadi belum lunas.', async ()=>{
-    try{ await dbDeletePembayaran(id); toast('Pembayaran dihapus','ok'); if(!USE_FIRESTORE){ renderRiwayatTable(); } }
-    catch(e){ toast('Gagal menghapus: '+e.message,'err'); }
+  confirmAction('Delete this payment record? The related month(s) status will revert to unpaid.', async ()=>{
+    try{ await dbDeletePembayaran(id); toast('Payment deleted','ok'); if(!USE_FIRESTORE){ renderRiwayatTable(); } }
+    catch(e){ toast('Failed to delete: '+e.message,'err'); }
   });
 }
 
-/* ---- Edit Pembayaran ---- */
+/* ---- Edit Payment ---- */
 let editBayarSelectedMonths = new Set();
 function editPembayaran(id){
   const p = state.pembayaran.find(x=>x.id===id);
-  if(!p){ toast('Data pembayaran tidak ditemukan','err'); return; }
+  if(!p){ toast('Payment data not found','err'); return; }
   const s = findSiswa(p.studentId);
   const ta = currentTA();
   document.getElementById('editBayarId').value = p.id;
-  document.getElementById('editBayarSiswaNama').textContent = s ? `${s.noAbsen ? '#'+s.noAbsen+' — ' : ''}${s.nama}` : '(siswa dihapus)';
+  document.getElementById('editBayarSiswaNama').textContent = s ? `${s.noAbsen ? '#'+s.noAbsen+' — ' : ''}${s.nama}` : '(student deleted)';
   document.getElementById('editBayarNominal').value = p.nominalPerBulan || 0;
   document.getElementById('editBayarTanggal').value = p.tanggal || '';
   document.getElementById('editBayarMetode').value = p.metode || 'Tunai';
@@ -1669,7 +1739,7 @@ function editPembayaran(id){
     const lockedByOther = isBulanLunas(p.studentId, bulanNum, tahun, p.id);
     const selected = editBayarSelectedMonths.has(bulanNum);
     return `<div class="month-chip ${lockedByOther?'paid':''} ${selected?'selected':''}" data-bulan="${bulanNum}" onclick="toggleEditBulanChip(${bulanNum}, ${lockedByOther})">
-      ${b.slice(0,3)} <span style="opacity:.55; font-weight:400;">'${String(tahun).slice(-2)}</span><span class="amt">${lockedByOther ? '✓ Lunas' : ''}</span>
+      ${b.slice(0,3)} <span style="opacity:.55; font-weight:400;">'${String(tahun).slice(-2)}</span><span class="amt">${lockedByOther ? '✓ Paid' : ''}</span>
     </div>`;
   }).join('');
   updateEditBayarTotal();
@@ -1696,9 +1766,9 @@ async function simpanEditPembayaran(){
   const metode = document.getElementById('editBayarMetode').value;
   const keterangan = document.getElementById('editBayarKeterangan').value.trim();
   const nominal = Number(document.getElementById('editBayarNominal').value)||0;
-  if(editBayarSelectedMonths.size===0){ toast('Pilih minimal satu bulan yang dibayar','err'); return; }
-  if(!tanggal){ toast('Tanggal bayar wajib diisi','err'); return; }
-  if(nominal<=0){ toast('Nominal per bulan harus lebih dari 0','err'); return; }
+  if(editBayarSelectedMonths.size===0){ toast('Select at least one month to pay','err'); return; }
+  if(!tanggal){ toast('Payment date is required','err'); return; }
+  if(nominal<=0){ toast('Amount per month must be greater than 0','err'); return; }
   const bulanList = Array.from(editBayarSelectedMonths)
     .map(bulan => ({ bulan, tahun: tahunUntukBulan(ta?.label, bulan) }))
     .sort((a,b)=> PERIODE_URUT.indexOf(a.bulan) - PERIODE_URUT.indexOf(b.bulan));
@@ -1710,14 +1780,14 @@ async function simpanEditPembayaran(){
   };
   try{
     await dbUpdatePembayaran(id, obj);
-    toast('Pembayaran diperbarui','ok');
+    toast('Payment updated','ok');
     closeModal('modalEditBayar');
     if(!USE_FIRESTORE) renderRiwayatTable();
-  }catch(e){ toast('Gagal menyimpan perubahan: '+e.message,'err'); }
+  }catch(e){ toast('Failed to save changes: '+e.message,'err'); }
 }
 
 /* ============================================================
-   CETAK BUKTI
+   PRINT RECEIPT
    ============================================================ */
 function renderCetakTable(){
   const q = (document.getElementById('searchCetak').value||'').toLowerCase();
@@ -1725,26 +1795,26 @@ function renderCetakTable(){
     .filter(p=>{ const s = findSiswa(p.studentId); return (s?.nama||'').toLowerCase().includes(q); })
     .sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
   if(list.length===0){
-    document.getElementById('cetakTable').innerHTML = emptyState('Belum ada transaksi untuk dicetak di tahun ajaran ini.');
+    document.getElementById('cetakTable').innerHTML = emptyState('No transactions yet to print in this school year.');
     return;
   }
   const rows = list.map(p=>{
     const s = findSiswa(p.studentId);
     return `<tr>
-      <td>${esc(s?.nama || '(siswa dihapus)')}</td>
+      <td>${esc(s?.nama || '(student deleted)')}</td>
       <td>${esc(formatBulanTahunText(p, false))}</td>
       <td class="right num">${rupiah(p.total)}</td>
       <td>${esc(p.tanggal)}</td>
       <td class="center" style="white-space:nowrap;">
-        <button class="btn btn-sm btn-gold" onclick='cetakBukti("${p.id}")' title="Cetak">🖨 Cetak</button>
-        <button class="btn btn-sm btn-outline" onclick='unduhBuktiGambar("${p.id}")' title="Unduh sebagai gambar (PNG)">🖼️ Gambar</button>
-        <button class="btn btn-sm btn-outline" onclick='unduhBuktiPDF("${p.id}")' title="Unduh sebagai PDF">📄 PDF</button>
-        <button class="btn btn-sm btn-outline" onclick='kirimBuktiWA("${p.id}")' title="Kirim ke WhatsApp orang tua">💬 WA</button>
+        <button class="btn btn-sm btn-gold" onclick='cetakBukti("${p.id}")' title="Print">🖨 Print</button>
+        <button class="btn btn-sm btn-outline" onclick='unduhBuktiGambar("${p.id}")' title="Download as image (PNG)">🖼️ Image</button>
+        <button class="btn btn-sm btn-outline" onclick='unduhBuktiPDF("${p.id}")' title="Download as PDF">📄 PDF</button>
+        <button class="btn btn-sm btn-outline" onclick='kirimBuktiWA("${p.id}")' title="Send to parent's WhatsApp">💬 WA</button>
       </td>
     </tr>`;
   }).join('');
   document.getElementById('cetakTable').innerHTML = `
-    <table><thead><tr><th>Nama</th><th>Bulan Dibayar</th><th class="right">Nominal</th><th>Tanggal</th><th class="center">Aksi</th></tr></thead>
+    <table><thead><tr><th>Name</th><th>Month(s) Paid</th><th class="right">Amount</th><th>Date</th><th class="center">Action</th></tr></thead>
     <tbody>${rows}</tbody></table>`;
 }
 function buildReceiptHTML(p, s, ta){
@@ -1754,34 +1824,34 @@ function buildReceiptHTML(p, s, ta){
   const lunasPenuh = isTahunAjaranLunasPenuh(s?.id, ta?.label);
   return `
     <div class="receipt">
-      ${lunasPenuh ? `<div class="stamp">LUNAS<br>1 TAHUN<br>KELAS</div>` : ''}
+      ${lunasPenuh ? `<div class="stamp">PAID<br>1 YEAR<br>CLASS</div>` : ''}
       <div class="receipt-head">
-        <div class="sekolah">${esc(ta?.namaSekolah || 'Nama Sekolah')}</div>
-        <div class="kelas">${esc(ta?.namaKelas || 'Nama Kelas')} &middot; Tahun Ajaran ${esc(ta?.label || '-')}</div>
+        <div class="sekolah">${esc(ta?.namaSekolah || 'School Name')}</div>
+        <div class="kelas">${esc(ta?.namaKelas || 'Class Name')} &middot; School Year ${esc(ta?.label || '-')}</div>
       </div>
-      <div class="receipt-title">Bukti Pembayaran Kas Kelas</div>
-      <div class="receipt-row"><span class="k">Nama Siswa</span><span class="v">${esc(s?.nama || '-')}</span></div>
-      <div class="receipt-row"><span class="k">No. Absen</span><span class="v">${esc(s?.noAbsen ?? '-')}</span></div>
-      ${s?.namaOrtu ? `<div class="receipt-row"><span class="k">Orang Tua/Wali</span><span class="v">${esc(s.namaOrtu)}</span></div>` : ''}
-      <div class="receipt-row"><span class="k">Bulan Dibayar</span><span class="v">${esc(bulanText)}</span></div>
-      <div class="receipt-row"><span class="k">Periode</span><span class="v">${esc(periodeLabelTA(ta?.label))}</span></div>
-      <div class="receipt-row"><span class="k">Nominal / Bulan</span><span class="v">${rupiah(p.nominalPerBulan)}</span></div>
-      <div class="receipt-row"><span class="k">Jumlah Bulan</span><span class="v">${(p.bulanList||[]).length}</span></div>
-      <div class="receipt-row"><span class="k">Metode Bayar</span><span class="v">${esc(p.metode)}</span></div>
-      <div class="receipt-row"><span class="k">Tanggal Bayar</span><span class="v">${tgl}</span></div>
-      ${p.keterangan ? `<div class="receipt-row"><span class="k">Keterangan</span><span class="v">${esc(p.keterangan)}</span></div>` : ''}
-      <div class="receipt-total"><span>Total Dibayar</span><span>${rupiah(p.total)}</span></div>
+      <div class="receipt-title">Class Cash Payment Receipt</div>
+      <div class="receipt-row"><span class="k">Student Name</span><span class="v">${esc(s?.nama || '-')}</span></div>
+      <div class="receipt-row"><span class="k">Roll No.</span><span class="v">${esc(s?.noAbsen ?? '-')}</span></div>
+      ${s?.namaOrtu ? `<div class="receipt-row"><span class="k">Parent/Guardian</span><span class="v">${esc(s.namaOrtu)}</span></div>` : ''}
+      <div class="receipt-row"><span class="k">Month(s) Paid</span><span class="v">${esc(bulanText)}</span></div>
+      <div class="receipt-row"><span class="k">Period</span><span class="v">${esc(periodeLabelTA(ta?.label))}</span></div>
+      <div class="receipt-row"><span class="k">Amount / Month</span><span class="v">${rupiah(p.nominalPerBulan)}</span></div>
+      <div class="receipt-row"><span class="k">Number of Months</span><span class="v">${(p.bulanList||[]).length}</span></div>
+      <div class="receipt-row"><span class="k">Payment Method</span><span class="v">${esc(p.metode)}</span></div>
+      <div class="receipt-row"><span class="k">Payment Date</span><span class="v">${tgl}</span></div>
+      ${p.keterangan ? `<div class="receipt-row"><span class="k">Notes</span><span class="v">${esc(p.keterangan)}</span></div>` : ''}
+      <div class="receipt-total"><span>Total Paid</span><span>${rupiah(p.total)}</span></div>
       <div class="receipt-foot">
-        <div class="sign">Orang Tua / Wali<div class="line">&nbsp;</div></div>
-        <div class="sign">${esc(ta?.bendahara || 'Bendahara Kelas')}<div class="line">&nbsp;</div></div>
+        <div class="sign">Parent / Guardian<div class="line">&nbsp;</div></div>
+        <div class="sign">${esc(ta?.bendahara || 'Class Treasurer')}<div class="line">&nbsp;</div></div>
       </div>
-      <div class="receipt-no">No. Kwitansi: ${noKwitansi}</div>
+      <div class="receipt-no">Receipt No.: ${noKwitansi}</div>
     </div>
   `;
 }
 function cetakBukti(paymentId){
   const p = state.pembayaran.find(x=>x.id===paymentId);
-  if(!p){ toast('Data pembayaran tidak ditemukan','err'); return; }
+  if(!p){ toast('Payment data not found','err'); return; }
   const s = findSiswa(p.studentId);
   const ta = currentTA();
   document.getElementById('printArea').innerHTML = buildReceiptHTML(p, s, ta);
@@ -1789,12 +1859,12 @@ function cetakBukti(paymentId){
 }
 window.addEventListener('afterprint', ()=>{ document.getElementById('printArea').innerHTML = ''; });
 
-/* ---- Render bukti ke canvas (dipakai untuk export gambar/PDF/WA) ---- */
+/* ---- Render receipt to canvas (used for image/PDF/WA export) ---- */
 async function renderReceiptToCanvas(paymentId){
   const p = state.pembayaran.find(x=>x.id===paymentId);
-  if(!p){ toast('Data pembayaran tidak ditemukan','err'); return null; }
+  if(!p){ toast('Payment data not found','err'); return null; }
   if(typeof html2canvas === 'undefined'){
-    toast('Pustaka export gambar belum termuat. Periksa koneksi internet lalu muat ulang halaman.','err');
+    toast('Image export library not loaded yet. Check your internet connection then reload the page.','err');
     return null;
   }
   const s = findSiswa(p.studentId);
@@ -1824,19 +1894,19 @@ function normalizeWaNumber(noHp){
 }
 function pesanBuktiWA(p, s){
   const bulanText = formatBulanTahunRingkas(p);
-  return `Assalamu'alaikum, berikut bukti pembayaran kas kelas a.n. *${s?.nama || '-'}* untuk bulan ${bulanText} sebesar ${rupiah(p.total)}. Terima kasih.`;
+  return `Assalamu'alaikum, here is the class cash payment receipt on behalf of *${s?.nama || '-'}* for ${bulanText} amounting to ${rupiah(p.total)}. Thank you.`;
 }
 async function unduhBuktiGambar(paymentId){
   const res = await renderReceiptToCanvas(paymentId);
   if(!res) return;
   const link = document.createElement('a');
-  link.download = `bukti-bayar-${safeFileName(res.s?.nama)}-${tahunAwalPembayaran(res.p)}.png`;
+  link.download = `payment-receipt-${safeFileName(res.s?.nama)}-${tahunAwalPembayaran(res.p)}.png`;
   link.href = res.canvas.toDataURL('image/png');
   link.click();
-  toast('Gambar bukti bayar diunduh','ok');
+  toast('Receipt image downloaded','ok');
 }
 async function unduhBuktiPDF(paymentId){
-  if(!window.jspdf){ toast('Pustaka export PDF belum termuat. Periksa koneksi internet lalu muat ulang halaman.','err'); return; }
+  if(!window.jspdf){ toast('PDF export library not loaded yet. Check your internet connection then reload the page.','err'); return; }
   const res = await renderReceiptToCanvas(paymentId);
   if(!res) return;
   const {jsPDF} = window.jspdf;
@@ -1849,8 +1919,8 @@ async function unduhBuktiPDF(paymentId){
   const x = (pageW - imgW) / 2;
   const y = margin;
   pdf.addImage(res.canvas.toDataURL('image/png'), 'PNG', x, y, imgW, imgH);
-  pdf.save(`bukti-bayar-${safeFileName(res.s?.nama)}-${tahunAwalPembayaran(res.p)}.pdf`);
-  toast('PDF bukti bayar diunduh','ok');
+  pdf.save(`payment-receipt-${safeFileName(res.s?.nama)}-${tahunAwalPembayaran(res.p)}.pdf`);
+  toast('Receipt PDF downloaded','ok');
 }
 async function kirimBuktiWA(paymentId){
   const res = await renderReceiptToCanvas(paymentId);
@@ -1859,11 +1929,11 @@ async function kirimBuktiWA(paymentId){
   const pesan = pesanBuktiWA(p, s);
   const noHpWA = normalizeWaNumber(s?.noHp);
   canvas.toBlob(async (blob)=>{
-    if(!blob){ toast('Gagal membuat gambar bukti','err'); return; }
-    const file = new File([blob], `bukti-bayar-${safeFileName(s?.nama)}.png`, {type:'image/png'});
+    if(!blob){ toast('Failed to create receipt image','err'); return; }
+    const file = new File([blob], `payment-receipt-${safeFileName(s?.nama)}.png`, {type:'image/png'});
     if(navigator.canShare && navigator.canShare({files:[file]})){
       try{
-        await navigator.share({files:[file], text: pesan, title:'Bukti Pembayaran Kas Kelas'});
+        await navigator.share({files:[file], text: pesan, title:'Class Cash Payment Receipt'});
         return;
       }catch(err){ if(err && err.name==='AbortError') return; }
     }
@@ -1871,14 +1941,14 @@ async function kirimBuktiWA(paymentId){
     link.download = file.name;
     link.href = URL.createObjectURL(blob);
     link.click();
-    toast('Gambar bukti diunduh. Lampirkan manual di chat WhatsApp yang terbuka.', 'ok');
+    toast('Receipt image downloaded. Attach it manually in the WhatsApp chat that opened.', 'ok');
     const waUrl = (noHpWA ? `https://wa.me/${noHpWA}` : 'https://wa.me/') + `?text=${encodeURIComponent(pesan)}`;
     window.open(waUrl, '_blank');
   }, 'image/png');
 }
 
 /* ============================================================
-   LAPORAN / REKAP
+   REPORT / SUMMARY
    ============================================================ */
 function renderLaporanTab(){
   const ta = currentTA();
@@ -1890,7 +1960,7 @@ function renderRekapTable(){
   const siswaSorted = currentSiswaList().slice().sort((a,b)=>(a.noAbsen||0)-(b.noAbsen||0));
 
   if(siswaSorted.length===0){
-    document.getElementById('rekapTable').innerHTML = emptyState('Belum ada data siswa di tahun ajaran ini.');
+    document.getElementById('rekapTable').innerHTML = emptyState('No student data yet in this school year.');
     document.getElementById('rekapStatGrid').innerHTML = '';
     return;
   }
@@ -1922,12 +1992,12 @@ function renderRekapTable(){
   document.getElementById('rekapTable').innerHTML = `
     <table class="rekap-table">
       <thead><tr>
-        <th class="namecell">No</th><th class="namecell" style="left:34px;">Nama</th>
+        <th class="namecell">No</th><th class="namecell" style="left:34px;">Name</th>
         ${headerCols}<th class="right">Total</th>
       </tr></thead>
       <tbody>${rows}</tbody>
       <tfoot><tr style="background:#faf6ec; font-weight:700;">
-        <td class="namecell" colspan="2">Total per Bulan</td>
+        <td class="namecell" colspan="2">Total per Month</td>
         ${footCells}
         <td class="right num">${rupiah(grandTotal)}</td>
       </tr></tfoot>
@@ -1941,22 +2011,22 @@ function renderRekapTable(){
   const persen = totalSlotBulan ? Math.round((slotLunas/totalSlotBulan)*100) : 0;
 
   document.getElementById('rekapStatGrid').innerHTML = `
-    <div class="stat"><div class="label">Tahun Ajaran</div><div class="value" style="font-size:16px;">${esc(ta?.label||'-')}</div></div>
-    <div class="stat"><div class="label">Total Terkumpul (${periodeLabelTA(ta?.label)})</div><div class="value mono green">${rupiah(grandTotal)}</div></div>
-    <div class="stat"><div class="label">Kelengkapan Pembayaran</div><div class="value">${persen}%</div></div>
-    <div class="stat"><div class="label">Slot Lunas</div><div class="value">${slotLunas} / ${totalSlotBulan}</div></div>
+    <div class="stat"><div class="label">School Year</div><div class="value" style="font-size:16px;">${esc(ta?.label||'-')}</div></div>
+    <div class="stat"><div class="label">Total Collected (${periodeLabelTA(ta?.label)})</div><div class="value mono green">${rupiah(grandTotal)}</div></div>
+    <div class="stat"><div class="label">Payment Completeness</div><div class="value">${persen}%</div></div>
+    <div class="stat"><div class="label">Paid Slots</div><div class="value">${slotLunas} / ${totalSlotBulan}</div></div>
   `;
 }
 
 /* ============================================================
-   KELOLA USER (admin only)
+   MANAGE USERS (admin only)
    ============================================================ */
 async function addNewUser(){
-  if(!USE_FIRESTORE){ toast('Kelola user hanya tersedia saat tersambung Firebase','err'); return; }
+  if(!USE_FIRESTORE){ toast('User management is only available when connected to Firebase','err'); return; }
   const email = document.getElementById('newUserEmail').value.trim();
   const password = document.getElementById('newUserPassword').value;
   const role = document.getElementById('newUserRole').value;
-  if(!email || password.length<6){ toast('Email & password (min 6 karakter) wajib diisi','err'); return; }
+  if(!email || password.length<6){ toast('Email & password (min 6 characters) are required','err'); return; }
   try{
     let secondaryApp = firebase.apps.find(a=>a.name==='Secondary');
     if(!secondaryApp){ secondaryApp = firebase.initializeApp(firebase.app().options, 'Secondary'); }
@@ -1967,22 +2037,22 @@ async function addNewUser(){
       email, role, addedAt: Date.now(), addedBy: currentUser.email
     });
     await secAuth.signOut();
-    toast('User berhasil ditambahkan','ok');
+    toast('User added successfully','ok');
     document.getElementById('newUserEmail').value = '';
     document.getElementById('newUserPassword').value = '';
     renderUsersTable();
   }catch(e){
-    toast('Gagal menambah user: '+translateAuthError(e.code||''), 'err');
+    toast('Failed to add user: '+translateAuthError(e.code||''), 'err');
   }
 }
 async function renderUsersTable(){
   if(!USE_FIRESTORE){
-    document.getElementById('usersTable').innerHTML = emptyState('Kelola user hanya tersedia saat tersambung Firebase.');
+    document.getElementById('usersTable').innerHTML = emptyState('User management is only available when connected to Firebase.');
     return;
   }
   try{
     const snap = await DB.collection('users').orderBy('addedAt','desc').get();
-    if(snap.empty){ document.getElementById('usersTable').innerHTML = emptyState('Belum ada user lain.'); return; }
+    if(snap.empty){ document.getElementById('usersTable').innerHTML = emptyState('No other users yet.'); return; }
     const rows = snap.docs.map(d=>{
       const u = d.data();
       const isSelf = d.id===currentUser.uid;
@@ -1990,25 +2060,25 @@ async function renderUsersTable(){
         <td>${esc(u.email)}</td>
         <td><span class="pill ${u.role==='admin'?'lunas':'belum'}">${esc(u.role)}</span></td>
         <td>${u.addedAt ? new Date(u.addedAt).toLocaleDateString('id-ID') : '-'}</td>
-        <td class="center">${isSelf ? '<span class="helper">akun Anda</span>' : `<button class="btn btn-sm btn-danger" onclick='revokeUser("${d.id}","${esc(u.email)}")'>Cabut Akses</button>`}</td>
+        <td class="center">${isSelf ? '<span class="helper">your account</span>' : `<button class="btn btn-sm btn-danger" onclick='revokeUser("${d.id}","${esc(u.email)}")'>Revoke Access</button>`}</td>
       </tr>`;
     }).join('');
     document.getElementById('usersTable').innerHTML = `
-      <table><thead><tr><th>Email</th><th>Peran</th><th>Ditambahkan</th><th class="center">Aksi</th></tr></thead>
+      <table><thead><tr><th>Email</th><th>Role</th><th>Added</th><th class="center">Action</th></tr></thead>
       <tbody>${rows}</tbody></table>`;
   }catch(e){
-    document.getElementById('usersTable').innerHTML = emptyState('Gagal memuat daftar user: '+e.message);
+    document.getElementById('usersTable').innerHTML = emptyState('Failed to load user list: '+e.message);
   }
 }
 function revokeUser(uid, email){
-  confirmAction(`Cabut akses untuk ${email}? Akun Firebase Auth-nya tetap ada, hanya akses ke data kas kelas yang dicabut.`, async ()=>{
-    try{ await DB.collection('users').doc(uid).delete(); toast('Akses dicabut','ok'); renderUsersTable(); }
-    catch(e){ toast('Gagal mencabut akses: '+e.message,'err'); }
+  confirmAction(`Revoke access for ${email}? Their Firebase Auth account will remain, only access to the class cash data will be revoked.`, async ()=>{
+    try{ await DB.collection('users').doc(uid).delete(); toast('Access revoked','ok'); renderUsersTable(); }
+    catch(e){ toast('Failed to revoke access: '+e.message,'err'); }
   });
 }
 
 /* ============================================================
-   PENGATURAN
+   SETTINGS
    ============================================================ */
 function renderPengaturanTab(){
   const ta = currentTA();
@@ -2025,19 +2095,19 @@ function renderPengaturanTab(){
   const customCfg = localStorage.getItem(LS_FBCONFIG);
   const forcedLocal = localStorage.getItem(LS_FORCE_LOCAL)==='1';
   if(USE_FIRESTORE){
-    badge.textContent = 'Tersambung';
+    badge.textContent = 'Connected';
     badge.style.background = 'var(--green-soft)'; badge.style.color = 'var(--green)';
     statusText.innerHTML = customCfg
-      ? '✅ Tersambung ke Firebase project kustom milik Anda — data tersinkron realtime.'
-      : '✅ Tersambung ke Firebase project bawaan aplikasi ini — data tersinkron realtime ke semua yang membuka link ini.';
+      ? '✅ Connected to your own custom Firebase project — data is synced in realtime.'
+      : "✅ Connected to this app's built-in Firebase project — data is synced in realtime to everyone who opens this link.";
   }else if(forcedLocal){
-    badge.textContent = 'Mode Lokal (dipaksa)';
+    badge.textContent = 'Local Mode (forced)';
     badge.style.background = 'var(--gold-soft)'; badge.style.color = '#7a5b17';
-    statusText.innerHTML = 'ℹ️ Firebase dinonaktifkan manual pada perangkat ini. Data hanya tersimpan di browser ini.';
+    statusText.innerHTML = 'ℹ️ Firebase has been manually disabled on this device. Data is only stored in this browser.';
   }else{
-    badge.textContent = 'Mode Lokal (fallback)';
+    badge.textContent = 'Local Mode (fallback)';
     badge.style.background = 'var(--maroon-soft)'; badge.style.color = 'var(--maroon)';
-    statusText.innerHTML = '⚠️ Gagal tersambung ke Firebase (cek koneksi internet / Firestore Rules), sementara memakai data lokal browser ini.';
+    statusText.innerHTML = "⚠️ Failed to connect to Firebase (check your internet connection / Firestore Rules), temporarily using this browser's local data.";
   }
 }
 async function saveIdentitas(){
@@ -2050,33 +2120,33 @@ async function saveIdentitas(){
   };
   try{
     await updateTahunAjaran(currentTahunAjaranId, obj);
-    toast('Identitas tahun ajaran ini disimpan','ok');
-  }catch(e){ toast('Gagal menyimpan: '+e.message,'err'); }
+    toast('This school year\'s identity has been saved','ok');
+  }catch(e){ toast('Failed to save: '+e.message,'err'); }
 }
 async function saveFirebaseConfig(){
   const raw = document.getElementById('fbConfigInput').value.trim();
-  if(!raw){ toast('Tempel konfigurasi Firebase terlebih dahulu','err'); return; }
+  if(!raw){ toast('Paste the Firebase configuration first','err'); return; }
   let cfg;
   try{ cfg = JSON.parse(raw); }
-  catch(e){ toast('Format JSON tidak valid','err'); return; }
-  if(!cfg.apiKey || !cfg.projectId){ toast('Konfigurasi tidak lengkap (perlu apiKey & projectId)','err'); return; }
+  catch(e){ toast('Invalid JSON format','err'); return; }
+  if(!cfg.apiKey || !cfg.projectId){ toast('Incomplete configuration (apiKey & projectId required)','err'); return; }
   localStorage.removeItem(LS_FORCE_LOCAL);
   localStorage.setItem(LS_FBCONFIG, JSON.stringify(cfg));
-  toast('Menyambungkan ke Firebase...','ok');
+  toast('Connecting to Firebase...','ok');
   location.reload();
 }
 function clearFirebaseConfig(){
-  confirmAction('Kembalikan ke konfigurasi Firebase bawaan aplikasi ini?', ()=>{
+  confirmAction("Restore this app's default Firebase configuration?", ()=>{
     localStorage.removeItem(LS_FBCONFIG);
     localStorage.removeItem(LS_FORCE_LOCAL);
-    toast('Kembali ke config bawaan, memuat ulang...','ok');
+    toast('Restored to default config, reloading...','ok');
     setTimeout(()=>location.reload(), 600);
   });
 }
 function forceLocalMode(){
-  confirmAction('Nonaktifkan Firebase di perangkat ini dan pakai data lokal saja (tanpa login)? Cocok untuk uji coba. Data Firestore online tidak terhapus/terpengaruh.', ()=>{
+  confirmAction('Disable Firebase on this device and use local data only (no login)? Good for testing. Online Firestore data will not be deleted/affected.', ()=>{
     localStorage.setItem(LS_FORCE_LOCAL, '1');
-    toast('Mode lokal diaktifkan, memuat ulang...','ok');
+    toast('Local mode enabled, reloading...','ok');
     setTimeout(()=>location.reload(), 600);
   });
 }
@@ -2095,19 +2165,19 @@ function importBackup(evt){
   reader.onload = () => {
     try{
       const parsed = JSON.parse(reader.result);
-      confirmAction('Menimpa seluruh data lokal saat ini dengan isi file backup. Lanjutkan?', ()=>{
+      confirmAction('This will overwrite all current local data with the backup file contents. Continue?', ()=>{
         if(USE_FIRESTORE){
-          toast('Mode Firebase aktif — backup hanya bisa dipulihkan saat mode lokal. Nonaktifkan Firebase dulu jika perlu.', 'err');
+          toast('Firebase mode is active — backup can only be restored in local mode. Disable Firebase first if needed.', 'err');
           return;
         }
         tahunAjaranList = parsed.tahunAjaranList || [];
         state.siswa = parsed.siswa || [];
         state.pembayaran = parsed.pembayaran || [];
         saveLocal();
-        toast('Data berhasil dipulihkan','ok');
+        toast('Data restored successfully','ok');
         afterTahunAjaranListLoaded();
       });
-    }catch(e){ toast('File backup tidak valid','err'); }
+    }catch(e){ toast('Invalid backup file','err'); }
   };
   reader.readAsText(file);
 }
@@ -2120,10 +2190,10 @@ function importBackup(evt){
   if(ok){
     AUTH.onAuthStateChanged(onAuthReady);
   }else{
-    // mode lokal murni (tanpa Firebase sama sekali): langsung masuk, tanpa login
+    // pure local mode (no Firebase at all): go straight in, no login
     currentUser = {uid:'local', email:'mode-lokal', role:'admin'};
     document.getElementById('navUsersBtn').style.display = 'none';
-    document.getElementById('whoEmail').textContent = 'Mode lokal';
+    document.getElementById('whoEmail').textContent = 'Local mode';
     showScreen('app');
     await bootAppData();
   }
