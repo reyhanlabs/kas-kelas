@@ -338,7 +338,7 @@
     body *{visibility:hidden;}
     #printArea, #printArea *{visibility:visible;}
     #printArea{display:block; position:absolute; top:0; left:0; width:100%; background:#fff;}
-    @page{ size:A5; margin:10mm; }
+    @page{ size:A4; margin:14mm; }
   }
   .receipt{
     width:148mm; margin:0 auto; padding:8mm; border:2px solid var(--navy);
@@ -379,6 +379,24 @@
   .helper{font-size:11.5px; color:var(--ink-soft); margin-top:4px;}
   .config-box{background:#f7f3e8; border:1px dashed var(--gold); border-radius:8px; padding:14px 16px; margin-bottom:16px; font-size:12.5px; color:#6b5217;}
   code.inl{background:#eee6cf; padding:1px 5px; border-radius:4px; font-family:'JetBrains Mono'; font-size:11.5px;}
+
+  /* ===== Expense ledger report ===== */
+  .ledger-account{margin-bottom:22px; border:1px solid var(--paper-line); border-radius:8px; overflow:hidden;}
+  .ledger-account:last-child{margin-bottom:0;}
+  .ledger-account-head{background:var(--gold-soft); color:#6b5217; padding:8px 12px; font-weight:700; font-size:13px; display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap;}
+  .ledger-account table{font-size:12.5px;}
+  .ledger-account th{background:#faf8f2;}
+  .ledger-account tfoot td{font-weight:700; background:#faf6ec; border-top:2px solid var(--paper-line);}
+  .ledger-report-head{text-align:center; margin-bottom:20px;}
+  .ledger-report-head h2{margin:0 0 2px 0; color:var(--navy);}
+  .ledger-report-head .sub1{font-size:13px; color:var(--ink-soft);}
+  .ledger-report-head .sub2{font-size:11.5px; color:var(--ink-soft); margin-top:2px;}
+  .ledger-grandtotal{display:flex; justify-content:flex-end; gap:10px; align-items:baseline; margin-top:14px; font-size:15px;}
+  .ledger-grandtotal .amt{font-family:'JetBrains Mono'; font-weight:700; font-size:19px; color:var(--maroon);}
+  #printArea .ledger-account, #printArea .ledger-report-head{display:block;}
+  @media print{
+    #printArea .ledger-account{break-inside:avoid;}
+  }
 </style>
 </head>
 <body>
@@ -457,6 +475,14 @@
       <button class="tab-btn" data-tab="laporan">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19V5"/><path d="M4 19h16"/><rect x="7" y="12" width="3" height="7"/><rect x="12.5" y="8" width="3" height="11"/><rect x="18" y="4" width="3" height="15"/></svg>
         Report Summary
+      </button>
+      <button class="tab-btn" data-tab="pengeluaran">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20"/><path d="M17 5.5c0-1.9-2.2-3-5-3s-5 1.1-5 3 2.2 3 5 3 5 1.1 5 3-2.2 3-5 3-5-1.1-5-3"/></svg>
+        Expense Entry
+      </button>
+      <button class="tab-btn" data-tab="laporanPengeluaran">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3h9l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M15 3v5h5"/><path d="M8 13h8"/><path d="M8 17h5"/></svg>
+        Expense Ledger
       </button>
       <button class="tab-btn" data-tab="users" id="navUsersBtn" style="display:none;">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8.5" cy="7" r="4"/><path d="M2 21v-2a6 6 0 0 1 6-6h1a6 6 0 0 1 6 6v2"/><path d="M17 11l2 2 4-4"/></svg>
@@ -629,6 +655,68 @@
         </div>
       </section>
 
+      <!-- ================= EXPENSE ENTRY ================= -->
+      <section id="tab-pengeluaran" class="tab-panel" style="display:none;">
+        <div class="topbar">
+          <div>
+            <h1>Expense Entry</h1>
+            <div class="sub">Record class operational expenses against an activity/account</div>
+          </div>
+        </div>
+
+        <div class="card" id="pengeluaranFormCard">
+          <div class="helper" id="pengeluaranNoKegiatanWarning" style="display:none; background:var(--maroon-soft); color:var(--maroon); padding:10px 12px; border-radius:8px; margin-bottom:14px; font-weight:600;">
+            No activities set up yet for this school year. Go to Settings → Activities (Kegiatan) to add one first, linked to an account.
+          </div>
+          <div class="field">
+            <label>Activity</label>
+            <select id="pengeluaranKegiatanId"></select>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Date</label>
+              <input type="date" id="pengeluaranTanggal">
+            </div>
+            <div class="field">
+              <label>Amount</label>
+              <input type="number" id="pengeluaranNominal" placeholder="e.g. 50000">
+            </div>
+          </div>
+          <div class="field">
+            <label>Description</label>
+            <input type="text" id="pengeluaranKeterangan" placeholder="e.g. Oasis gallon refill + bank admin fee">
+          </div>
+          <p class="helper">Reference No. is generated automatically (e.g. <span class="mono" id="pengeluaranNoRefPreview">CD000001</span>) once saved.</p>
+          <button class="btn btn-primary" id="pengeluaranSaveBtn" onclick="simpanPengeluaran()">Save Expense</button>
+        </div>
+
+        <div class="card">
+          <h2>Expense History</h2>
+          <div style="display:flex; gap:10px; margin-bottom:12px; flex-wrap:wrap;">
+            <div class="search-box">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+              <input type="text" id="searchPengeluaran" placeholder="Search description or activity..." oninput="renderRiwayatPengeluaranTable()">
+            </div>
+          </div>
+          <div id="riwayatPengeluaranTable"></div>
+        </div>
+      </section>
+
+      <!-- ================= EXPENSE LEDGER REPORT ================= -->
+      <section id="tab-laporanPengeluaran" class="tab-panel" style="display:none;">
+        <div class="topbar">
+          <div>
+            <h1>Expense Ledger (Buku Besar)</h1>
+            <div class="sub">Detailed cash usage per account, formatted for printing/handover</div>
+          </div>
+          <button class="btn btn-outline" onclick="cetakLaporanPengeluaran()">🖨 Print Report</button>
+        </div>
+
+        <div class="grid-stats" id="pengeluaranStatGrid"></div>
+
+        <div id="ledgerReportBody"></div>
+      </section>
+
       <!-- ================= MANAGE USERS ================= -->
       <section id="tab-users" class="tab-panel" style="display:none;">
         <div class="topbar">
@@ -710,6 +798,20 @@
           <p class="helper">Each school year is a separate "book": the student list &amp; payment summary are not mixed with other school years. Old data stays saved and can be viewed anytime via the selector in the sidebar.</p>
           <div id="taManageTable"></div>
           <button class="btn btn-outline" style="margin-top:10px;" onclick="openTahunAjaranModal()">+ Add School Year</button>
+        </div>
+
+        <div class="card">
+          <h2>Chart of Accounts (Akun)</h2>
+          <p class="helper">The expense account/ledger categories for this school year, e.g. <code class="inl">6900-00-011</code> &mdash; Class Supplies. Each Activity below is linked to one of these accounts, and the Expense Ledger report is grouped by account.</p>
+          <div id="akunTable"></div>
+          <button class="btn btn-outline" style="margin-top:10px;" onclick="openAkunModal()">+ Add Account</button>
+        </div>
+
+        <div class="card">
+          <h2>Activities (Kegiatan)</h2>
+          <p class="helper">Activities are what you actually pick when entering an expense &mdash; each one is mapped to an account above, e.g. "Market Day 2025" &rarr; account <code class="inl">6900-00-012</code>.</p>
+          <div id="kegiatanTable"></div>
+          <button class="btn btn-outline" style="margin-top:10px;" onclick="openKegiatanModal()">+ Add Activity</button>
         </div>
 
         <div class="card">
@@ -886,6 +988,85 @@ service cloud.firestore {
   </div>
 </div>
 
+<!-- Account Modal -->
+<div class="overlay" id="modalAkun">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="modalAkunTitle">Add Account</h3>
+      <button class="icon-btn" onclick="closeModal('modalAkun')">✕</button>
+    </div>
+    <input type="hidden" id="akunId">
+    <div class="field">
+      <label>Account Code</label>
+      <input type="text" id="akunKode" placeholder="e.g. 6900-00-011">
+    </div>
+    <div class="field">
+      <label>Account Name</label>
+      <input type="text" id="akunNama" placeholder="e.g. Class Supplies">
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeModal('modalAkun')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveAkun()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Activity Modal -->
+<div class="overlay" id="modalKegiatan">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="modalKegiatanTitle">Add Activity</h3>
+      <button class="icon-btn" onclick="closeModal('modalKegiatan')">✕</button>
+    </div>
+    <input type="hidden" id="kegiatanId">
+    <div class="field">
+      <label>Activity Name</label>
+      <input type="text" id="kegiatanNama" placeholder="e.g. Market Day 2025">
+    </div>
+    <div class="field">
+      <label>Linked Account</label>
+      <select id="kegiatanAkunId"></select>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeModal('modalKegiatan')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveKegiatan()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Expense Modal -->
+<div class="overlay" id="modalEditPengeluaran">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Edit Expense</h3>
+      <button class="icon-btn" onclick="closeModal('modalEditPengeluaran')">✕</button>
+    </div>
+    <input type="hidden" id="editPengeluaranId">
+    <div class="field">
+      <label>Activity</label>
+      <select id="editPengeluaranKegiatanId"></select>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Date</label>
+        <input type="date" id="editPengeluaranTanggal">
+      </div>
+      <div class="field">
+        <label>Amount</label>
+        <input type="number" id="editPengeluaranNominal">
+      </div>
+    </div>
+    <div class="field">
+      <label>Description</label>
+      <input type="text" id="editPengeluaranKeterangan" placeholder="e.g. Oasis gallon refill">
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeModal('modalEditPengeluaran')">Cancel</button>
+      <button class="btn btn-primary" onclick="simpanEditPengeluaran()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
 <!-- Confirmation Modal -->
 <div class="overlay" id="modalConfirm">
   <div class="modal" style="max-width:380px;">
@@ -960,7 +1141,10 @@ let currentTahunAjaranId = null;
 
 let state = {
   siswa: [],       // {id, tahunAjaranId, noAbsen, nama, nominalKhusus}
-  pembayaran: []   // {id, tahunAjaranId, studentId, tahun, bulanList:[..], nominalPerBulan, total, tanggal, metode, keterangan, createdAt}
+  pembayaran: [],  // {id, tahunAjaranId, studentId, tahun, bulanList:[..], nominalPerBulan, total, tanggal, metode, keterangan, createdAt}
+  akun: [],        // {id, tahunAjaranId, kode, nama}
+  kegiatan: [],    // {id, tahunAjaranId, nama, akunId}
+  pengeluaran: []  // {id, tahunAjaranId, kegiatanId, noRef, tanggal, keterangan, nominal, createdAt}
 };
 
 /* ---------------- Utilities ---------------- */
@@ -1038,6 +1222,8 @@ function switchTab(tab){
   if(tab==='pembayaran') renderPembayaranTab();
   if(tab==='cetak') renderCetakTable();
   if(tab==='laporan') renderLaporanTab();
+  if(tab==='pengeluaran') renderPengeluaranTab();
+  if(tab==='laporanPengeluaran') renderLaporanPengeluaranTab();
   if(tab==='users') renderUsersTable();
   if(tab==='pengaturan') renderPengaturanTab();
 }
@@ -1114,11 +1300,17 @@ function loadLocal(){
       tahunAjaranList = parsed.tahunAjaranList || [];
       state.siswa = parsed.siswa || [];
       state.pembayaran = parsed.pembayaran || [];
+      state.akun = parsed.akun || [];
+      state.kegiatan = parsed.kegiatan || [];
+      state.pengeluaran = parsed.pengeluaran || [];
     }
   }catch(e){ console.error(e); }
 }
 function saveLocal(){
-  localStorage.setItem(LS_KEY, JSON.stringify({tahunAjaranList, siswa: state.siswa, pembayaran: state.pembayaran}));
+  localStorage.setItem(LS_KEY, JSON.stringify({
+    tahunAjaranList, siswa: state.siswa, pembayaran: state.pembayaran,
+    akun: state.akun, kegiatan: state.kegiatan, pengeluaran: state.pengeluaran
+  }));
 }
 function setConnLabel(){
   const dot = document.getElementById('connDot');
@@ -1181,6 +1373,21 @@ async function bootAppData(){
       state.pembayaran = snap.docs.map(d=>({id:d.id, ...d.data()}));
       refreshCurrentTab();
     }, err=>toast('Failed to load payment data: '+err.message,'err')));
+
+    unsubscribers.push(DB.collection('akun').onSnapshot(snap=>{
+      state.akun = snap.docs.map(d=>({id:d.id, ...d.data()}));
+      refreshCurrentTab();
+    }, err=>toast('Failed to load account data: '+err.message,'err')));
+
+    unsubscribers.push(DB.collection('kegiatan').onSnapshot(snap=>{
+      state.kegiatan = snap.docs.map(d=>({id:d.id, ...d.data()}));
+      refreshCurrentTab();
+    }, err=>toast('Failed to load activity data: '+err.message,'err')));
+
+    unsubscribers.push(DB.collection('pengeluaran').onSnapshot(snap=>{
+      state.pengeluaran = snap.docs.map(d=>({id:d.id, ...d.data()}));
+      refreshCurrentTab();
+    }, err=>toast('Failed to load expense data: '+err.message,'err')));
   }else{
     loadLocal();
     afterTahunAjaranListLoaded();
@@ -1395,6 +1602,115 @@ async function dbDeletePembayaran(id){
     state.pembayaran = state.pembayaran.filter(p=>p.id!==id);
     saveLocal();
   }
+}
+
+/* ---- Account (Akun) CRUD ---- */
+async function dbAddAkun(obj){
+  const payload = {tahunAjaranId: currentTahunAjaranId, ...obj};
+  if(USE_FIRESTORE){
+    const ref = await DB.collection('akun').add(payload);
+    return ref.id;
+  }else{
+    const id = uid();
+    state.akun.push({id, ...payload});
+    saveLocal();
+    return id;
+  }
+}
+async function dbUpdateAkun(id, obj){
+  if(USE_FIRESTORE){
+    await DB.collection('akun').doc(id).update(obj);
+  }else{
+    const idx = state.akun.findIndex(a=>a.id===id);
+    if(idx>-1) state.akun[idx] = {...state.akun[idx], ...obj};
+    saveLocal();
+  }
+}
+async function dbDeleteAkun(id){
+  if(USE_FIRESTORE){
+    await DB.collection('akun').doc(id).delete();
+  }else{
+    state.akun = state.akun.filter(a=>a.id!==id);
+    saveLocal();
+  }
+}
+
+/* ---- Activity (Kegiatan) CRUD ---- */
+async function dbAddKegiatan(obj){
+  const payload = {tahunAjaranId: currentTahunAjaranId, ...obj};
+  if(USE_FIRESTORE){
+    const ref = await DB.collection('kegiatan').add(payload);
+    return ref.id;
+  }else{
+    const id = uid();
+    state.kegiatan.push({id, ...payload});
+    saveLocal();
+    return id;
+  }
+}
+async function dbUpdateKegiatan(id, obj){
+  if(USE_FIRESTORE){
+    await DB.collection('kegiatan').doc(id).update(obj);
+  }else{
+    const idx = state.kegiatan.findIndex(k=>k.id===id);
+    if(idx>-1) state.kegiatan[idx] = {...state.kegiatan[idx], ...obj};
+    saveLocal();
+  }
+}
+async function dbDeleteKegiatan(id){
+  if(USE_FIRESTORE){
+    await DB.collection('kegiatan').doc(id).delete();
+  }else{
+    state.kegiatan = state.kegiatan.filter(k=>k.id!==id);
+    saveLocal();
+  }
+}
+
+/* ---- Expense (Pengeluaran) CRUD ---- */
+async function dbAddPengeluaran(obj){
+  const payload = {tahunAjaranId: currentTahunAjaranId, ...obj};
+  if(USE_FIRESTORE){
+    const ref = await DB.collection('pengeluaran').add(payload);
+    return ref.id;
+  }else{
+    const id = uid();
+    state.pengeluaran.push({id, ...payload});
+    saveLocal();
+    return id;
+  }
+}
+async function dbUpdatePengeluaran(id, obj){
+  if(USE_FIRESTORE){
+    await DB.collection('pengeluaran').doc(id).update(obj);
+  }else{
+    const idx = state.pengeluaran.findIndex(p=>p.id===id);
+    if(idx>-1) state.pengeluaran[idx] = {...state.pengeluaran[idx], ...obj};
+    saveLocal();
+  }
+}
+async function dbDeletePengeluaran(id){
+  if(USE_FIRESTORE){
+    await DB.collection('pengeluaran').doc(id).delete();
+  }else{
+    state.pengeluaran = state.pengeluaran.filter(p=>p.id!==id);
+    saveLocal();
+  }
+}
+
+/* ---- Shared helpers for accounts / activities / expenses ---- */
+function currentAkunList(){ return state.akun.filter(a=>a.tahunAjaranId===currentTahunAjaranId).sort((a,b)=> (a.kode||'').localeCompare(b.kode||'')); }
+function currentKegiatanList(){ return state.kegiatan.filter(k=>k.tahunAjaranId===currentTahunAjaranId); }
+function currentPengeluaranList(){ return state.pengeluaran.filter(p=>p.tahunAjaranId===currentTahunAjaranId); }
+function findAkun(id){ return state.akun.find(a=>a.id===id); }
+function findKegiatan(id){ return state.kegiatan.find(k=>k.id===id); }
+/* Generate the next sequential CD-style reference number for this school year, e.g. CD000007 */
+function generateNoRefPengeluaran(){
+  let max = 0;
+  currentPengeluaranList().forEach(p=>{
+    const m = String(p.noRef||'').match(/(\d+)$/);
+    if(m) max = Math.max(max, Number(m[1]));
+  });
+  return 'CD' + String(max+1).padStart(6,'0');
 }
 
 /* ============================================================
@@ -2078,6 +2394,356 @@ function revokeUser(uid, email){
 }
 
 /* ============================================================
+   ACCOUNTS & ACTIVITIES (master data for expenses)
+   ============================================================ */
+function renderAkunTable(){
+  const list = currentAkunList();
+  if(list.length===0){
+    document.getElementById('akunTable').innerHTML = emptyState('No accounts yet. Click "+ Add Account" to start (e.g. 6900-00-011 — Class Supplies).');
+    return;
+  }
+  const rows = list.map(a=>{
+    const jmlKegiatan = state.kegiatan.filter(k=>k.akunId===a.id).length;
+    return `<tr>
+      <td class="mono">${esc(a.kode)}</td>
+      <td>${esc(a.nama)}</td>
+      <td class="center">${jmlKegiatan}</td>
+      <td class="center">
+        <button class="icon-btn" title="Edit" onclick='editAkun("${a.id}")'>✎</button>
+        <button class="icon-btn" title="Delete" onclick='deleteAkunConfirm("${a.id}")'>🗑</button>
+      </td>
+    </tr>`;
+  }).join('');
+  document.getElementById('akunTable').innerHTML = `
+    <table><thead><tr><th>Code</th><th>Name</th><th class="center">Activities</th><th class="center">Action</th></tr></thead>
+    <tbody>${rows}</tbody></table>`;
+}
+function openAkunModal(){
+  document.getElementById('modalAkunTitle').textContent = 'Add Account';
+  document.getElementById('akunId').value = '';
+  document.getElementById('akunKode').value = '';
+  document.getElementById('akunNama').value = '';
+  openModal('modalAkun');
+}
+function editAkun(id){
+  const a = findAkun(id);
+  if(!a) return;
+  document.getElementById('modalAkunTitle').textContent = 'Edit Account';
+  document.getElementById('akunId').value = a.id;
+  document.getElementById('akunKode').value = a.kode||'';
+  document.getElementById('akunNama').value = a.nama||'';
+  openModal('modalAkun');
+}
+async function saveAkun(){
+  const id = document.getElementById('akunId').value;
+  const kode = document.getElementById('akunKode').value.trim();
+  const nama = document.getElementById('akunNama').value.trim();
+  if(!kode || !nama){ toast('Account code & name are required','err'); return; }
+  const obj = { kode, nama };
+  try{
+    if(id){ await dbUpdateAkun(id, obj); toast('Account updated','ok'); }
+    else{ await dbAddAkun(obj); toast('Account added','ok'); }
+    closeModal('modalAkun');
+    if(!USE_FIRESTORE) renderAkunTable();
+  }catch(e){ toast('Failed to save: '+e.message,'err'); }
+}
+function deleteAkunConfirm(id){
+  const jmlKegiatan = state.kegiatan.filter(k=>k.akunId===id).length;
+  if(jmlKegiatan>0){
+    toast(`This account can't be deleted because ${jmlKegiatan} activity/activities still use it. Reassign or delete those activities first.`, 'err');
+    return;
+  }
+  confirmAction('Delete this account?', async ()=>{
+    try{ await dbDeleteAkun(id); toast('Account deleted','ok'); if(!USE_FIRESTORE) renderAkunTable(); }
+    catch(e){ toast('Failed to delete: '+e.message,'err'); }
+  });
+}
+
+function renderKegiatanTable(){
+  const list = currentKegiatanList();
+  if(list.length===0){
+    document.getElementById('kegiatanTable').innerHTML = emptyState('No activities yet. Add an account first, then click "+ Add Activity".');
+    return;
+  }
+  const rows = list.map(k=>{
+    const a = findAkun(k.akunId);
+    const jmlPengeluaran = state.pengeluaran.filter(p=>p.kegiatanId===k.id).length;
+    return `<tr>
+      <td>${esc(k.nama)}</td>
+      <td class="mono">${a ? esc(a.kode)+' — '+esc(a.nama) : '<span class="helper">(account deleted)</span>'}</td>
+      <td class="center">${jmlPengeluaran}</td>
+      <td class="center">
+        <button class="icon-btn" title="Edit" onclick='editKegiatan("${k.id}")'>✎</button>
+        <button class="icon-btn" title="Delete" onclick='deleteKegiatanConfirm("${k.id}")'>🗑</button>
+      </td>
+    </tr>`;
+  }).join('');
+  document.getElementById('kegiatanTable').innerHTML = `
+    <table><thead><tr><th>Activity</th><th>Linked Account</th><th class="center">Expenses</th><th class="center">Action</th></tr></thead>
+    <tbody>${rows}</tbody></table>`;
+}
+function populateAkunSelect(selectEl, selectedId){
+  const list = currentAkunList();
+  if(list.length===0){
+    selectEl.innerHTML = '<option value="">— No accounts yet —</option>';
+    return;
+  }
+  selectEl.innerHTML = list.map(a=>`<option value="${a.id}" ${a.id===selectedId?'selected':''}>${esc(a.kode)} — ${esc(a.nama)}</option>`).join('');
+}
+function openKegiatanModal(){
+  if(currentAkunList().length===0){ toast('Add at least one account first (see Chart of Accounts above)','err'); return; }
+  document.getElementById('modalKegiatanTitle').textContent = 'Add Activity';
+  document.getElementById('kegiatanId').value = '';
+  document.getElementById('kegiatanNama').value = '';
+  populateAkunSelect(document.getElementById('kegiatanAkunId'), null);
+  openModal('modalKegiatan');
+}
+function editKegiatan(id){
+  const k = findKegiatan(id);
+  if(!k) return;
+  document.getElementById('modalKegiatanTitle').textContent = 'Edit Activity';
+  document.getElementById('kegiatanId').value = k.id;
+  document.getElementById('kegiatanNama').value = k.nama||'';
+  populateAkunSelect(document.getElementById('kegiatanAkunId'), k.akunId);
+  openModal('modalKegiatan');
+}
+async function saveKegiatan(){
+  const id = document.getElementById('kegiatanId').value;
+  const nama = document.getElementById('kegiatanNama').value.trim();
+  const akunId = document.getElementById('kegiatanAkunId').value;
+  if(!nama){ toast('Activity name is required','err'); return; }
+  if(!akunId){ toast('Please select a linked account','err'); return; }
+  const obj = { nama, akunId };
+  try{
+    if(id){ await dbUpdateKegiatan(id, obj); toast('Activity updated','ok'); }
+    else{ await dbAddKegiatan(obj); toast('Activity added','ok'); }
+    closeModal('modalKegiatan');
+    if(!USE_FIRESTORE) renderKegiatanTable();
+  }catch(e){ toast('Failed to save: '+e.message,'err'); }
+}
+function deleteKegiatanConfirm(id){
+  const jmlPengeluaran = state.pengeluaran.filter(p=>p.kegiatanId===id).length;
+  if(jmlPengeluaran>0){
+    toast(`This activity can't be deleted because it already has ${jmlPengeluaran} expense record(s). Delete those expenses first if you really want to remove this activity.`, 'err');
+    return;
+  }
+  confirmAction('Delete this activity?', async ()=>{
+    try{ await dbDeleteKegiatan(id); toast('Activity deleted','ok'); if(!USE_FIRESTORE) renderKegiatanTable(); }
+    catch(e){ toast('Failed to delete: '+e.message,'err'); }
+  });
+}
+
+/* ============================================================
+   EXPENSE ENTRY
+   ============================================================ */
+function renderPengeluaranTab(){
+  const sel = document.getElementById('pengeluaranKegiatanId');
+  const hasKegiatan = currentKegiatanList().length>0;
+  populateKegiatanSelect(sel);
+  document.getElementById('pengeluaranNoKegiatanWarning').style.display = hasKegiatan ? 'none' : 'block';
+  document.getElementById('pengeluaranSaveBtn').disabled = !hasKegiatan;
+  document.getElementById('pengeluaranTanggal').value = new Date().toISOString().slice(0,10);
+  document.getElementById('pengeluaranKeterangan').value = '';
+  document.getElementById('pengeluaranNominal').value = '';
+  document.getElementById('pengeluaranNoRefPreview').textContent = generateNoRefPengeluaran();
+  renderRiwayatPengeluaranTable();
+}
+function populateKegiatanSelect(selectEl, selectedId){
+  const list = currentKegiatanList();
+  if(list.length===0){
+    selectEl.innerHTML = '<option value="">— No activities yet —</option>';
+    return;
+  }
+  selectEl.innerHTML = list.map(k=>{
+    const a = findAkun(k.akunId);
+    const label = a ? `${esc(k.nama)} (${esc(a.kode)})` : esc(k.nama);
+    return `<option value="${k.id}" ${k.id===selectedId?'selected':''}>${label}</option>`;
+  }).join('');
+}
+async function simpanPengeluaran(){
+  const kegiatanId = document.getElementById('pengeluaranKegiatanId').value;
+  const tanggal = document.getElementById('pengeluaranTanggal').value;
+  const keterangan = document.getElementById('pengeluaranKeterangan').value.trim();
+  const nominal = Number(document.getElementById('pengeluaranNominal').value)||0;
+  if(!kegiatanId){ toast('Please select an activity first','err'); return; }
+  if(!tanggal){ toast('Expense date is required','err'); return; }
+  if(!keterangan){ toast('Description is required','err'); return; }
+  if(nominal<=0){ toast('Amount must be greater than 0','err'); return; }
+  const noRef = generateNoRefPengeluaran();
+  const obj = { kegiatanId, noRef, tanggal, keterangan, nominal, createdAt: Date.now() };
+  try{
+    await dbAddPengeluaran(obj);
+    toast('Expense recorded successfully','ok');
+    document.getElementById('pengeluaranKeterangan').value = '';
+    document.getElementById('pengeluaranNominal').value = '';
+    document.getElementById('pengeluaranNoRefPreview').textContent = generateNoRefPengeluaran();
+    renderRiwayatPengeluaranTable();
+  }catch(e){ toast('Failed to save expense: '+e.message,'err'); }
+}
+function renderRiwayatPengeluaranTable(){
+  const q = (document.getElementById('searchPengeluaran').value||'').toLowerCase();
+  const list = currentPengeluaranList()
+    .filter(p=>{
+      const k = findKegiatan(p.kegiatanId);
+      const hay = (p.keterangan||'') + ' ' + (k?.nama||'');
+      return hay.toLowerCase().includes(q);
+    })
+    .sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+  if(list.length===0){
+    document.getElementById('riwayatPengeluaranTable').innerHTML = emptyState('No expenses recorded yet in this school year.');
+    return;
+  }
+  const rows = list.map(p=>{
+    const k = findKegiatan(p.kegiatanId);
+    const a = k ? findAkun(k.akunId) : null;
+    return `<tr>
+      <td class="mono">${esc(p.noRef||'-')}</td>
+      <td>${esc(p.tanggal)}</td>
+      <td>${esc(k?.nama || '(activity deleted)')}</td>
+      <td class="mono">${a ? esc(a.kode) : '-'}</td>
+      <td>${esc(p.keterangan)}</td>
+      <td class="right num">${rupiah(p.nominal)}</td>
+      <td class="center">
+        <button class="icon-btn" title="Edit" onclick='editPengeluaran("${p.id}")'>✎</button>
+        <button class="icon-btn" title="Delete" onclick='deletePengeluaranConfirm("${p.id}")'>🗑</button>
+      </td>
+    </tr>`;
+  }).join('');
+  document.getElementById('riwayatPengeluaranTable').innerHTML = `
+    <div class="table-scroll">
+      <table><thead><tr><th>Ref. No.</th><th>Date</th><th>Activity</th><th>Account</th><th>Description</th><th class="right">Amount</th><th class="center">Action</th></tr></thead>
+      <tbody>${rows}</tbody></table>
+    </div>`;
+}
+function editPengeluaran(id){
+  const p = state.pengeluaran.find(x=>x.id===id);
+  if(!p){ toast('Expense not found','err'); return; }
+  document.getElementById('editPengeluaranId').value = p.id;
+  populateKegiatanSelect(document.getElementById('editPengeluaranKegiatanId'), p.kegiatanId);
+  document.getElementById('editPengeluaranTanggal').value = p.tanggal||'';
+  document.getElementById('editPengeluaranNominal').value = p.nominal||0;
+  document.getElementById('editPengeluaranKeterangan').value = p.keterangan||'';
+  openModal('modalEditPengeluaran');
+}
+async function simpanEditPengeluaran(){
+  const id = document.getElementById('editPengeluaranId').value;
+  const kegiatanId = document.getElementById('editPengeluaranKegiatanId').value;
+  const tanggal = document.getElementById('editPengeluaranTanggal').value;
+  const nominal = Number(document.getElementById('editPengeluaranNominal').value)||0;
+  const keterangan = document.getElementById('editPengeluaranKeterangan').value.trim();
+  if(!kegiatanId){ toast('Please select an activity','err'); return; }
+  if(!tanggal){ toast('Expense date is required','err'); return; }
+  if(nominal<=0){ toast('Amount must be greater than 0','err'); return; }
+  if(!keterangan){ toast('Description is required','err'); return; }
+  try{
+    await dbUpdatePengeluaran(id, { kegiatanId, tanggal, nominal, keterangan });
+    toast('Expense updated','ok');
+    closeModal('modalEditPengeluaran');
+    if(!USE_FIRESTORE) renderRiwayatPengeluaranTable();
+  }catch(e){ toast('Failed to save changes: '+e.message,'err'); }
+}
+function deletePengeluaranConfirm(id){
+  confirmAction('Delete this expense record?', async ()=>{
+    try{ await dbDeletePengeluaran(id); toast('Expense deleted','ok'); if(!USE_FIRESTORE) renderRiwayatPengeluaranTable(); }
+    catch(e){ toast('Failed to delete: '+e.message,'err'); }
+  });
+}
+
+/* ============================================================
+   EXPENSE LEDGER REPORT (Buku Besar Pengeluaran)
+   ============================================================ */
+/* Group all of this school year's expenses by account, computing a running balance per account,
+   the same shape as a printed "Buku Besar Kas" ledger. */
+function buildLedgerGroups(){
+  const akunList = currentAkunList();
+  const kegiatanList = currentKegiatanList();
+  const pengeluaranList = currentPengeluaranList().slice().sort((a,b)=>{
+    const d = new Date(a.tanggal) - new Date(b.tanggal);
+    return d !== 0 ? d : (a.createdAt||0)-(b.createdAt||0);
+  });
+  const groups = akunList.map(a=>{
+    const kegiatanIds = new Set(kegiatanList.filter(k=>k.akunId===a.id).map(k=>k.id));
+    let saldo = 0;
+    const rows = pengeluaranList.filter(p=>kegiatanIds.has(p.kegiatanId)).map(p=>{
+      saldo += Number(p.nominal||0);
+      const k = findKegiatan(p.kegiatanId);
+      return { ...p, saldo, kegiatanNama: k?.nama || '-' };
+    });
+    return { akun:a, rows, total: saldo };
+  }).filter(g=> g.rows.length>0);
+  const grandTotal = groups.reduce((sum,g)=>sum+g.total,0);
+  return { groups, grandTotal };
+}
+function renderLaporanPengeluaranTab(){
+  const { groups, grandTotal } = buildLedgerGroups();
+  const ta = currentTA();
+
+  document.getElementById('pengeluaranStatGrid').innerHTML = `
+    <div class="stat"><div class="label">School Year</div><div class="value" style="font-size:16px;">${esc(ta?.label||'-')}</div></div>
+    <div class="stat"><div class="label">Accounts With Expenses</div><div class="value">${groups.length}</div></div>
+    <div class="stat"><div class="label">Total Expense Entries</div><div class="value">${currentPengeluaranList().length}</div></div>
+    <div class="stat"><div class="label">Total Cash Used</div><div class="value mono maroon">${rupiah(grandTotal)}</div></div>
+  `;
+
+  const body = document.getElementById('ledgerReportBody');
+  if(groups.length===0){
+    body.innerHTML = emptyState('No expenses recorded yet in this school year, so there is nothing to show in the ledger.');
+    return;
+  }
+  body.innerHTML = buildLedgerReportHTML(groups, grandTotal, ta, false);
+}
+/* forPrint=true renders the header block used only inside the printable #printArea copy */
+function buildLedgerReportHTML(groups, grandTotal, ta, forPrint){
+  const head = forPrint ? `
+    <div class="ledger-report-head">
+      <h2>Buku Besar Kas — ${esc(ta?.namaKelas || ta?.label || 'Class Cash')}</h2>
+      <div class="sub1">${esc(ta?.namaSekolah || 'School Name')}</div>
+      <div class="sub2">School Year ${esc(ta?.label||'-')} &middot; Printed ${new Date().toLocaleString('en-US', {dateStyle:'long', timeStyle:'short'})}</div>
+    </div>` : '';
+
+  const sections = groups.map(g=>{
+    const rows = g.rows.map(r=>`
+      <tr>
+        <td>${esc(r.tanggal)}</td>
+        <td class="mono">${esc(r.noRef||'-')}</td>
+        <td>${esc(r.keterangan)}${r.kegiatanNama && r.kegiatanNama!=='-' ? ` <span class="helper">(${esc(r.kegiatanNama)})</span>` : ''}</td>
+        <td class="right num">${rupiah(r.nominal)}</td>
+        <td class="right num">${rupiah(r.saldo)}</td>
+      </tr>`).join('');
+    return `
+      <div class="ledger-account">
+        <div class="ledger-account-head">
+          <span>${esc(g.akun.kode)} &middot; ${esc(g.akun.nama)}</span>
+          <span>${rupiah(g.total)}</span>
+        </div>
+        <table>
+          <thead><tr><th>Date</th><th>Ref. No.</th><th>Description</th><th class="right">Debit</th><th class="right">Balance</th></tr></thead>
+          <tbody>
+            <tr><td colspan="4" class="helper">Starting Balance:</td><td class="right num">${rupiah(0)}</td></tr>
+            ${rows}
+          </tbody>
+          <tfoot><tr><td colspan="3">Ending Balance / Total Movement</td><td class="right num">${rupiah(g.total)}</td><td class="right num">${rupiah(g.total)}</td></tr></tfoot>
+        </table>
+      </div>`;
+  }).join('');
+
+  const total = `
+    <div class="ledger-grandtotal">
+      <span>Grand Total, All Accounts:</span>
+      <span class="amt">${rupiah(grandTotal)}</span>
+    </div>`;
+
+  return head + sections + total;
+}
+function cetakLaporanPengeluaran(){
+  const { groups, grandTotal } = buildLedgerGroups();
+  if(groups.length===0){ toast('No expenses to print yet','err'); return; }
+  const ta = currentTA();
+  document.getElementById('printArea').innerHTML = `<div style="padding:6mm;">${buildLedgerReportHTML(groups, grandTotal, ta, true)}</div>`;
+  setTimeout(()=> window.print(), 80);
+}
+
+/* ============================================================
    SETTINGS
    ============================================================ */
 function renderPengaturanTab(){
@@ -2089,6 +2755,8 @@ function renderPengaturanTab(){
   document.getElementById('setBendahara').value = ta?.bendahara||'';
 
   renderTaManageTable();
+  renderAkunTable();
+  renderKegiatanTable();
 
   const badge = document.getElementById('badgeKoneksi');
   const statusText = document.getElementById('fbStatusText');
