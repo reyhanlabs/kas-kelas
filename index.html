@@ -2366,7 +2366,10 @@ function cetakBukti(paymentId){
   document.getElementById('printArea').innerHTML = buildReceiptHTML(p, s, ta);
   setTimeout(()=> window.print(), 80);
 }
-window.addEventListener('afterprint', ()=>{ document.getElementById('printArea').innerHTML = ''; });
+window.addEventListener('afterprint', ()=>{
+  document.getElementById('printArea').innerHTML = '';
+  document.getElementById('printOrientationOverride')?.remove();
+});
 
 /* ---- Render receipt to canvas (used for image/PDF/WA export) ---- */
 async function renderReceiptToCanvas(paymentId){
@@ -2586,6 +2589,13 @@ function cetakLaporanKasMasuk(){
       </tr></tfoot>
     </table>`;
   document.getElementById('printArea').innerHTML = `<div style="padding:6mm;">${html}</div>`;
+  // This report's 12-month table is wide, so print it landscape while everything else (receipts, ledgers) stays portrait
+  if(!document.getElementById('printOrientationOverride')){
+    const styleEl = document.createElement('style');
+    styleEl.id = 'printOrientationOverride';
+    styleEl.innerHTML = '@media print{ @page{ size:A4 landscape; margin:14mm; } }';
+    document.head.appendChild(styleEl);
+  }
   setTimeout(()=> window.print(), 80);
 }
 
