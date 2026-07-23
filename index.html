@@ -1824,12 +1824,14 @@ function renderDashboard(){
   const paidThisMonth = siswaTA.filter(s => isBulanLunas(s.id, bulanIdx, tahun));
   const totalTerkumpulBulanIni = paidThisMonth.reduce((sum,s)=> sum + nominalUntukSiswa(s), 0);
   const totalSemuaWaktu = state.pembayaran.filter(p=>p.tahunAjaranId===currentTahunAjaranId).reduce((sum,p)=> sum + Number(p.total||0), 0);
+  const totalPengeluaranTA = currentPengeluaranList().reduce((sum,p)=> sum + Number(p.nominal||0), 0);
 
   document.getElementById('statGrid').innerHTML = `
     <div class="stat"><div class="label">Total Students</div><div class="value">${totalSiswa}</div></div>
     <div class="stat"><div class="label">Paid This Month</div><div class="value green">${paidThisMonth.length} / ${totalSiswa}</div></div>
     <div class="stat"><div class="label">Collected This Month</div><div class="value mono">${rupiah(totalTerkumpulBulanIni)}</div></div>
     <div class="stat"><div class="label">Total Cash This School Year</div><div class="value mono green">${rupiah(totalSemuaWaktu)}</div></div>
+    <div class="stat"><div class="label">Total Expenses This School Year</div><div class="value mono maroon">${rupiah(totalPengeluaranTA)}</div></div>
     <div class="stat"><div class="label">Bank Balance (Bank Mandiri)</div><div class="value mono">${rupiah(saldoBankSaatIni())}</div></div>
   `;
 
