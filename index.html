@@ -1,0 +1,1814 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Buku Kas Kelas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+<style>
+  :root{
+    --navy:#1E2A44;
+    --navy-deep:#141d31;
+    --paper:#FBF7EF;
+    --paper-line:#E4DAC4;
+    --ink:#2A2620;
+    --ink-soft:#6b6455;
+    --gold:#C99A3E;
+    --gold-soft:#e8d3a1;
+    --green:#3B7A57;
+    --green-soft:#e3efe7;
+    --maroon:#8B2E2E;
+    --maroon-soft:#f5e3e1;
+    --radius:10px;
+    --shadow: 0 1px 2px rgba(30,42,68,0.06), 0 6px 20px rgba(30,42,68,0.08);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:'Public Sans', sans-serif;
+    background:var(--navy-deep);
+    color:var(--ink);
+    min-height:100vh;
+  }
+  h1,h2,h3,.display{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    letter-spacing:-0.01em;
+  }
+  .mono{font-family:'JetBrains Mono', monospace;}
+
+  /* ===== Auth screens ===== */
+  .auth-screen{
+    min-height:100vh; display:flex; align-items:center; justify-content:center;
+    background:radial-gradient(ellipse at top, #22304f 0%, var(--navy-deep) 60%);
+    padding:20px;
+  }
+  .auth-card{
+    background:var(--paper); border-radius:14px; padding:32px 30px; width:100%; max-width:380px;
+    box-shadow:0 24px 60px rgba(0,0,0,0.4);
+  }
+  .auth-brand{display:flex; align-items:center; gap:10px; margin-bottom:18px;}
+  .auth-brand .mark{width:38px;height:38px;border-radius:9px;background:var(--gold); display:flex;align-items:center;justify-content:center; font-family:'Fraunces',serif; font-weight:700; color:var(--navy-deep); font-size:18px;}
+  .auth-brand .txt{font-family:'Fraunces',serif; font-size:18px; font-weight:600; color:var(--navy);}
+  .auth-sub{font-size:12.5px; color:var(--ink-soft); margin-bottom:20px; line-height:1.5;}
+  .auth-foot-link{font-size:12px; color:var(--navy); text-decoration:underline; cursor:pointer; background:none; border:none; padding:0; margin-top:8px;}
+  .auth-error{font-size:12.5px; color:var(--maroon); margin-top:8px; min-height:16px;}
+
+  /* ===== App shell ===== */
+  #app{ display:none; }
+  #app.show{ display:flex; min-height:100vh; }
+  .sidebar{
+    width:236px;
+    flex-shrink:0;
+    background:linear-gradient(180deg, var(--navy) 0%, var(--navy-deep) 100%);
+    color:#EDEAE0;
+    padding:22px 14px;
+    display:flex;
+    flex-direction:column;
+    position:sticky;
+    top:0;
+    height:100vh;
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:0 8px 14px 8px;
+    margin-bottom:10px;
+  }
+  .brand-mark{
+    width:34px;height:34px;border-radius:8px;
+    background:var(--gold);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Fraunces',serif; font-weight:700; color:var(--navy-deep); font-size:17px;
+    flex-shrink:0;
+  }
+  .brand-text .t1{font-family:'Fraunces',serif; font-size:15.5px; font-weight:600; line-height:1.2;}
+  .brand-text .t2{font-size:11px; color:#b9c0d1; margin-top:1px;}
+
+  .ta-switcher{
+    padding:10px 8px; margin-bottom:12px; border-radius:9px; background:rgba(255,255,255,0.05);
+    border:1px solid rgba(255,255,255,0.1);
+  }
+  .ta-switcher label{font-size:10px; text-transform:uppercase; letter-spacing:.05em; color:#9aa3ba; margin-bottom:5px; display:block;}
+  .ta-switcher select{
+    width:100%; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:#fff;
+    font-size:12.5px; padding:6px 8px; border-radius:6px; margin-bottom:6px;
+  }
+  .ta-switcher select option{color:#111;}
+  .ta-add-btn{
+    width:100%; background:none; border:1px dashed rgba(255,255,255,0.3); color:#c9cfdd;
+    font-size:11.5px; padding:5px; border-radius:6px; cursor:pointer;
+  }
+  .ta-add-btn:hover{background:rgba(255,255,255,0.06); color:#fff;}
+
+  nav.tabs{display:flex; flex-direction:column; gap:3px; flex:1;}
+  .tab-btn{
+    display:flex; align-items:center; gap:10px;
+    padding:10px 12px; border-radius:8px; cursor:pointer;
+    color:#c9cfdd; font-size:13.5px; font-weight:500;
+    border:none; background:transparent; text-align:left; width:100%;
+    transition:background .15s, color .15s;
+  }
+  .tab-btn svg{width:17px;height:17px; flex-shrink:0; opacity:.85;}
+  .tab-btn:hover{background:rgba(255,255,255,0.06); color:#fff;}
+  .tab-btn.active{background:rgba(201,154,62,0.16); color:#fff;}
+  .tab-btn.active svg{opacity:1;}
+  .sidebar-foot{
+    font-size:10.5px; color:#7d859c; padding:10px 8px 0 8px;
+    border-top:1px solid rgba(255,255,255,0.1); margin-top:10px;
+  }
+  .conn-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;position:relative;top:-1px;}
+  .conn-dot.on{background:#59c98a;}
+  .conn-dot.off{background:#e0a23e;}
+  .who-row{display:flex; align-items:center; justify-content:space-between; margin-top:8px;}
+  .who-row .email{font-size:11px; color:#c9cfdd; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:150px;}
+  .logout-btn{background:none;border:none;color:#e0a23e;font-size:11px;cursor:pointer; text-decoration:underline;}
+  .role-badge{font-size:9.5px; text-transform:uppercase; letter-spacing:.05em; background:rgba(201,154,62,0.2); color:var(--gold); padding:1px 6px; border-radius:10px; margin-left:5px;}
+
+  main{
+    flex:1;
+    background: var(--paper);
+    position:relative;
+    min-height:100vh;
+    overflow-x:hidden;
+  }
+  main::before{
+    content:"";
+    position:absolute; inset:0;
+    background-image: repeating-linear-gradient(
+      to bottom, transparent, transparent 33px, var(--paper-line) 34px
+    );
+    opacity:.55;
+    pointer-events:none;
+  }
+  .content-wrap{
+    position:relative;
+    max-width:1180px;
+    margin:0 auto;
+    padding:30px 34px 60px 34px;
+  }
+  .topbar{
+    display:flex; align-items:baseline; justify-content:space-between;
+    margin-bottom:22px; flex-wrap:wrap; gap:10px;
+  }
+  .topbar h1{font-size:26px; margin:0; color:var(--navy);}
+  .topbar .sub{font-size:12.5px; color:var(--ink-soft); margin-top:2px;}
+  .topbar-right{font-size:12px; color:var(--ink-soft); text-align:right;}
+
+  .card{
+    background:#fff; border:1px solid var(--paper-line);
+    border-radius:var(--radius); box-shadow:var(--shadow);
+    padding:20px 22px; margin-bottom:18px;
+  }
+  .card h2{font-size:16px; margin:0 0 14px 0; color:var(--navy); display:flex; align-items:center; gap:8px;}
+  .card h2 .badge{
+    font-family:'Public Sans'; font-size:10.5px; font-weight:700; text-transform:uppercase;
+    letter-spacing:.04em; background:var(--gold-soft); color:#7a5b17; padding:2px 8px; border-radius:20px;
+  }
+
+  .grid-stats{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:18px;}
+  @media(max-width:900px){.grid-stats{grid-template-columns:repeat(2,1fr);}}
+  .stat{
+    background:#fff; border:1px solid var(--paper-line); border-radius:var(--radius);
+    padding:16px 18px; box-shadow:var(--shadow);
+  }
+  .stat .label{font-size:11px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.05em;}
+  .stat .value{font-family:'JetBrains Mono'; font-size:21px; font-weight:600; margin-top:6px; color:var(--navy);}
+  .stat .value.green{color:var(--green);}
+  .stat .value.maroon{color:var(--maroon);}
+
+  table{width:100%; border-collapse:collapse; font-size:13px;}
+  th{
+    text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.04em;
+    color:var(--ink-soft); padding:9px 10px; border-bottom:2px solid var(--paper-line);
+    white-space:nowrap;
+  }
+  td{padding:9px 10px; border-bottom:1px solid var(--paper-line); vertical-align:middle;}
+  tr:hover td{background:#faf8f2;}
+  .num{font-family:'JetBrains Mono'; }
+  .right{text-align:right;}
+  .center{text-align:center;}
+
+  .btn{
+    display:inline-flex; align-items:center; gap:6px; cursor:pointer;
+    padding:8px 14px; border-radius:7px; border:1px solid transparent;
+    font-size:13px; font-weight:600; font-family:'Public Sans'; transition:all .15s;
+  }
+  .btn-primary{background:var(--navy); color:#fff;}
+  .btn-primary:hover{background:#141d31;}
+  .btn-gold{background:var(--gold); color:#2a2107;}
+  .btn-gold:hover{background:#b98a2e;}
+  .btn-outline{background:#fff; border-color:var(--paper-line); color:var(--navy);}
+  .btn-outline:hover{background:#f5f1e6;}
+  .btn-danger{background:#fff; border-color:var(--maroon-soft); color:var(--maroon);}
+  .btn-danger:hover{background:var(--maroon-soft);}
+  .btn-sm{padding:5px 10px; font-size:12px; border-radius:6px;}
+  .btn-block{width:100%; justify-content:center;}
+  .btn:disabled{opacity:.5; cursor:not-allowed;}
+  .icon-btn{
+    background:none;border:none;cursor:pointer;color:var(--ink-soft);padding:4px;border-radius:5px;
+  }
+  .icon-btn:hover{background:#f1ede1; color:var(--navy);}
+
+  input, select, textarea{
+    font-family:'Public Sans'; font-size:13.5px; padding:8px 10px;
+    border:1px solid #d9d2bf; border-radius:7px; background:#fffdf8; color:var(--ink);
+    width:100%;
+  }
+  input:focus, select:focus, textarea:focus{outline:2px solid var(--gold-soft); border-color:var(--gold);}
+  label{font-size:12px; font-weight:600; color:var(--ink-soft); display:block; margin-bottom:4px;}
+  .field{margin-bottom:13px;}
+  .field-row{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+
+  .pill{
+    display:inline-flex; align-items:center; gap:4px; padding:3px 9px; border-radius:20px;
+    font-size:11.5px; font-weight:700;
+  }
+  .pill.lunas{background:var(--green-soft); color:var(--green);}
+  .pill.belum{background:var(--maroon-soft); color:var(--maroon);}
+
+  .empty{
+    text-align:center; padding:40px 20px; color:var(--ink-soft);
+  }
+  .empty svg{width:40px;height:40px;opacity:.35; margin-bottom:10px;}
+
+  /* modal */
+  .overlay{
+    position:fixed; inset:0; background:rgba(20,29,49,0.55); display:none;
+    align-items:flex-start; justify-content:center; z-index:100; padding:40px 16px; overflow-y:auto;
+  }
+  .overlay.show{display:flex;}
+  .modal{
+    background:#fff; border-radius:12px; width:100%; max-width:480px; padding:22px 24px;
+    box-shadow:0 20px 60px rgba(0,0,0,0.35); margin-top:20px;
+  }
+  .modal.wide{max-width:640px;}
+  .modal-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;}
+  .modal-head h3{margin:0; font-size:17px; color:var(--navy);}
+  .modal-foot{display:flex; justify-content:flex-end; gap:8px; margin-top:18px;}
+
+  .toast-wrap{position:fixed; bottom:20px; right:20px; z-index:200; display:flex; flex-direction:column; gap:8px;}
+  .toast{
+    background:var(--navy); color:#fff; padding:11px 16px; border-radius:8px; font-size:13px;
+    box-shadow:0 8px 24px rgba(0,0,0,0.25); animation:slidein .2s ease-out; max-width:320px;
+  }
+  .toast.err{background:var(--maroon);}
+  .toast.ok{background:var(--green);}
+  @keyframes slidein{from{transform:translateY(8px); opacity:0;} to{transform:translateY(0); opacity:1;}}
+
+  .month-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:8px;}
+  @media(max-width:560px){.month-grid{grid-template-columns:repeat(3,1fr);}}
+  .month-chip{
+    border:1.5px solid var(--paper-line); border-radius:8px; padding:8px 6px; text-align:center;
+    cursor:pointer; font-size:12.5px; font-weight:600; color:var(--ink-soft); user-select:none;
+    transition:all .12s; position:relative;
+  }
+  .month-chip.paid{background:var(--green-soft); border-color:var(--green); color:var(--green); cursor:default;}
+  .month-chip.selected{background:var(--navy); border-color:var(--navy); color:#fff;}
+  .month-chip .amt{display:block; font-size:10px; font-weight:500; margin-top:2px; opacity:.85;}
+
+  .rekap-table th, .rekap-table td{text-align:center; padding:7px 6px;}
+  .rekap-table td.namecell, .rekap-table th.namecell{text-align:left; position:sticky; left:0; background:#fff; z-index:2;}
+  .rekap-table .cell-paid{color:var(--green); font-weight:600;}
+  .rekap-table .cell-unpaid{color:#c9c2ae;}
+  .rekap-scroll{overflow-x:auto;}
+
+  .search-box{position:relative; max-width:280px;}
+  .search-box svg{position:absolute; left:9px; top:9px; width:15px;height:15px; color:var(--ink-soft);}
+  .search-box input{padding-left:30px;}
+
+  select.tahun-select{max-width:110px; display:inline-block;}
+
+  /* ===== Print receipt ===== */
+  #printArea{display:none;}
+  @media print{
+    body *{visibility:hidden;}
+    #printArea, #printArea *{visibility:visible;}
+    #printArea{display:block; position:absolute; top:0; left:0; width:100%;}
+    @page{ size:A5; margin:10mm; }
+  }
+  .receipt{
+    width:148mm; margin:0 auto; padding:8mm; border:2px solid var(--navy);
+    border-radius:6px; font-family:'Public Sans'; position:relative; background:#fff;
+  }
+  .receipt-head{text-align:center; border-bottom:2px dashed var(--paper-line); padding-bottom:8px; margin-bottom:10px;}
+  .receipt-head .sekolah{font-family:'Fraunces',serif; font-size:16px; font-weight:700; color:var(--navy);}
+  .receipt-head .kelas{font-size:11.5px; color:var(--ink-soft); margin-top:1px;}
+  .receipt-title{font-family:'Fraunces',serif; text-align:center; font-size:14px; letter-spacing:.08em; text-transform:uppercase; margin:6px 0 12px 0; color:var(--maroon);}
+  .receipt-row{display:flex; justify-content:space-between; font-size:12.5px; padding:4px 0; border-bottom:1px dotted #e6e0cd;}
+  .receipt-row .k{color:var(--ink-soft);}
+  .receipt-row .v{font-weight:600; text-align:right;}
+  .receipt-total{
+    display:flex; justify-content:space-between; margin-top:10px; padding-top:8px;
+    border-top:2px solid var(--navy); font-family:'JetBrains Mono'; font-weight:700; font-size:15px;
+  }
+  .receipt-foot{display:flex; justify-content:space-between; margin-top:26px; font-size:11.5px;}
+  .receipt-foot .sign{text-align:center; width:45%;}
+  .receipt-foot .line{margin-top:34px; border-top:1px solid var(--ink); padding-top:3px;}
+  .stamp{
+    position:absolute; top:60px; right:16px; width:88px; height:88px; border-radius:50%;
+    border:3px solid var(--maroon); color:var(--maroon); display:flex; align-items:center; justify-content:center;
+    transform:rotate(-11deg); font-family:'Fraunces',serif; font-weight:700; font-size:15px; text-align:center;
+    line-height:1.15; letter-spacing:.03em; opacity:.85;
+  }
+  .stamp::before{
+    content:""; position:absolute; inset:5px; border:1.5px solid var(--maroon); border-radius:50%;
+  }
+  .receipt-no{font-family:'JetBrains Mono'; font-size:10.5px; color:var(--ink-soft); text-align:center; margin-top:10px;}
+
+  ::-webkit-scrollbar{height:8px; width:8px;}
+  ::-webkit-scrollbar-thumb{background:#d9d2bf; border-radius:8px;}
+
+  .helper{font-size:11.5px; color:var(--ink-soft); margin-top:4px;}
+  .config-box{background:#f7f3e8; border:1px dashed var(--gold); border-radius:8px; padding:14px 16px; margin-bottom:16px; font-size:12.5px; color:#6b5217;}
+  code.inl{background:#eee6cf; padding:1px 5px; border-radius:4px; font-family:'JetBrains Mono'; font-size:11.5px;}
+</style>
+</head>
+<body>
+
+<!-- ================= LOGIN SCREEN ================= -->
+<div class="auth-screen" id="loginScreen">
+  <div class="auth-card">
+    <div class="auth-brand"><div class="mark">K</div><div class="txt">Buku Kas Kelas</div></div>
+    <div class="auth-sub">Masuk dengan akun yang sudah didaftarkan oleh admin kelas. Belum punya akun? Hubungi admin/bendahara kelas Anda.</div>
+    <div class="field">
+      <label>Email</label>
+      <input type="email" id="loginEmail" placeholder="nama@sekolah.com" autocomplete="username">
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="btn btn-primary btn-block" onclick="doLogin()">Masuk</button>
+    <div class="auth-error" id="loginError"></div>
+    <button class="auth-foot-link" onclick="doResetPassword()">Lupa password? Kirim tautan reset ke email di atas</button>
+  </div>
+</div>
+
+<!-- ================= NO ACCESS SCREEN ================= -->
+<div class="auth-screen" id="noAccessScreen" style="display:none;">
+  <div class="auth-card">
+    <div class="auth-brand"><div class="mark">K</div><div class="txt">Buku Kas Kelas</div></div>
+    <p style="font-size:13.5px; color:var(--ink-soft); line-height:1.6;">
+      Akun <b id="noAccessEmail"></b> berhasil masuk, tapi belum diberi akses ke data kas kelas.
+      Minta admin menambahkan email ini di menu <b>Kelola User</b>.
+    </p>
+    <button class="btn btn-outline btn-block" onclick="doLogout()">Keluar</button>
+  </div>
+</div>
+
+<div id="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">K</div>
+      <div class="brand-text">
+        <div class="t1">Buku Kas Kelas</div>
+        <div class="t2" id="sbNamaKelas">Kas Kelas</div>
+      </div>
+    </div>
+
+    <div class="ta-switcher">
+      <label>Tahun Ajaran</label>
+      <select id="tahunAjaranSelect" onchange="onTahunAjaranSwitch()"></select>
+      <button class="ta-add-btn" onclick="openTahunAjaranModal()">+ Tahun Ajaran Baru</button>
+    </div>
+
+    <nav class="tabs" id="tabsNav">
+      <button class="tab-btn active" data-tab="dashboard">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+        Dashboard
+      </button>
+      <button class="tab-btn" data-tab="siswa">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.5 2.7-6 6-6s6 2.5 6 6"/><circle cx="17.5" cy="8.5" r="2.6"/><path d="M15.5 14.2c2.6.3 4.7 2.5 4.7 5.8"/></svg>
+        Master Siswa
+      </button>
+      <button class="tab-btn" data-tab="pembayaran">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="M2.5 10h19"/><path d="M6 14.5h4"/></svg>
+        Pencatatan Pembayaran
+      </button>
+      <button class="tab-btn" data-tab="cetak">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V3h12v6"/><rect x="4" y="9" width="16" height="8" rx="1.5"/><path d="M6 14h12v7H6z"/></svg>
+        Cetak Bukti Bayar
+      </button>
+      <button class="tab-btn" data-tab="laporan">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19V5"/><path d="M4 19h16"/><rect x="7" y="12" width="3" height="7"/><rect x="12.5" y="8" width="3" height="11"/><rect x="18" y="4" width="3" height="15"/></svg>
+        Rekap Laporan
+      </button>
+      <button class="tab-btn" data-tab="users" id="navUsersBtn" style="display:none;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8.5" cy="7" r="4"/><path d="M2 21v-2a6 6 0 0 1 6-6h1a6 6 0 0 1 6 6v2"/><path d="M17 11l2 2 4-4"/></svg>
+        Kelola User
+      </button>
+      <button class="tab-btn" data-tab="pengaturan">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+        Pengaturan
+      </button>
+    </nav>
+    <div class="sidebar-foot">
+      <div><span class="conn-dot off" id="connDot"></span><span id="connLabel">Mode lokal (belum tersambung)</span></div>
+      <div class="who-row">
+        <span class="email" id="whoEmail"></span>
+        <button class="logout-btn" onclick="doLogout()">Keluar</button>
+      </div>
+      <div style="margin-top:5px;">Buku Kas Kelas v2.0</div>
+    </div>
+  </aside>
+
+  <main>
+    <div class="content-wrap">
+
+      <!-- ================= DASHBOARD ================= -->
+      <section id="tab-dashboard" class="tab-panel">
+        <div class="topbar">
+          <div>
+            <h1>Dashboard</h1>
+            <div class="sub" id="dashSub">Ringkasan kas kelas bulan berjalan</div>
+          </div>
+          <div class="topbar-right" id="todayLabel"></div>
+        </div>
+
+        <div class="grid-stats" id="statGrid"></div>
+
+        <div class="card">
+          <h2>Status Pembayaran Bulan Ini <span class="badge" id="badgeBulanIni"></span></h2>
+          <div id="dashBulanIniTable"></div>
+        </div>
+
+        <div class="card">
+          <h2>Pembayaran Terbaru</h2>
+          <div id="dashRecentTable"></div>
+        </div>
+      </section>
+
+      <!-- ================= MASTER SISWA ================= -->
+      <section id="tab-siswa" class="tab-panel" style="display:none;">
+        <div class="topbar">
+          <div>
+            <h1>Master Siswa</h1>
+            <div class="sub">Data siswa &amp; nominal iuran kas kelas per bulan &mdash; tahun ajaran berjalan</div>
+          </div>
+          <button class="btn btn-primary" onclick="openSiswaModal()">+ Tambah Siswa</button>
+        </div>
+
+        <div class="card">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:10px;">
+            <div class="search-box">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+              <input type="text" id="searchSiswa" placeholder="Cari nama siswa..." oninput="renderSiswaTable()">
+            </div>
+            <div class="helper">Nominal default (jika siswa tidak punya nominal khusus): <b class="mono" id="nominalDefaultLabel"></b></div>
+          </div>
+          <div id="siswaTable"></div>
+        </div>
+      </section>
+
+      <!-- ================= PEMBAYARAN ================= -->
+      <section id="tab-pembayaran" class="tab-panel" style="display:none;">
+        <div class="topbar">
+          <div>
+            <h1>Pencatatan Pembayaran</h1>
+            <div class="sub">Catat pembayaran kas kelas per siswa, bisa untuk beberapa bulan sekaligus</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="field-row">
+            <div class="field">
+              <label>Pilih Siswa</label>
+              <select id="bayarSiswaSelect" onchange="onBayarSiswaChange()"></select>
+            </div>
+            <div class="field">
+              <label>Tahun</label>
+              <select id="bayarTahunSelect" class="tahun-select" onchange="onBayarSiswaChange()"></select>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Pilih Bulan yang Dibayar (klik untuk memilih, hijau = sudah lunas)</label>
+            <div class="month-grid" id="bayarMonthGrid"></div>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label>Tanggal Bayar</label>
+              <input type="date" id="bayarTanggal">
+            </div>
+            <div class="field">
+              <label>Metode</label>
+              <select id="bayarMetode">
+                <option value="Tunai">Tunai</option>
+                <option value="Transfer">Transfer</option>
+                <option value="QRIS">QRIS</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Keterangan (opsional)</label>
+            <input type="text" id="bayarKeterangan" placeholder="mis. dibayar oleh orang tua langsung">
+          </div>
+
+          <div class="field">
+            <label>Total Nominal</label>
+            <div class="mono" id="bayarTotalPreview" style="font-size:20px; font-weight:700; color:var(--navy);">Rp 0</div>
+          </div>
+
+          <button class="btn btn-primary" onclick="simpanPembayaran()">Simpan Pembayaran</button>
+        </div>
+
+        <div class="card">
+          <h2>Riwayat Pembayaran</h2>
+          <div style="display:flex; gap:10px; margin-bottom:12px; flex-wrap:wrap;">
+            <div class="search-box">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+              <input type="text" id="searchRiwayat" placeholder="Cari nama siswa..." oninput="renderRiwayatTable()">
+            </div>
+          </div>
+          <div id="riwayatTable"></div>
+        </div>
+      </section>
+
+      <!-- ================= CETAK BUKTI ================= -->
+      <section id="tab-cetak" class="tab-panel" style="display:none;">
+        <div class="topbar">
+          <div>
+            <h1>Cetak Bukti Bayar</h1>
+            <div class="sub">Pilih transaksi pembayaran untuk dicetak sebagai bukti bayar orang tua</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="search-box" style="margin-bottom:14px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+            <input type="text" id="searchCetak" placeholder="Cari nama siswa..." oninput="renderCetakTable()">
+          </div>
+          <div id="cetakTable"></div>
+        </div>
+      </section>
+
+      <!-- ================= LAPORAN ================= -->
+      <section id="tab-laporan" class="tab-panel" style="display:none;">
+        <div class="topbar">
+          <div>
+            <h1>Rekap Laporan</h1>
+            <div class="sub">Rekapitulasi status pembayaran kas seluruh siswa dalam tahun ajaran ini</div>
+          </div>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <select id="rekapTahunSelect" class="tahun-select" onchange="renderRekapTable()"></select>
+            <button class="btn btn-outline" onclick="window.print()">🖨 Cetak Laporan</button>
+          </div>
+        </div>
+
+        <div class="grid-stats" id="rekapStatGrid"></div>
+
+        <div class="card">
+          <h2>Matriks Pembayaran per Bulan</h2>
+          <div class="rekap-scroll" id="rekapTable"></div>
+        </div>
+      </section>
+
+      <!-- ================= KELOLA USER ================= -->
+      <section id="tab-users" class="tab-panel" style="display:none;">
+        <div class="topbar">
+          <div>
+            <h1>Kelola User</h1>
+            <div class="sub">Tambah akun untuk guru/bendahara lain &mdash; hanya admin yang bisa mengakses menu ini</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Tambah User Baru</h2>
+          <div class="field-row">
+            <div class="field">
+              <label>Email</label>
+              <input type="email" id="newUserEmail" placeholder="nama@sekolah.com">
+            </div>
+            <div class="field">
+              <label>Password Sementara</label>
+              <input type="text" id="newUserPassword" placeholder="min. 6 karakter">
+            </div>
+          </div>
+          <div class="field">
+            <label>Peran</label>
+            <select id="newUserRole">
+              <option value="bendahara">Bendahara (bisa input &amp; lihat data)</option>
+              <option value="admin">Admin (bisa kelola user lain)</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" onclick="addNewUser()">+ Tambah User</button>
+          <p class="helper">Sampaikan email &amp; password sementara ini secara pribadi ke yang bersangkutan. Mereka bisa menggantinya lewat "Lupa password" di layar login.</p>
+        </div>
+
+        <div class="card">
+          <h2>Daftar User</h2>
+          <div id="usersTable"></div>
+        </div>
+      </section>
+
+      <!-- ================= PENGATURAN ================= -->
+      <section id="tab-pengaturan" class="tab-panel" style="display:none;">
+        <div class="topbar">
+          <div>
+            <h1>Pengaturan</h1>
+            <div class="sub">Identitas kelas untuk tahun ajaran ini &amp; koneksi database</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Identitas Kelas &mdash; Tahun Ajaran Ini</h2>
+          <div class="field-row">
+            <div class="field">
+              <label>Nama Sekolah</label>
+              <input type="text" id="setNamaSekolah" placeholder="SD Negeri 01 Contoh">
+            </div>
+            <div class="field">
+              <label>Nama Kelas</label>
+              <input type="text" id="setNamaKelas" placeholder="Kelas 5A">
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Nominal Iuran Default / Bulan</label>
+              <input type="number" id="setNominalDefault" placeholder="10000">
+            </div>
+            <div class="field">
+              <label>Nama Wali Kelas</label>
+              <input type="text" id="setWaliKelas" placeholder="Bu Sari, S.Pd.">
+            </div>
+          </div>
+          <div class="field">
+            <label>Nama Bendahara Kas</label>
+            <input type="text" id="setBendahara" placeholder="Siti Aminah (Bendahara)">
+          </div>
+          <button class="btn btn-primary" onclick="saveIdentitas()">Simpan Identitas</button>
+        </div>
+
+        <div class="card">
+          <h2>Kelola Tahun Ajaran</h2>
+          <p class="helper">Setiap tahun ajaran adalah "buku" terpisah: daftar siswa &amp; rekap pembayarannya tidak tercampur dengan tahun ajaran lain. Data lama tetap tersimpan dan bisa dilihat kapan saja lewat pemilih di sidebar.</p>
+          <div id="taManageTable"></div>
+          <button class="btn btn-outline" style="margin-top:10px;" onclick="openTahunAjaranModal()">+ Tambah Tahun Ajaran</button>
+        </div>
+
+        <div class="card">
+          <h2>Koneksi Firebase <span class="badge" id="badgeKoneksi">Opsional</span></h2>
+          <div class="config-box">
+            Aplikasi ini sudah tertanam konfigurasi Firebase project <code class="inl">kas-kelas-9d42b</code> secara bawaan.
+            Kolom di bawah hanya diperlukan jika Anda ingin <b>mengganti</b> ke project Firebase lain milik Anda sendiri.
+          </div>
+          <div class="field">
+            <label>Ganti ke firebaseConfig lain (opsional, format JSON)</label>
+            <textarea id="fbConfigInput" rows="7" placeholder='{
+  "apiKey": "...",
+  "authDomain": "...",
+  "projectId": "...",
+  "storageBucket": "...",
+  "messagingSenderId": "...",
+  "appId": "..."
+}'></textarea>
+          </div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button class="btn btn-primary" onclick="saveFirebaseConfig()">Sambungkan ke Config Ini</button>
+            <button class="btn btn-outline" onclick="clearFirebaseConfig()">Kembalikan ke Config Bawaan</button>
+            <button class="btn btn-danger" onclick="forceLocalMode()">Paksa Mode Lokal (uji coba, tanpa login)</button>
+          </div>
+          <p class="helper" id="fbStatusText" style="margin-top:10px;"></p>
+        </div>
+
+        <div class="card">
+          <h2>Contoh Aturan Keamanan Firestore (wajib untuk mode online)</h2>
+          <p class="helper">Salin ke Firestore &rarr; Rules. Aturan ini mewajibkan login sebelum bisa membaca/menulis data apa pun, dan membatasi menu Kelola User hanya untuk admin.</p>
+          <pre class="mono" style="background:#f7f3e8; padding:12px 14px; border-radius:8px; font-size:11.5px; overflow-x:auto;">rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() { return request.auth != null; }
+    function myRole() {
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role
+        : null;
+    }
+    function isAdmin() { return isSignedIn() && myRole() == 'admin'; }
+
+    match /users/{uid} {
+      allow read: if isSignedIn() && (isAdmin() || request.auth.uid == uid);
+      allow write: if isAdmin();
+    }
+    match /tahunAjaran/{doc} { allow read, write: if isSignedIn(); }
+    match /siswa/{doc} { allow read, write: if isSignedIn(); }
+    match /pembayaran/{doc} { allow read, write: if isSignedIn(); }
+    match /pengaturan/{doc} { allow read, write: if isSignedIn(); }
+  }
+}</pre>
+        </div>
+
+        <div class="card">
+          <h2>Cadangkan / Pulihkan Data (mode lokal)</h2>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button class="btn btn-outline" onclick="exportBackup()">⬇ Unduh Backup (.json)</button>
+            <label class="btn btn-outline" style="cursor:pointer;">
+              ⬆ Pulihkan dari Backup
+              <input type="file" accept=".json" style="display:none;" onchange="importBackup(event)">
+            </label>
+          </div>
+          <p class="helper">Tombol ini hanya relevan untuk mode lokal (tanpa Firebase). Kalau sedang tersambung Firebase, backup terbaik dilakukan lewat Firebase Console (Firestore &rarr; Export).</p>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<!-- Modal Siswa -->
+<div class="overlay" id="modalSiswa">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="modalSiswaTitle">Tambah Siswa</h3>
+      <button class="icon-btn" onclick="closeModal('modalSiswa')">✕</button>
+    </div>
+    <input type="hidden" id="siswaId">
+    <div class="field">
+      <label>Nomor Absen</label>
+      <input type="number" id="siswaNoAbsen" placeholder="1">
+    </div>
+    <div class="field">
+      <label>Nama Lengkap</label>
+      <input type="text" id="siswaNama" placeholder="Nama siswa">
+    </div>
+    <div class="field">
+      <label>Nominal Iuran Khusus (kosongkan jika ikut nominal default)</label>
+      <input type="number" id="siswaNominalKhusus" placeholder="mis. 10000">
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeModal('modalSiswa')">Batal</button>
+      <button class="btn btn-primary" onclick="saveSiswa()">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Tahun Ajaran -->
+<div class="overlay" id="modalTahunAjaran">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Tambah Tahun Ajaran Baru</h3>
+      <button class="icon-btn" onclick="closeModal('modalTahunAjaran')">✕</button>
+    </div>
+    <div class="field">
+      <label>Label Tahun Ajaran</label>
+      <input type="text" id="taLabel" placeholder="2027/2028">
+    </div>
+    <div class="field">
+      <label>Salin Daftar Siswa dari Tahun Ajaran Lain (opsional)</label>
+      <select id="taCopyFrom"></select>
+    </div>
+    <p class="helper">Siswa hasil salinan bisa langsung diedit/dihapus/ditambah di menu Master Siswa. Data pembayaran <b>tidak</b> ikut disalin — tahun ajaran baru selalu mulai dari nol.</p>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeModal('modalTahunAjaran')">Batal</button>
+      <button class="btn btn-primary" onclick="createNewTahunAjaranFromModal()">Buat Tahun Ajaran</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Konfirmasi -->
+<div class="overlay" id="modalConfirm">
+  <div class="modal" style="max-width:380px;">
+    <div class="modal-head">
+      <h3>Konfirmasi</h3>
+      <button class="icon-btn" onclick="closeModal('modalConfirm')">✕</button>
+    </div>
+    <p id="confirmText" style="font-size:13.5px; color:var(--ink-soft);"></p>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeModal('modalConfirm')">Batal</button>
+      <button class="btn btn-danger" id="confirmActionBtn">Hapus</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<!-- Print area for receipt -->
+<div id="printArea"></div>
+
+<script>
+/* ============================================================
+   BUKU KAS KELAS v2 — single file app
+   Firebase Auth (login wajib) + Firestore, scoped per Tahun Ajaran
+   Fallback: mode lokal (localStorage) untuk uji coba tanpa login
+   ============================================================ */
+
+const BULAN = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
+const LS_KEY = "kaskelas_data_v2";
+const LS_FBCONFIG = "kaskelas_fbconfig_v1";
+const LS_FORCE_LOCAL = "kaskelas_force_local_v1";
+const LS_CURRENT_TA = "kaskelas_current_ta_v1";
+
+// Konfigurasi Firebase bawaan aplikasi ini (project: kas-kelas-9d42b)
+const DEFAULT_FIREBASE_CONFIG = {
+  apiKey: "AIzaSyAxhnpqcadvu7WuOc3_6ghKAP6YlCE3FuM",
+  authDomain: "kas-kelas-9d42b.firebaseapp.com",
+  projectId: "kas-kelas-9d42b",
+  storageBucket: "kas-kelas-9d42b.firebasestorage.app",
+  messagingSenderId: "826244565906",
+  appId: "1:826244565906:web:4ceca576f39ea961874f4b"
+};
+
+let DB = null;
+let AUTH = null;
+let USE_FIRESTORE = false;
+let REQUIRE_AUTH = false;      // true only when actually running against Firestore
+let currentUser = null;        // {uid, email, role}
+let unsubscribers = [];        // tahunAjaran + siswa + pembayaran listeners
+
+let tahunAjaranList = [];
+let currentTahunAjaranId = null;
+
+let state = {
+  siswa: [],       // {id, tahunAjaranId, noAbsen, nama, nominalKhusus}
+  pembayaran: []   // {id, tahunAjaranId, studentId, tahun, bulanList:[..], nominalPerBulan, total, tanggal, metode, keterangan, createdAt}
+};
+
+/* ---------------- Utilities ---------------- */
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+function rupiah(n){
+  n = Number(n)||0;
+  return new Intl.NumberFormat('id-ID', {style:'currency', currency:'IDR', minimumFractionDigits:0}).format(n);
+}
+function esc(s){
+  return String(s??"").replace(/[&<>"']/g, m => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
+}
+function toast(msg, type=""){
+  const wrap = document.getElementById('toastWrap');
+  const el = document.createElement('div');
+  el.className = 'toast' + (type?(' '+type):'');
+  el.textContent = msg;
+  wrap.appendChild(el);
+  setTimeout(()=>{ el.remove(); }, 3200);
+}
+function currentTA(){ return tahunAjaranList.find(t=>t.id===currentTahunAjaranId) || null; }
+function nominalUntukSiswa(siswaObj){
+  const ta = currentTA();
+  const def = ta ? Number(ta.nominalDefault||0) : 0;
+  if(!siswaObj) return def;
+  return (siswaObj.nominalKhusus !== null && siswaObj.nominalKhusus !== undefined && siswaObj.nominalKhusus !== "")
+    ? Number(siswaObj.nominalKhusus) : def;
+}
+function findSiswa(id){ return state.siswa.find(s=>s.id===id); }
+function currentSiswaList(){ return state.siswa.filter(s=>s.tahunAjaranId===currentTahunAjaranId); }
+
+function openModal(id){ document.getElementById(id).classList.add('show'); }
+function closeModal(id){ document.getElementById(id).classList.remove('show'); }
+function confirmAction(text, fn){
+  document.getElementById('confirmText').textContent = text;
+  const btn = document.getElementById('confirmActionBtn');
+  btn.onclick = ()=>{ fn(); closeModal('modalConfirm'); };
+  openModal('modalConfirm');
+}
+function translateAuthError(code){
+  const map = {
+    'auth/invalid-email':'Format email tidak valid.',
+    'auth/user-not-found':'Email tidak terdaftar.',
+    'auth/wrong-password':'Password salah.',
+    'auth/invalid-credential':'Email atau password salah.',
+    'auth/too-many-requests':'Terlalu banyak percobaan, coba lagi nanti.',
+    'auth/email-already-in-use':'Email ini sudah terdaftar.',
+    'auth/weak-password':'Password terlalu lemah (minimal 6 karakter).'
+  };
+  return map[code] || ('Terjadi kesalahan (' + (code||'tidak diketahui') + ')');
+}
+
+/* ---------------- Tabs ---------------- */
+document.getElementById('tabsNav').addEventListener('click', (e)=>{
+  const btn = e.target.closest('.tab-btn');
+  if(!btn) return;
+  switchTab(btn.dataset.tab);
+});
+function switchTab(tab){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
+  document.querySelectorAll('.tab-panel').forEach(p=>p.style.display='none');
+  document.getElementById('tab-'+tab).style.display='block';
+  if(tab==='dashboard') renderDashboard();
+  if(tab==='siswa') renderSiswaTable();
+  if(tab==='pembayaran') renderPembayaranTab();
+  if(tab==='cetak') renderCetakTable();
+  if(tab==='laporan') renderLaporanTab();
+  if(tab==='users') renderUsersTable();
+  if(tab==='pengaturan') renderPengaturanTab();
+}
+
+/* ============================================================
+   AUTH
+   ============================================================ */
+async function doLogin(){
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass = document.getElementById('loginPassword').value;
+  const errEl = document.getElementById('loginError');
+  errEl.textContent = '';
+  if(!email || !pass){ errEl.textContent = 'Isi email dan password.'; return; }
+  try{
+    await AUTH.signInWithEmailAndPassword(email, pass);
+  }catch(e){
+    errEl.textContent = translateAuthError(e.code);
+  }
+}
+function doLogout(){
+  if(AUTH) AUTH.signOut();
+}
+async function doResetPassword(){
+  const email = document.getElementById('loginEmail').value.trim();
+  const errEl = document.getElementById('loginError');
+  if(!email){ errEl.textContent = 'Isi email dulu untuk mengirim tautan reset.'; return; }
+  try{
+    await AUTH.sendPasswordResetEmail(email);
+    errEl.style.color = 'var(--green)';
+    errEl.textContent = 'Email reset password terkirim, cek inbox/spam.';
+  }catch(e){
+    errEl.style.color = 'var(--maroon)';
+    errEl.textContent = translateAuthError(e.code);
+  }
+}
+function showScreen(which){
+  document.getElementById('loginScreen').style.display = which==='login' ? 'flex' : 'none';
+  document.getElementById('noAccessScreen').style.display = which==='noaccess' ? 'flex' : 'none';
+  document.getElementById('app').classList.toggle('show', which==='app');
+}
+
+async function onAuthReady(user){
+  if(!user){
+    currentUser = null;
+    showScreen('login');
+    return;
+  }
+  try{
+    const doc = await DB.collection('users').doc(user.uid).get();
+    if(doc.exists){
+      currentUser = {uid:user.uid, email:user.email, role: doc.data().role || 'bendahara'};
+      document.getElementById('navUsersBtn').style.display = currentUser.role==='admin' ? 'flex' : 'none';
+      document.getElementById('whoEmail').textContent = currentUser.email;
+      showScreen('app');
+      await bootAppData();
+    }else{
+      document.getElementById('noAccessEmail').textContent = user.email;
+      showScreen('noaccess');
+    }
+  }catch(e){
+    toast('Gagal memuat data akun: '+e.message, 'err');
+    showScreen('login');
+  }
+}
+
+/* ============================================================
+   STORAGE ADAPTER (local fallback)
+   ============================================================ */
+function loadLocal(){
+  try{
+    const raw = localStorage.getItem(LS_KEY);
+    if(raw){
+      const parsed = JSON.parse(raw);
+      tahunAjaranList = parsed.tahunAjaranList || [];
+      state.siswa = parsed.siswa || [];
+      state.pembayaran = parsed.pembayaran || [];
+    }
+  }catch(e){ console.error(e); }
+}
+function saveLocal(){
+  localStorage.setItem(LS_KEY, JSON.stringify({tahunAjaranList, siswa: state.siswa, pembayaran: state.pembayaran}));
+}
+function setConnLabel(){
+  const dot = document.getElementById('connDot');
+  const label = document.getElementById('connLabel');
+  if(USE_FIRESTORE){
+    dot.className = 'conn-dot on';
+    label.textContent = 'Tersambung ke Firebase';
+  }else{
+    dot.className = 'conn-dot off';
+    label.textContent = 'Mode lokal (belum tersambung)';
+  }
+}
+
+async function initFirebase(){
+  if(localStorage.getItem(LS_FORCE_LOCAL)==='1'){ setConnLabel(); return false; }
+  const raw = localStorage.getItem(LS_FBCONFIG);
+  let cfg = DEFAULT_FIREBASE_CONFIG;
+  if(raw){
+    try{ cfg = JSON.parse(raw); }catch(e){ console.error('Config tersimpan tidak valid, memakai config bawaan.', e); }
+  }
+  if(!cfg || !cfg.apiKey || !cfg.projectId){ setConnLabel(); return false; }
+  try{
+    if(!firebase.apps.length){ firebase.initializeApp(cfg); }
+    DB = firebase.firestore();
+    AUTH = firebase.auth();
+    await DB.collection('tahunAjaran').limit(1).get(); // uji koneksi
+    USE_FIRESTORE = true;
+    setConnLabel();
+    return true;
+  }catch(e){
+    console.error(e);
+    toast('Gagal terhubung ke Firebase, memakai mode lokal sementara.', 'err');
+    DB = null; AUTH = null; USE_FIRESTORE = false;
+    setConnLabel();
+    return false;
+  }
+}
+
+/* ============================================================
+   DATA BOOT (tahun ajaran + siswa + pembayaran)
+   ============================================================ */
+async function bootAppData(){
+  unsubscribers.forEach(u=>u());
+  unsubscribers = [];
+
+  if(USE_FIRESTORE){
+    unsubscribers.push(DB.collection('tahunAjaran').orderBy('createdAt','asc').onSnapshot(snap=>{
+      tahunAjaranList = snap.docs.map(d=>({id:d.id, ...d.data()}));
+      afterTahunAjaranListLoaded();
+    }, err=>toast('Gagal memuat data tahun ajaran: '+err.message,'err')));
+
+    unsubscribers.push(DB.collection('siswa').onSnapshot(snap=>{
+      state.siswa = snap.docs.map(d=>({id:d.id, ...d.data()}));
+      refreshCurrentTab();
+    }, err=>toast('Gagal memuat data siswa: '+err.message,'err')));
+
+    unsubscribers.push(DB.collection('pembayaran').onSnapshot(snap=>{
+      state.pembayaran = snap.docs.map(d=>({id:d.id, ...d.data()}));
+      refreshCurrentTab();
+    }, err=>toast('Gagal memuat data pembayaran: '+err.message,'err')));
+  }else{
+    loadLocal();
+    afterTahunAjaranListLoaded();
+  }
+}
+
+async function afterTahunAjaranListLoaded(){
+  if(tahunAjaranList.length===0){
+    const y = new Date().getFullYear();
+    await createTahunAjaran({label:`${y}/${y+1}`, namaSekolah:'', namaKelas:'', waliKelas:'', bendahara:'', nominalDefault:10000});
+    return; // akan ter-trigger ulang lewat listener / local reload
+  }
+  const saved = localStorage.getItem(LS_CURRENT_TA);
+  if(saved && tahunAjaranList.find(t=>t.id===saved)){
+    currentTahunAjaranId = saved;
+  }else{
+    // default ke tahun ajaran yang paling baru dibuat
+    const sorted = tahunAjaranList.slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+    currentTahunAjaranId = sorted[0].id;
+  }
+  renderTahunAjaranSelect();
+  refreshCurrentTab();
+}
+
+function refreshCurrentTab(){
+  if(!currentTahunAjaranId && tahunAjaranList.length){ currentTahunAjaranId = tahunAjaranList[0].id; }
+  renderTahunAjaranSelect();
+  const activeBtn = document.querySelector('.tab-btn.active');
+  if(activeBtn) switchTab(activeBtn.dataset.tab);
+}
+
+/* ---- Tahun Ajaran CRUD ---- */
+async function createTahunAjaran(obj){
+  const payload = {createdAt: Date.now(), ...obj};
+  if(USE_FIRESTORE){
+    const ref = await DB.collection('tahunAjaran').add(payload);
+    return ref.id;
+  }else{
+    const id = uid();
+    tahunAjaranList.push({id, ...payload});
+    currentTahunAjaranId = id;
+    saveLocal();
+    renderTahunAjaranSelect();
+    refreshCurrentTab();
+    return id;
+  }
+}
+async function updateTahunAjaran(id, obj){
+  if(USE_FIRESTORE){
+    await DB.collection('tahunAjaran').doc(id).update(obj);
+  }else{
+    const idx = tahunAjaranList.findIndex(t=>t.id===id);
+    if(idx>-1) tahunAjaranList[idx] = {...tahunAjaranList[idx], ...obj};
+    saveLocal();
+    renderTahunAjaranSelect();
+    refreshCurrentTab();
+  }
+}
+async function deleteTahunAjaran(id){
+  if(USE_FIRESTORE){
+    await DB.collection('tahunAjaran').doc(id).delete();
+  }else{
+    tahunAjaranList = tahunAjaranList.filter(t=>t.id!==id);
+    if(currentTahunAjaranId===id){ currentTahunAjaranId = tahunAjaranList[0]?.id || null; }
+    saveLocal();
+    renderTahunAjaranSelect();
+    refreshCurrentTab();
+  }
+}
+
+function renderTahunAjaranSelect(){
+  const sel = document.getElementById('tahunAjaranSelect');
+  const sorted = tahunAjaranList.slice().sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
+  sel.innerHTML = sorted.map(t=>`<option value="${t.id}" ${t.id===currentTahunAjaranId?'selected':''}>${esc(t.label)}</option>`).join('');
+  const ta = currentTA();
+  document.getElementById('sbNamaKelas').textContent = ta ? (ta.namaKelas || ta.label) : 'Kas Kelas';
+}
+function onTahunAjaranSwitch(){
+  currentTahunAjaranId = document.getElementById('tahunAjaranSelect').value;
+  localStorage.setItem(LS_CURRENT_TA, currentTahunAjaranId);
+  refreshCurrentTab();
+}
+function openTahunAjaranModal(){
+  document.getElementById('taLabel').value = '';
+  const sel = document.getElementById('taCopyFrom');
+  const sorted = tahunAjaranList.slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+  sel.innerHTML = '<option value="">— Mulai kosong —</option>' +
+    sorted.map(t=>`<option value="${t.id}">${esc(t.label)} (salin ${state.siswa.filter(s=>s.tahunAjaranId===t.id).length} siswa)</option>`).join('');
+  openModal('modalTahunAjaran');
+}
+async function createNewTahunAjaranFromModal(){
+  const label = document.getElementById('taLabel').value.trim();
+  if(!label){ toast('Isi label tahun ajaran, mis. 2027/2028','err'); return; }
+  const copyFromId = document.getElementById('taCopyFrom').value;
+  const source = copyFromId ? tahunAjaranList.find(t=>t.id===copyFromId) : null;
+  const identity = source ? {
+    namaSekolah: source.namaSekolah||'', namaKelas: source.namaKelas||'',
+    waliKelas: source.waliKelas||'', bendahara: source.bendahara||'', nominalDefault: source.nominalDefault||10000
+  } : { namaSekolah:'', namaKelas:'', waliKelas:'', bendahara:'', nominalDefault:10000 };
+  try{
+    const newId = await createTahunAjaran({label, ...identity});
+    if(copyFromId){
+      const toCopy = state.siswa.filter(s=>s.tahunAjaranId===copyFromId);
+      for(const s of toCopy){
+        await dbAddSiswa({ noAbsen:s.noAbsen||0, nama:s.nama, nominalKhusus:(s.nominalKhusus??null) }, newId);
+      }
+      toast(`Tahun ajaran "${label}" dibuat, ${toCopy.length} siswa disalin`, 'ok');
+    }else{
+      toast(`Tahun ajaran "${label}" dibuat`, 'ok');
+    }
+    currentTahunAjaranId = newId;
+    localStorage.setItem(LS_CURRENT_TA, newId);
+    closeModal('modalTahunAjaran');
+    refreshCurrentTab();
+  }catch(e){ toast('Gagal membuat tahun ajaran: '+e.message, 'err'); }
+}
+function renderTaManageTable(){
+  const sorted = tahunAjaranList.slice().sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
+  const rows = sorted.map(t=>{
+    const jmlSiswa = state.siswa.filter(s=>s.tahunAjaranId===t.id).length;
+    const jmlBayar = state.pembayaran.filter(p=>p.tahunAjaranId===t.id).length;
+    const isActive = t.id===currentTahunAjaranId;
+    return `<tr ${isActive?'style="background:#faf6ec;"':''}>
+      <td>${esc(t.label)} ${isActive?'<span class="pill lunas">sedang dilihat</span>':''}</td>
+      <td class="center">${jmlSiswa}</td>
+      <td class="center">${jmlBayar}</td>
+      <td class="center">
+        ${isActive?'' : `<button class="btn btn-sm btn-outline" onclick="switchToTA('${t.id}')">Lihat</button>`}
+        <button class="icon-btn" title="Ganti label" onclick='renameTA("${t.id}")'>✎</button>
+        ${(jmlSiswa===0 && jmlBayar===0 && sorted.length>1) ? `<button class="icon-btn" title="Hapus" onclick='deleteTAConfirm("${t.id}")'>🗑</button>` : ''}
+      </td>
+    </tr>`;
+  }).join('');
+  document.getElementById('taManageTable').innerHTML = `
+    <table><thead><tr><th>Label</th><th class="center">Siswa</th><th class="center">Transaksi</th><th class="center">Aksi</th></tr></thead>
+    <tbody>${rows}</tbody></table>`;
+}
+function switchToTA(id){
+  currentTahunAjaranId = id;
+  localStorage.setItem(LS_CURRENT_TA, id);
+  refreshCurrentTab();
+}
+function renameTA(id){
+  const t = tahunAjaranList.find(x=>x.id===id);
+  const label = prompt('Label baru untuk tahun ajaran ini:', t?.label||'');
+  if(label && label.trim()){
+    updateTahunAjaran(id, {label:label.trim()}).then(()=>toast('Label diperbarui','ok'));
+  }
+}
+function deleteTAConfirm(id){
+  confirmAction('Hapus tahun ajaran ini? Hanya bisa dilakukan jika belum ada siswa/transaksi di dalamnya.', async ()=>{
+    try{ await deleteTahunAjaran(id); toast('Tahun ajaran dihapus','ok'); }
+    catch(e){ toast('Gagal menghapus: '+e.message,'err'); }
+  });
+}
+
+/* ---- Siswa CRUD ---- */
+async function dbAddSiswa(obj, tahunAjaranIdOverride){
+  const payload = {tahunAjaranId: tahunAjaranIdOverride || currentTahunAjaranId, ...obj};
+  if(USE_FIRESTORE){
+    const ref = await DB.collection('siswa').add(payload);
+    return ref.id;
+  }else{
+    const id = uid();
+    state.siswa.push({id, ...payload});
+    saveLocal();
+    return id;
+  }
+}
+async function dbUpdateSiswa(id, obj){
+  if(USE_FIRESTORE){
+    await DB.collection('siswa').doc(id).update(obj);
+  }else{
+    const idx = state.siswa.findIndex(s=>s.id===id);
+    if(idx>-1) state.siswa[idx] = {...state.siswa[idx], ...obj};
+    saveLocal();
+  }
+}
+async function dbDeleteSiswa(id){
+  if(USE_FIRESTORE){
+    await DB.collection('siswa').doc(id).delete();
+  }else{
+    state.siswa = state.siswa.filter(s=>s.id!==id);
+    saveLocal();
+  }
+}
+async function dbAddPembayaran(obj){
+  const payload = {tahunAjaranId: currentTahunAjaranId, ...obj};
+  if(USE_FIRESTORE){
+    const ref = await DB.collection('pembayaran').add(payload);
+    return ref.id;
+  }else{
+    const id = uid();
+    state.pembayaran.push({id, ...payload});
+    saveLocal();
+    return id;
+  }
+}
+async function dbDeletePembayaran(id){
+  if(USE_FIRESTORE){
+    await DB.collection('pembayaran').doc(id).delete();
+  }else{
+    state.pembayaran = state.pembayaran.filter(p=>p.id!==id);
+    saveLocal();
+  }
+}
+
+/* ============================================================
+   DASHBOARD
+   ============================================================ */
+function renderDashboard(){
+  const now = new Date();
+  const bulanIdx = now.getMonth()+1;
+  const tahun = now.getFullYear();
+  document.getElementById('todayLabel').textContent = now.toLocaleDateString('id-ID', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+  document.getElementById('badgeBulanIni').textContent = BULAN[bulanIdx-1] + ' ' + tahun;
+
+  const siswaTA = currentSiswaList();
+  const totalSiswa = siswaTA.length;
+  const paidThisMonth = siswaTA.filter(s => isBulanLunas(s.id, bulanIdx, tahun));
+  const totalTerkumpulBulanIni = paidThisMonth.reduce((sum,s)=> sum + nominalUntukSiswa(s), 0);
+  const totalSemuaWaktu = state.pembayaran.filter(p=>p.tahunAjaranId===currentTahunAjaranId).reduce((sum,p)=> sum + Number(p.total||0), 0);
+
+  document.getElementById('statGrid').innerHTML = `
+    <div class="stat"><div class="label">Total Siswa</div><div class="value">${totalSiswa}</div></div>
+    <div class="stat"><div class="label">Lunas Bulan Ini</div><div class="value green">${paidThisMonth.length} / ${totalSiswa}</div></div>
+    <div class="stat"><div class="label">Terkumpul Bulan Ini</div><div class="value mono">${rupiah(totalTerkumpulBulanIni)}</div></div>
+    <div class="stat"><div class="label">Total Kas Tahun Ajaran Ini</div><div class="value mono green">${rupiah(totalSemuaWaktu)}</div></div>
+  `;
+
+  if(totalSiswa===0){
+    document.getElementById('dashBulanIniTable').innerHTML = emptyState('Belum ada data siswa di tahun ajaran ini. Tambahkan di menu Master Siswa.');
+  }else{
+    const rows = siswaTA.slice().sort((a,b)=> (a.noAbsen||0)-(b.noAbsen||0)).map(s=>{
+      const lunas = isBulanLunas(s.id, bulanIdx, tahun);
+      return `<tr>
+        <td class="num">${esc(s.noAbsen||'-')}</td>
+        <td>${esc(s.nama)}</td>
+        <td class="right num">${rupiah(nominalUntukSiswa(s))}</td>
+        <td class="center">${lunas ? '<span class="pill lunas">✓ Lunas</span>' : '<span class="pill belum">Belum</span>'}</td>
+      </tr>`;
+    }).join('');
+    document.getElementById('dashBulanIniTable').innerHTML = `
+      <table><thead><tr><th>No</th><th>Nama</th><th class="right">Iuran</th><th class="center">Status</th></tr></thead>
+      <tbody>${rows}</tbody></table>`;
+  }
+
+  const recent = state.pembayaran.filter(p=>p.tahunAjaranId===currentTahunAjaranId)
+    .slice().sort((a,b)=> (b.createdAt||0)-(a.createdAt||0)).slice(0,8);
+  if(recent.length===0){
+    document.getElementById('dashRecentTable').innerHTML = emptyState('Belum ada transaksi pembayaran di tahun ajaran ini.');
+  }else{
+    const rows = recent.map(p=>{
+      const s = findSiswa(p.studentId);
+      return `<tr>
+        <td>${esc(s?.nama || '(siswa dihapus)')}</td>
+        <td>${(p.bulanList||[]).map(b=>BULAN[b-1].slice(0,3)).join(', ')} ${esc(p.tahun)}</td>
+        <td class="right num">${rupiah(p.total)}</td>
+        <td>${esc(p.tanggal)}</td>
+      </tr>`;
+    }).join('');
+    document.getElementById('dashRecentTable').innerHTML = `
+      <table><thead><tr><th>Nama</th><th>Bulan</th><th class="right">Nominal</th><th>Tanggal</th></tr></thead>
+      <tbody>${rows}</tbody></table>`;
+  }
+}
+function emptyState(msg){
+  return `<div class="empty">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 12h8M8 8h5"/></svg>
+    <div>${esc(msg)}</div>
+  </div>`;
+}
+function isBulanLunas(studentId, bulan, tahun){
+  return state.pembayaran.some(p => p.tahunAjaranId===currentTahunAjaranId && p.studentId===studentId && Number(p.tahun)===Number(tahun) && (p.bulanList||[]).includes(bulan));
+}
+
+/* ============================================================
+   MASTER SISWA
+   ============================================================ */
+function renderSiswaTable(){
+  const ta = currentTA();
+  document.getElementById('nominalDefaultLabel').textContent = rupiah(ta?.nominalDefault||0);
+  const q = (document.getElementById('searchSiswa').value||'').toLowerCase();
+  const list = currentSiswaList().filter(s=> s.nama.toLowerCase().includes(q)).sort((a,b)=>(a.noAbsen||0)-(b.noAbsen||0));
+  if(list.length===0){
+    document.getElementById('siswaTable').innerHTML = emptyState('Belum ada siswa di tahun ajaran ini. Klik "+ Tambah Siswa" untuk mulai.');
+    return;
+  }
+  const rows = list.map(s=>`
+    <tr>
+      <td class="num">${esc(s.noAbsen||'-')}</td>
+      <td>${esc(s.nama)}</td>
+      <td class="right num">${rupiah(nominalUntukSiswa(s))} ${ (s.nominalKhusus===undefined||s.nominalKhusus===null||s.nominalKhusus==='') ? '<span class="helper">(default)</span>' : ''}</td>
+      <td class="center">
+        <button class="icon-btn" title="Edit" onclick='editSiswa("${s.id}")'>✎</button>
+        <button class="icon-btn" title="Hapus" onclick='deleteSiswaConfirm("${s.id}", "${esc(s.nama)}")'>🗑</button>
+      </td>
+    </tr>`).join('');
+  document.getElementById('siswaTable').innerHTML = `
+    <table><thead><tr><th>No</th><th>Nama</th><th class="right">Nominal Iuran</th><th class="center">Aksi</th></tr></thead>
+    <tbody>${rows}</tbody></table>`;
+}
+function openSiswaModal(){
+  document.getElementById('modalSiswaTitle').textContent = 'Tambah Siswa';
+  document.getElementById('siswaId').value = '';
+  const list = currentSiswaList();
+  document.getElementById('siswaNoAbsen').value = (list.length ? Math.max(...list.map(s=>Number(s.noAbsen)||0))+1 : 1);
+  document.getElementById('siswaNama').value = '';
+  document.getElementById('siswaNominalKhusus').value = '';
+  openModal('modalSiswa');
+}
+function editSiswa(id){
+  const s = findSiswa(id);
+  if(!s) return;
+  document.getElementById('modalSiswaTitle').textContent = 'Edit Siswa';
+  document.getElementById('siswaId').value = s.id;
+  document.getElementById('siswaNoAbsen').value = s.noAbsen||'';
+  document.getElementById('siswaNama').value = s.nama||'';
+  document.getElementById('siswaNominalKhusus').value = (s.nominalKhusus??'');
+  openModal('modalSiswa');
+}
+async function saveSiswa(){
+  const id = document.getElementById('siswaId').value;
+  const nama = document.getElementById('siswaNama').value.trim();
+  if(!nama){ toast('Nama siswa wajib diisi','err'); return; }
+  const obj = {
+    noAbsen: Number(document.getElementById('siswaNoAbsen').value)||0,
+    nama,
+    nominalKhusus: document.getElementById('siswaNominalKhusus').value === '' ? null : Number(document.getElementById('siswaNominalKhusus').value)
+  };
+  try{
+    if(id){ await dbUpdateSiswa(id, obj); toast('Data siswa diperbarui','ok'); }
+    else{ await dbAddSiswa(obj); toast('Siswa ditambahkan','ok'); }
+    closeModal('modalSiswa');
+    if(!USE_FIRESTORE) renderSiswaTable();
+  }catch(e){ toast('Gagal menyimpan: '+e.message, 'err'); }
+}
+function deleteSiswaConfirm(id, nama){
+  confirmAction(`Hapus siswa "${nama}"? Riwayat pembayarannya tidak ikut terhapus.`, async ()=>{
+    try{ await dbDeleteSiswa(id); toast('Siswa dihapus','ok'); if(!USE_FIRESTORE) renderSiswaTable(); }
+    catch(e){ toast('Gagal menghapus: '+e.message,'err'); }
+  });
+}
+
+/* ============================================================
+   PEMBAYARAN
+   ============================================================ */
+let bayarSelectedMonths = new Set();
+
+function renderPembayaranTab(){
+  const sel = document.getElementById('bayarSiswaSelect');
+  sel.innerHTML = currentSiswaList().slice().sort((a,b)=>(a.noAbsen||0)-(b.noAbsen||0))
+    .map(s=>`<option value="${s.id}">${esc(s.noAbsen?('#'+s.noAbsen+' — '):'')}${esc(s.nama)}</option>`).join('');
+  const tahunSel = document.getElementById('bayarTahunSelect');
+  const nowY = new Date().getFullYear();
+  tahunSel.innerHTML = [nowY-1, nowY, nowY+1].map(y=>`<option value="${y}" ${y===nowY?'selected':''}>${y}</option>`).join('');
+  document.getElementById('bayarTanggal').value = new Date().toISOString().slice(0,10);
+  bayarSelectedMonths = new Set();
+  onBayarSiswaChange();
+  renderRiwayatTable();
+}
+function onBayarSiswaChange(){
+  bayarSelectedMonths = new Set();
+  const studentId = document.getElementById('bayarSiswaSelect').value;
+  const tahun = Number(document.getElementById('bayarTahunSelect').value);
+  const s = findSiswa(studentId);
+  const nominal = nominalUntukSiswa(s);
+  const grid = document.getElementById('bayarMonthGrid');
+  grid.innerHTML = BULAN.map((b,i)=>{
+    const bulanNum = i+1;
+    const paid = isBulanLunas(studentId, bulanNum, tahun);
+    return `<div class="month-chip ${paid?'paid':''}" data-bulan="${bulanNum}" onclick="toggleBulanChip(${bulanNum}, ${paid})">
+      ${b.slice(0,3)}<span class="amt">${paid ? '✓ Lunas' : rupiah(nominal)}</span>
+    </div>`;
+  }).join('');
+  updateBayarTotal();
+}
+function toggleBulanChip(bulan, paid){
+  if(paid) return;
+  if(bayarSelectedMonths.has(bulan)) bayarSelectedMonths.delete(bulan);
+  else bayarSelectedMonths.add(bulan);
+  document.querySelectorAll('#bayarMonthGrid .month-chip').forEach(el=>{
+    if(Number(el.dataset.bulan)===bulan) el.classList.toggle('selected', bayarSelectedMonths.has(bulan));
+  });
+  updateBayarTotal();
+}
+function updateBayarTotal(){
+  const studentId = document.getElementById('bayarSiswaSelect').value;
+  const s = findSiswa(studentId);
+  const nominal = nominalUntukSiswa(s);
+  const total = nominal * bayarSelectedMonths.size;
+  document.getElementById('bayarTotalPreview').textContent = rupiah(total);
+}
+async function simpanPembayaran(){
+  const studentId = document.getElementById('bayarSiswaSelect').value;
+  const tahun = Number(document.getElementById('bayarTahunSelect').value);
+  const tanggal = document.getElementById('bayarTanggal').value;
+  const metode = document.getElementById('bayarMetode').value;
+  const keterangan = document.getElementById('bayarKeterangan').value.trim();
+  const s = findSiswa(studentId);
+  if(!s){ toast('Pilih siswa terlebih dahulu','err'); return; }
+  if(bayarSelectedMonths.size===0){ toast('Pilih minimal satu bulan yang dibayar','err'); return; }
+  if(!tanggal){ toast('Tanggal bayar wajib diisi','err'); return; }
+  const nominal = nominalUntukSiswa(s);
+  const bulanList = Array.from(bayarSelectedMonths).sort((a,b)=>a-b);
+  const obj = {
+    studentId, tahun, bulanList,
+    nominalPerBulan: nominal,
+    total: nominal * bulanList.length,
+    tanggal, metode, keterangan,
+    createdAt: Date.now()
+  };
+  try{
+    await dbAddPembayaran(obj);
+    toast('Pembayaran berhasil dicatat','ok');
+    bayarSelectedMonths = new Set();
+    document.getElementById('bayarKeterangan').value = '';
+    onBayarSiswaChange();
+    renderRiwayatTable();
+  }catch(e){ toast('Gagal menyimpan pembayaran: '+e.message,'err'); }
+}
+function renderRiwayatTable(){
+  const q = (document.getElementById('searchRiwayat').value||'').toLowerCase();
+  const list = state.pembayaran.filter(p=>p.tahunAjaranId===currentTahunAjaranId)
+    .filter(p=>{ const s = findSiswa(p.studentId); return (s?.nama||'').toLowerCase().includes(q); })
+    .sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+  if(list.length===0){
+    document.getElementById('riwayatTable').innerHTML = emptyState('Belum ada riwayat pembayaran di tahun ajaran ini.');
+    return;
+  }
+  const rows = list.map(p=>{
+    const s = findSiswa(p.studentId);
+    return `<tr>
+      <td>${esc(s?.nama || '(siswa dihapus)')}</td>
+      <td>${(p.bulanList||[]).map(b=>BULAN[b-1].slice(0,3)).join(', ')} ${esc(p.tahun)}</td>
+      <td class="right num">${rupiah(p.total)}</td>
+      <td>${esc(p.tanggal)}</td>
+      <td>${esc(p.metode)}</td>
+      <td class="center">
+        <button class="icon-btn" title="Cetak Bukti" onclick='cetakBukti("${p.id}")'>🖨</button>
+        <button class="icon-btn" title="Hapus" onclick='deletePembayaranConfirm("${p.id}")'>🗑</button>
+      </td>
+    </tr>`;
+  }).join('');
+  document.getElementById('riwayatTable').innerHTML = `
+    <table><thead><tr><th>Nama</th><th>Bulan Dibayar</th><th class="right">Nominal</th><th>Tanggal</th><th>Metode</th><th class="center">Aksi</th></tr></thead>
+    <tbody>${rows}</tbody></table>`;
+}
+function deletePembayaranConfirm(id){
+  confirmAction('Hapus catatan pembayaran ini? Status bulan terkait akan kembali menjadi belum lunas.', async ()=>{
+    try{ await dbDeletePembayaran(id); toast('Pembayaran dihapus','ok'); if(!USE_FIRESTORE){ renderRiwayatTable(); } }
+    catch(e){ toast('Gagal menghapus: '+e.message,'err'); }
+  });
+}
+
+/* ============================================================
+   CETAK BUKTI
+   ============================================================ */
+function renderCetakTable(){
+  const q = (document.getElementById('searchCetak').value||'').toLowerCase();
+  const list = state.pembayaran.filter(p=>p.tahunAjaranId===currentTahunAjaranId)
+    .filter(p=>{ const s = findSiswa(p.studentId); return (s?.nama||'').toLowerCase().includes(q); })
+    .sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+  if(list.length===0){
+    document.getElementById('cetakTable').innerHTML = emptyState('Belum ada transaksi untuk dicetak di tahun ajaran ini.');
+    return;
+  }
+  const rows = list.map(p=>{
+    const s = findSiswa(p.studentId);
+    return `<tr>
+      <td>${esc(s?.nama || '(siswa dihapus)')}</td>
+      <td>${(p.bulanList||[]).map(b=>BULAN[b-1].slice(0,3)).join(', ')} ${esc(p.tahun)}</td>
+      <td class="right num">${rupiah(p.total)}</td>
+      <td>${esc(p.tanggal)}</td>
+      <td class="center"><button class="btn btn-sm btn-gold" onclick='cetakBukti("${p.id}")'>🖨 Cetak</button></td>
+    </tr>`;
+  }).join('');
+  document.getElementById('cetakTable').innerHTML = `
+    <table><thead><tr><th>Nama</th><th>Bulan Dibayar</th><th class="right">Nominal</th><th>Tanggal</th><th class="center">Aksi</th></tr></thead>
+    <tbody>${rows}</tbody></table>`;
+}
+function cetakBukti(paymentId){
+  const p = state.pembayaran.find(x=>x.id===paymentId);
+  if(!p){ toast('Data pembayaran tidak ditemukan','err'); return; }
+  const s = findSiswa(p.studentId);
+  const ta = currentTA();
+  const bulanText = (p.bulanList||[]).map(b=>BULAN[b-1]).join(', ');
+  const noKwitansi = 'KK-' + p.tahun + '-' + String(p.id).slice(-6).toUpperCase();
+  const tgl = p.tanggal ? new Date(p.tanggal).toLocaleDateString('id-ID', {day:'numeric', month:'long', year:'numeric'}) : '-';
+
+  document.getElementById('printArea').innerHTML = `
+    <div class="receipt">
+      <div class="stamp">LUNAS<br>KAS<br>KELAS</div>
+      <div class="receipt-head">
+        <div class="sekolah">${esc(ta?.namaSekolah || 'Nama Sekolah')}</div>
+        <div class="kelas">${esc(ta?.namaKelas || 'Nama Kelas')} &middot; Tahun Ajaran ${esc(ta?.label || '-')}</div>
+      </div>
+      <div class="receipt-title">Bukti Pembayaran Kas Kelas</div>
+      <div class="receipt-row"><span class="k">Nama Siswa</span><span class="v">${esc(s?.nama || '-')}</span></div>
+      <div class="receipt-row"><span class="k">No. Absen</span><span class="v">${esc(s?.noAbsen ?? '-')}</span></div>
+      <div class="receipt-row"><span class="k">Bulan Dibayar</span><span class="v">${esc(bulanText)}</span></div>
+      <div class="receipt-row"><span class="k">Tahun</span><span class="v">${esc(p.tahun)}</span></div>
+      <div class="receipt-row"><span class="k">Nominal / Bulan</span><span class="v">${rupiah(p.nominalPerBulan)}</span></div>
+      <div class="receipt-row"><span class="k">Jumlah Bulan</span><span class="v">${(p.bulanList||[]).length}</span></div>
+      <div class="receipt-row"><span class="k">Metode Bayar</span><span class="v">${esc(p.metode)}</span></div>
+      <div class="receipt-row"><span class="k">Tanggal Bayar</span><span class="v">${tgl}</span></div>
+      ${p.keterangan ? `<div class="receipt-row"><span class="k">Keterangan</span><span class="v">${esc(p.keterangan)}</span></div>` : ''}
+      <div class="receipt-total"><span>Total Dibayar</span><span>${rupiah(p.total)}</span></div>
+      <div class="receipt-foot">
+        <div class="sign">Orang Tua / Wali<div class="line">&nbsp;</div></div>
+        <div class="sign">${esc(ta?.bendahara || 'Bendahara Kelas')}<div class="line">&nbsp;</div></div>
+      </div>
+      <div class="receipt-no">No. Kwitansi: ${noKwitansi}</div>
+    </div>
+  `;
+  setTimeout(()=> window.print(), 80);
+}
+window.addEventListener('afterprint', ()=>{ document.getElementById('printArea').innerHTML = ''; });
+
+/* ============================================================
+   LAPORAN / REKAP
+   ============================================================ */
+function renderLaporanTab(){
+  const sel = document.getElementById('rekapTahunSelect');
+  const nowY = new Date().getFullYear();
+  const years = new Set([nowY-1, nowY, nowY+1]);
+  state.pembayaran.filter(p=>p.tahunAjaranId===currentTahunAjaranId).forEach(p=>years.add(Number(p.tahun)));
+  const sorted = Array.from(years).sort((a,b)=>a-b);
+  sel.innerHTML = sorted.map(y=>`<option value="${y}" ${y===nowY?'selected':''}>${y}</option>`).join('');
+  renderRekapTable();
+}
+function renderRekapTable(){
+  const tahun = Number(document.getElementById('rekapTahunSelect').value);
+  const siswaSorted = currentSiswaList().slice().sort((a,b)=>(a.noAbsen||0)-(b.noAbsen||0));
+
+  if(siswaSorted.length===0){
+    document.getElementById('rekapTable').innerHTML = emptyState('Belum ada data siswa di tahun ajaran ini.');
+    document.getElementById('rekapStatGrid').innerHTML = '';
+    return;
+  }
+
+  let grandTotal = 0;
+  const colTotals = new Array(12).fill(0);
+
+  const headerCols = BULAN.map(b=>`<th class="center">${b.slice(0,3)}</th>`).join('');
+  const rows = siswaSorted.map(s=>{
+    const nominal = nominalUntukSiswa(s);
+    let rowTotal = 0;
+    const cells = BULAN.map((b,i)=>{
+      const bulanNum = i+1;
+      const paid = isBulanLunas(s.id, bulanNum, tahun);
+      if(paid){ rowTotal += nominal; colTotals[i] += nominal; }
+      return `<td class="cell-${paid?'paid':'unpaid'}">${paid ? '✓' : '·'}</td>`;
+    }).join('');
+    grandTotal += rowTotal;
+    return `<tr>
+      <td class="namecell num">${esc(s.noAbsen||'-')}</td>
+      <td class="namecell" style="left:34px;">${esc(s.nama)}</td>
+      ${cells}
+      <td class="right num" style="font-weight:600;">${rupiah(rowTotal)}</td>
+    </tr>`;
+  }).join('');
+
+  const footCells = colTotals.map(t=>`<td class="num" style="font-size:10.5px;">${(t/1000).toFixed(0)}k</td>`).join('');
+
+  document.getElementById('rekapTable').innerHTML = `
+    <table class="rekap-table">
+      <thead><tr>
+        <th class="namecell">No</th><th class="namecell" style="left:34px;">Nama</th>
+        ${headerCols}<th class="right">Total</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+      <tfoot><tr style="background:#faf6ec; font-weight:700;">
+        <td class="namecell" colspan="2">Total per Bulan</td>
+        ${footCells}
+        <td class="right num">${rupiah(grandTotal)}</td>
+      </tr></tfoot>
+    </table>
+  `;
+
+  const totalSiswa = siswaSorted.length;
+  const totalSlotBulan = totalSiswa * 12;
+  let slotLunas = 0;
+  siswaSorted.forEach(s=> BULAN.forEach((b,i)=>{ if(isBulanLunas(s.id, i+1, tahun)) slotLunas++; }));
+  const persen = totalSlotBulan ? Math.round((slotLunas/totalSlotBulan)*100) : 0;
+
+  const ta = currentTA();
+  document.getElementById('rekapStatGrid').innerHTML = `
+    <div class="stat"><div class="label">Tahun Ajaran</div><div class="value" style="font-size:16px;">${esc(ta?.label||'-')}</div></div>
+    <div class="stat"><div class="label">Total Terkumpul (${tahun})</div><div class="value mono green">${rupiah(grandTotal)}</div></div>
+    <div class="stat"><div class="label">Kelengkapan Pembayaran</div><div class="value">${persen}%</div></div>
+    <div class="stat"><div class="label">Slot Lunas</div><div class="value">${slotLunas} / ${totalSlotBulan}</div></div>
+  `;
+}
+
+/* ============================================================
+   KELOLA USER (admin only)
+   ============================================================ */
+async function addNewUser(){
+  if(!USE_FIRESTORE){ toast('Kelola user hanya tersedia saat tersambung Firebase','err'); return; }
+  const email = document.getElementById('newUserEmail').value.trim();
+  const password = document.getElementById('newUserPassword').value;
+  const role = document.getElementById('newUserRole').value;
+  if(!email || password.length<6){ toast('Email & password (min 6 karakter) wajib diisi','err'); return; }
+  try{
+    let secondaryApp = firebase.apps.find(a=>a.name==='Secondary');
+    if(!secondaryApp){ secondaryApp = firebase.initializeApp(firebase.app().options, 'Secondary'); }
+    const secAuth = secondaryApp.auth();
+    const cred = await secAuth.createUserWithEmailAndPassword(email, password);
+    const newUid = cred.user.uid;
+    await DB.collection('users').doc(newUid).set({
+      email, role, addedAt: Date.now(), addedBy: currentUser.email
+    });
+    await secAuth.signOut();
+    toast('User berhasil ditambahkan','ok');
+    document.getElementById('newUserEmail').value = '';
+    document.getElementById('newUserPassword').value = '';
+    renderUsersTable();
+  }catch(e){
+    toast('Gagal menambah user: '+translateAuthError(e.code||''), 'err');
+  }
+}
+async function renderUsersTable(){
+  if(!USE_FIRESTORE){
+    document.getElementById('usersTable').innerHTML = emptyState('Kelola user hanya tersedia saat tersambung Firebase.');
+    return;
+  }
+  try{
+    const snap = await DB.collection('users').orderBy('addedAt','desc').get();
+    if(snap.empty){ document.getElementById('usersTable').innerHTML = emptyState('Belum ada user lain.'); return; }
+    const rows = snap.docs.map(d=>{
+      const u = d.data();
+      const isSelf = d.id===currentUser.uid;
+      return `<tr>
+        <td>${esc(u.email)}</td>
+        <td><span class="pill ${u.role==='admin'?'lunas':'belum'}">${esc(u.role)}</span></td>
+        <td>${u.addedAt ? new Date(u.addedAt).toLocaleDateString('id-ID') : '-'}</td>
+        <td class="center">${isSelf ? '<span class="helper">akun Anda</span>' : `<button class="btn btn-sm btn-danger" onclick='revokeUser("${d.id}","${esc(u.email)}")'>Cabut Akses</button>`}</td>
+      </tr>`;
+    }).join('');
+    document.getElementById('usersTable').innerHTML = `
+      <table><thead><tr><th>Email</th><th>Peran</th><th>Ditambahkan</th><th class="center">Aksi</th></tr></thead>
+      <tbody>${rows}</tbody></table>`;
+  }catch(e){
+    document.getElementById('usersTable').innerHTML = emptyState('Gagal memuat daftar user: '+e.message);
+  }
+}
+function revokeUser(uid, email){
+  confirmAction(`Cabut akses untuk ${email}? Akun Firebase Auth-nya tetap ada, hanya akses ke data kas kelas yang dicabut.`, async ()=>{
+    try{ await DB.collection('users').doc(uid).delete(); toast('Akses dicabut','ok'); renderUsersTable(); }
+    catch(e){ toast('Gagal mencabut akses: '+e.message,'err'); }
+  });
+}
+
+/* ============================================================
+   PENGATURAN
+   ============================================================ */
+function renderPengaturanTab(){
+  const ta = currentTA();
+  document.getElementById('setNamaSekolah').value = ta?.namaSekolah||'';
+  document.getElementById('setNamaKelas').value = ta?.namaKelas||'';
+  document.getElementById('setNominalDefault').value = ta?.nominalDefault||'';
+  document.getElementById('setWaliKelas').value = ta?.waliKelas||'';
+  document.getElementById('setBendahara').value = ta?.bendahara||'';
+
+  renderTaManageTable();
+
+  const badge = document.getElementById('badgeKoneksi');
+  const statusText = document.getElementById('fbStatusText');
+  const customCfg = localStorage.getItem(LS_FBCONFIG);
+  const forcedLocal = localStorage.getItem(LS_FORCE_LOCAL)==='1';
+  if(USE_FIRESTORE){
+    badge.textContent = 'Tersambung';
+    badge.style.background = 'var(--green-soft)'; badge.style.color = 'var(--green)';
+    statusText.innerHTML = customCfg
+      ? '✅ Tersambung ke Firebase project kustom milik Anda — data tersinkron realtime.'
+      : '✅ Tersambung ke Firebase project bawaan aplikasi ini — data tersinkron realtime ke semua yang membuka link ini.';
+  }else if(forcedLocal){
+    badge.textContent = 'Mode Lokal (dipaksa)';
+    badge.style.background = 'var(--gold-soft)'; badge.style.color = '#7a5b17';
+    statusText.innerHTML = 'ℹ️ Firebase dinonaktifkan manual pada perangkat ini. Data hanya tersimpan di browser ini.';
+  }else{
+    badge.textContent = 'Mode Lokal (fallback)';
+    badge.style.background = 'var(--maroon-soft)'; badge.style.color = 'var(--maroon)';
+    statusText.innerHTML = '⚠️ Gagal tersambung ke Firebase (cek koneksi internet / Firestore Rules), sementara memakai data lokal browser ini.';
+  }
+}
+async function saveIdentitas(){
+  const obj = {
+    namaSekolah: document.getElementById('setNamaSekolah').value.trim(),
+    namaKelas: document.getElementById('setNamaKelas').value.trim(),
+    nominalDefault: Number(document.getElementById('setNominalDefault').value)||0,
+    waliKelas: document.getElementById('setWaliKelas').value.trim(),
+    bendahara: document.getElementById('setBendahara').value.trim()
+  };
+  try{
+    await updateTahunAjaran(currentTahunAjaranId, obj);
+    toast('Identitas tahun ajaran ini disimpan','ok');
+  }catch(e){ toast('Gagal menyimpan: '+e.message,'err'); }
+}
+async function saveFirebaseConfig(){
+  const raw = document.getElementById('fbConfigInput').value.trim();
+  if(!raw){ toast('Tempel konfigurasi Firebase terlebih dahulu','err'); return; }
+  let cfg;
+  try{ cfg = JSON.parse(raw); }
+  catch(e){ toast('Format JSON tidak valid','err'); return; }
+  if(!cfg.apiKey || !cfg.projectId){ toast('Konfigurasi tidak lengkap (perlu apiKey & projectId)','err'); return; }
+  localStorage.removeItem(LS_FORCE_LOCAL);
+  localStorage.setItem(LS_FBCONFIG, JSON.stringify(cfg));
+  toast('Menyambungkan ke Firebase...','ok');
+  location.reload();
+}
+function clearFirebaseConfig(){
+  confirmAction('Kembalikan ke konfigurasi Firebase bawaan aplikasi ini?', ()=>{
+    localStorage.removeItem(LS_FBCONFIG);
+    localStorage.removeItem(LS_FORCE_LOCAL);
+    toast('Kembali ke config bawaan, memuat ulang...','ok');
+    setTimeout(()=>location.reload(), 600);
+  });
+}
+function forceLocalMode(){
+  confirmAction('Nonaktifkan Firebase di perangkat ini dan pakai data lokal saja (tanpa login)? Cocok untuk uji coba. Data Firestore online tidak terhapus/terpengaruh.', ()=>{
+    localStorage.setItem(LS_FORCE_LOCAL, '1');
+    toast('Mode lokal diaktifkan, memuat ulang...','ok');
+    setTimeout(()=>location.reload(), 600);
+  });
+}
+function exportBackup(){
+  const blob = new Blob([JSON.stringify({tahunAjaranList, siswa: state.siswa, pembayaran: state.pembayaran}, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'backup-kas-kelas-' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+function importBackup(evt){
+  const file = evt.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try{
+      const parsed = JSON.parse(reader.result);
+      confirmAction('Menimpa seluruh data lokal saat ini dengan isi file backup. Lanjutkan?', ()=>{
+        if(USE_FIRESTORE){
+          toast('Mode Firebase aktif — backup hanya bisa dipulihkan saat mode lokal. Nonaktifkan Firebase dulu jika perlu.', 'err');
+          return;
+        }
+        tahunAjaranList = parsed.tahunAjaranList || [];
+        state.siswa = parsed.siswa || [];
+        state.pembayaran = parsed.pembayaran || [];
+        saveLocal();
+        toast('Data berhasil dipulihkan','ok');
+        afterTahunAjaranListLoaded();
+      });
+    }catch(e){ toast('File backup tidak valid','err'); }
+  };
+  reader.readAsText(file);
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+(async function init(){
+  const ok = await initFirebase();
+  if(ok){
+    AUTH.onAuthStateChanged(onAuthReady);
+  }else{
+    // mode lokal murni (tanpa Firebase sama sekali): langsung masuk, tanpa login
+    currentUser = {uid:'local', email:'mode-lokal', role:'admin'};
+    document.getElementById('navUsersBtn').style.display = 'none';
+    document.getElementById('whoEmail').textContent = 'Mode lokal';
+    showScreen('app');
+    await bootAppData();
+  }
+})();
+</script>
+</body>
+</html>
