@@ -657,6 +657,19 @@
           <h2>Monthly Payment Matrix</h2>
           <div class="rekap-scroll" id="rekapTable"></div>
         </div>
+
+        <div class="card">
+          <h2>Share With Parents (Public Link)</h2>
+          <p class="helper">Publishes a read-only, sanitized snapshot (student names, monthly paid/unpaid status, and the current cash balance &mdash; no phone numbers or parent names) that anyone with the link can view without logging in. Nothing is shared until you click Publish, and it only updates when you click it again.</p>
+          <div id="publicLinkStatus" class="helper" style="margin-bottom:10px;"></div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+            <button class="btn btn-primary" onclick="publishPublicSummary()">Publish / Update Public Link</button>
+            <div class="field" id="publicLinkBox" style="flex:1; min-width:220px; margin-bottom:0; display:none;">
+              <input type="text" id="publicLinkInput" readonly onclick="this.select()">
+            </div>
+            <button class="btn btn-outline" id="copyPublicLinkBtn" style="display:none;" onclick="copyPublicLink()">Copy Link</button>
+          </div>
+        </div>
       </section>
 
       <!-- ================= EXPENSE ENTRY ================= -->
@@ -907,6 +920,7 @@ service cloud.firestore {
     match /kegiatan/{doc} { allow read, write: if isSignedIn(); }
     match /pengeluaran/{doc} { allow read, write: if isSignedIn(); }
     match /globalSettings/{doc} { allow read, write: if isSignedIn(); }
+    match /publicSummary/{doc} { allow read: if true; allow write: if isSignedIn(); }
   }
 }</pre>
         </div>
@@ -1133,6 +1147,11 @@ service cloud.firestore {
 <!-- Print area for receipt -->
 <div id="printArea"></div>
 
+<!-- Public read-only "share with parents" viewer (no login). Shown only when the URL has ?public=<schoolYearId> -->
+<div class="auth-screen" id="publicViewScreen" style="display:none; align-items:flex-start; padding-top:40px;">
+  <div class="auth-card" style="max-width:760px;" id="publicViewCard"></div>
+</div>
+
 <script>
 /* ============================================================
    CLASS CASH BOOK v2 — single file app
@@ -1187,6 +1206,8 @@ let currentTahunAjaranId = null;
 
 // Single running bank account (Bank Mandiri) — carries over across school years, NOT scoped per tahunAjaranId
 let saldoBank = { saldoAwal: 0, tanggalSaldoAwal: '', keterangan: '' };
+// Published (sanitized) snapshots for the public "share with parents" link — one doc per school year, doc id = tahunAjaranId
+let publicSummaryList = [];
 
 let state = {
   siswa: [],       // {id, tahunAjaranId, noAbsen, nama, nominalKhusus}
@@ -1445,6 +1466,11 @@ async function bootAppData(){
       saldoBank = doc.exists ? doc.data() : { saldoAwal:0, tanggalSaldoAwal:'', keterangan:'' };
       refreshCurrentTab();
     }, err=>toast('Failed to load bank balance data: '+err.message,'err')));
+
+    unsubscribers.push(DB.collection('publicSummary').onSnapshot(snap=>{
+      publicSummaryList = snap.docs.map(d=>({id:d.id, ...d.data()}));
+      refreshCurrentTab();
+    }, err=>toast('Failed to load public link status: '+err.message,'err')));
   }else{
     loadLocal();
     afterTahunAjaranListLoaded();
@@ -2369,6 +2395,7 @@ function renderLaporanTab(){
   const ta = currentTA();
   document.getElementById('rekapPeriodeBadge').textContent = periodeLabelTA(ta?.label);
   renderRekapTable();
+  renderPublicLinkStatus();
 }
 function renderRekapTable(){
   const ta = currentTA();
@@ -2431,6 +2458,79 @@ function renderRekapTable(){
     <div class="stat"><div class="label">Payment Completeness</div><div class="value">${persen}%</div></div>
     <div class="stat"><div class="label">Paid Slots</div><div class="value">${slotLunas} / ${totalSlotBulan}</div></div>
   `;
+}
+
+/* ---- Public "share with parents" link (sanitized read-only snapshot, no login required) ---- */
+function publicShareUrl(tahunAjaranId){
+  return location.origin + location.pathname + '?public=' + encodeURIComponent(tahunAjaranId);
+}
+function currentPublicSummary(){
+  return publicSummaryList.find(x=>x.id===currentTahunAjaranId) || null;
+}
+function renderPublicLinkStatus(){
+  const statusEl = document.getElementById('publicLinkStatus');
+  const boxEl = document.getElementById('publicLinkBox');
+  const copyBtn = document.getElementById('copyPublicLinkBtn');
+  if(!USE_FIRESTORE){
+    statusEl.textContent = 'The public link only works when connected to Firebase (it needs a shared online backend to read from).';
+    boxEl.style.display = 'none';
+    copyBtn.style.display = 'none';
+    return;
+  }
+  const snap = currentPublicSummary();
+  if(!snap){
+    statusEl.textContent = 'Not published yet for this school year. Click "Publish / Update Public Link" to create one.';
+    boxEl.style.display = 'none';
+    copyBtn.style.display = 'none';
+    return;
+  }
+  const when = snap.updatedAt ? new Date(snap.updatedAt).toLocaleString('en-US', {dateStyle:'medium', timeStyle:'short'}) : '-';
+  statusEl.innerHTML = `✅ Published. Last updated: <b>${esc(when)}</b>. Anyone with the link below can view it without logging in.`;
+  boxEl.style.display = '';
+  copyBtn.style.display = '';
+  document.getElementById('publicLinkInput').value = publicShareUrl(currentTahunAjaranId);
+}
+async function publishPublicSummary(){
+  if(!USE_FIRESTORE){ toast('Connect to Firebase first — the public link needs a shared online backend','err'); return; }
+  const ta = currentTA();
+  const siswaSorted = currentSiswaList().slice().sort((a,b)=>(a.noAbsen||0)-(b.noAbsen||0));
+  const siswaRingkas = siswaSorted.map(s=>({
+    nama: s.nama,
+    noAbsen: s.noAbsen||null,
+    bulanLunas: PERIODE_URUT.filter(bulanNum=> isBulanLunas(s.id, bulanNum, tahunUntukBulan(ta?.label, bulanNum)))
+  }));
+  const totalSiswa = siswaSorted.length;
+  const totalSlotBulan = totalSiswa * 12;
+  let slotLunas = 0, grandTotal = 0;
+  siswaSorted.forEach(s=>{
+    const nominal = nominalUntukSiswa(s);
+    PERIODE_URUT.forEach(bulanNum=>{
+      if(isBulanLunas(s.id, bulanNum, tahunUntukBulan(ta?.label, bulanNum))){ slotLunas++; grandTotal += nominal; }
+    });
+  });
+  const persen = totalSlotBulan ? Math.round((slotLunas/totalSlotBulan)*100) : 0;
+  const payload = {
+    namaSekolah: ta?.namaSekolah || '',
+    namaKelas: ta?.namaKelas || '',
+    label: ta?.label || '',
+    periode: periodeLabelTA(ta?.label),
+    siswaRingkas,
+    totalSiswa, grandTotal, persen, slotLunas, totalSlotBulan,
+    saldoBankSaatIni: saldoBankSaatIni(),
+    updatedAt: Date.now()
+  };
+  try{
+    await DB.collection('publicSummary').doc(currentTahunAjaranId).set(payload);
+    toast('Public link published/updated','ok');
+  }catch(e){ toast('Failed to publish: '+e.message,'err'); }
+}
+function copyPublicLink(){
+  const input = document.getElementById('publicLinkInput');
+  input.select();
+  navigator.clipboard?.writeText(input.value).then(()=> toast('Link copied','ok')).catch(()=>{
+    document.execCommand('copy');
+    toast('Link copied','ok');
+  });
 }
 
 /* ============================================================
@@ -3002,9 +3102,76 @@ function importBackup(evt){
 }
 
 /* ============================================================
+   PUBLIC VIEW (read-only, no login — for the "share with parents" link)
+   ============================================================ */
+function renderPublicSummaryHTML(data){
+  const rows = (data.siswaRingkas||[]).map((s,i)=>{
+    const cells = PERIODE_URUT.map(bulanNum=>{
+      const paid = (s.bulanLunas||[]).includes(bulanNum);
+      return `<td class="cell-${paid?'paid':'unpaid'}">${paid?'✓':'·'}</td>`;
+    }).join('');
+    return `<tr><td class="namecell num">${esc(s.noAbsen ?? (i+1))}</td><td class="namecell" style="left:34px;">${esc(s.nama)}</td>${cells}</tr>`;
+  }).join('');
+  const headerCols = PERIODE_URUT.map(bulanNum=>`<th class="center">${BULAN[bulanNum-1].slice(0,3)}</th>`).join('');
+  const when = data.updatedAt ? new Date(data.updatedAt).toLocaleString('en-US', {dateStyle:'long', timeStyle:'short'}) : '-';
+  return `
+    <div class="auth-brand"><div class="mark">K</div><div class="txt">Class Cash Book</div></div>
+    <h2 style="margin:0 0 2px 0; color:var(--navy);">${esc(data.namaKelas || data.label || 'Class Cash')}</h2>
+    <div class="helper" style="margin-bottom:16px;">${esc(data.namaSekolah||'')} &middot; School Year ${esc(data.label||'-')} &middot; ${esc(data.periode||'')}</div>
+    <div class="grid-stats" style="grid-template-columns:repeat(2,1fr); margin-bottom:18px;">
+      <div class="stat"><div class="label">Total Collected</div><div class="value mono green">${rupiah(data.grandTotal)}</div></div>
+      <div class="stat"><div class="label">Payment Completeness</div><div class="value">${data.persen}%</div></div>
+      <div class="stat"><div class="label">Bank Balance</div><div class="value mono">${rupiah(data.saldoBankSaatIni)}</div></div>
+      <div class="stat"><div class="label">Paid Slots</div><div class="value">${data.slotLunas} / ${data.totalSlotBulan}</div></div>
+    </div>
+    <div class="rekap-scroll">
+      <table class="rekap-table">
+        <thead><tr><th class="namecell">No</th><th class="namecell" style="left:34px;">Name</th>${headerCols}</tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+    <p class="helper" style="margin-top:14px; text-align:center;">Last updated: ${esc(when)} &middot; View-only, no login required</p>
+  `;
+}
+function initPublicView(tahunAjaranId){
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('noAccessScreen').style.display = 'none';
+  document.getElementById('app').classList.remove('show');
+  const screen = document.getElementById('publicViewScreen');
+  const card = document.getElementById('publicViewCard');
+  screen.style.display = 'flex';
+  card.innerHTML = '<p class="helper">Loading class cash summary…</p>';
+
+  let cfg = DEFAULT_FIREBASE_CONFIG;
+  try{
+    const raw = localStorage.getItem(LS_FBCONFIG);
+    if(raw) cfg = JSON.parse(raw);
+  }catch(e){ /* ignore, use default */ }
+
+  try{
+    if(!firebase.apps.length){ firebase.initializeApp(cfg); }
+    const db = firebase.firestore();
+    db.collection('publicSummary').doc(tahunAjaranId).onSnapshot(doc=>{
+      if(!doc.exists){
+        card.innerHTML = '<div class="auth-brand"><div class="mark">K</div><div class="txt">Class Cash Book</div></div><p class="helper">This link isn\'t published yet, or the school year no longer exists. Ask the class treasurer to publish/update the link.</p>';
+        return;
+      }
+      card.innerHTML = renderPublicSummaryHTML(doc.data());
+    }, err=>{
+      card.innerHTML = '<div class="auth-brand"><div class="mark">K</div><div class="txt">Class Cash Book</div></div><p class="helper">Could not load this report: '+esc(err.message)+'</p>';
+    });
+  }catch(e){
+    card.innerHTML = '<p class="helper">Could not load this report: '+esc(e.message)+'</p>';
+  }
+}
+
+/* ============================================================
    INIT
    ============================================================ */
 (async function init(){
+  const publicId = new URLSearchParams(location.search).get('public');
+  if(publicId){ initPublicView(publicId); return; }
+
   const ok = await initFirebase();
   if(ok){
     AUTH.onAuthStateChanged(onAuthReady);
