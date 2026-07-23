@@ -530,7 +530,25 @@
         <div class="grid-stats" id="statGrid"></div>
 
         <div class="card">
-          <h2>Payment Status This Month <span class="badge" id="badgeBulanIni"></span></h2>
+          <h2>Payment Status <span class="badge" id="badgeBulanIni"></span></h2>
+          <div style="display:flex; gap:10px; margin-bottom:12px; flex-wrap:wrap; align-items:flex-end;">
+            <div class="field" style="margin-bottom:0; max-width:170px;">
+              <label>Month</label>
+              <select id="dashBulanFilter" onchange="renderDashBulanIniTable()"></select>
+            </div>
+            <div class="field" style="margin-bottom:0; max-width:150px;">
+              <label>Status</label>
+              <select id="dashStatusFilter" onchange="renderDashBulanIniTable()">
+                <option value="all">All</option>
+                <option value="unpaid">Unpaid only</option>
+                <option value="paid">Paid only</option>
+              </select>
+            </div>
+            <div class="search-box" style="flex:1; min-width:160px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+              <input type="text" id="dashSearchSiswa" placeholder="Search student name..." oninput="renderDashBulanIniTable()">
+            </div>
+          </div>
           <div id="dashBulanIniTable"></div>
         </div>
 
@@ -1845,12 +1863,58 @@ function generateNoRefPengeluaran(){
 /* ============================================================
    DASHBOARD
    ============================================================ */
+/* Renders the "Payment Status" table using whichever month/status/name filters are currently selected */
+function renderDashBulanIniTable(){
+  const monthSel = document.getElementById('dashBulanFilter');
+  const [bulanNum, tahun] = (monthSel.value||'').split('-').map(Number);
+  document.getElementById('badgeBulanIni').textContent = (BULAN[bulanNum-1]||'') + ' ' + (tahun||'');
+
+  const statusFilter = document.getElementById('dashStatusFilter').value;
+  const q = (document.getElementById('dashSearchSiswa').value||'').toLowerCase();
+  const siswaTA = currentSiswaList();
+
+  if(siswaTA.length===0){
+    document.getElementById('dashBulanIniTable').innerHTML = emptyState('No student data yet in this school year. Add some in the Student Records menu.');
+    return;
+  }
+
+  const rows = siswaTA.slice().sort((a,b)=> (a.noAbsen||0)-(b.noAbsen||0))
+    .map(s=>({ s, lunas: isBulanLunas(s.id, bulanNum, tahun) }))
+    .filter(r=> r.s.nama.toLowerCase().includes(q))
+    .filter(r=> statusFilter==='all' ? true : statusFilter==='paid' ? r.lunas : !r.lunas);
+
+  if(rows.length===0){
+    document.getElementById('dashBulanIniTable').innerHTML = emptyState('No students match this filter.');
+    return;
+  }
+
+  const trs = rows.map(({s,lunas})=>`<tr>
+      <td class="num">${esc(s.noAbsen||'-')}</td>
+      <td>${esc(s.nama)}</td>
+      <td class="right num">${rupiah(nominalUntukSiswa(s))}</td>
+      <td class="center">${lunas ? '<span class="pill lunas">✓ Paid</span>' : '<span class="pill belum">Unpaid</span>'}</td>
+    </tr>`).join('');
+  document.getElementById('dashBulanIniTable').innerHTML = `
+    <table><thead><tr><th>No</th><th>Name</th><th class="right">Dues</th><th class="center">Status</th></tr></thead>
+    <tbody>${trs}</tbody></table>`;
+}
 function renderDashboard(){
   const now = new Date();
   const bulanIdx = now.getMonth()+1;
   const tahun = now.getFullYear();
   document.getElementById('todayLabel').textContent = now.toLocaleDateString('id-ID', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
-  document.getElementById('badgeBulanIni').textContent = BULAN[bulanIdx-1] + ' ' + tahun;
+
+  const ta = currentTA();
+  const monthSel = document.getElementById('dashBulanFilter');
+  const prevSelected = monthSel.value;
+  monthSel.innerHTML = PERIODE_URUT.map(bn=>{
+    const y = tahunUntukBulan(ta?.label, bn);
+    return `<option value="${bn}-${y}">${BULAN[bn-1]} ${y}</option>`;
+  }).join('');
+  const inPeriod = PERIODE_URUT.some(bn=> bn===bulanIdx && tahunUntukBulan(ta?.label, bn)===tahun);
+  const defaultValue = inPeriod ? `${bulanIdx}-${tahun}` : `${PERIODE_URUT[0]}-${tahunUntukBulan(ta?.label, PERIODE_URUT[0])}`;
+  const stillValid = Array.from(monthSel.options).some(o=>o.value===prevSelected);
+  monthSel.value = stillValid ? prevSelected : defaultValue;
 
   const siswaTA = currentSiswaList();
   const totalSiswa = siswaTA.length;
@@ -1868,22 +1932,7 @@ function renderDashboard(){
     <div class="stat"><div class="label">Bank Balance (Bank Mandiri)</div><div class="value mono">${rupiah(saldoBankSaatIni())}</div></div>
   `;
 
-  if(totalSiswa===0){
-    document.getElementById('dashBulanIniTable').innerHTML = emptyState('No student data yet in this school year. Add some in the Student Records menu.');
-  }else{
-    const rows = siswaTA.slice().sort((a,b)=> (a.noAbsen||0)-(b.noAbsen||0)).map(s=>{
-      const lunas = isBulanLunas(s.id, bulanIdx, tahun);
-      return `<tr>
-        <td class="num">${esc(s.noAbsen||'-')}</td>
-        <td>${esc(s.nama)}</td>
-        <td class="right num">${rupiah(nominalUntukSiswa(s))}</td>
-        <td class="center">${lunas ? '<span class="pill lunas">✓ Paid</span>' : '<span class="pill belum">Unpaid</span>'}</td>
-      </tr>`;
-    }).join('');
-    document.getElementById('dashBulanIniTable').innerHTML = `
-      <table><thead><tr><th>No</th><th>Name</th><th class="right">Dues</th><th class="center">Status</th></tr></thead>
-      <tbody>${rows}</tbody></table>`;
-  }
+  renderDashBulanIniTable();
 
   const recent = state.pembayaran.filter(p=>p.tahunAjaranId===currentTahunAjaranId)
     .slice().sort((a,b)=> (b.createdAt||0)-(a.createdAt||0)).slice(0,8);
