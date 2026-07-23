@@ -414,6 +414,8 @@
   .guide-nav{display:flex; flex-wrap:wrap; gap:6px;}
   .guide-nav a{font-size:12px; font-weight:600; color:var(--navy); background:var(--paper); border:1px solid var(--paper-line); padding:5px 11px; border-radius:20px; text-decoration:none; scroll-margin-top:14px;}
   .guide-nav a:hover{background:var(--gold-soft);}
+  .guide-nav-grp{width:100%; font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-soft); margin:10px 0 2px 0;}
+  .guide-nav-grp:first-child{margin-top:0;}
   .guide-tip{background:var(--green-soft); border-left:4px solid var(--green); border-radius:6px; padding:10px 14px; margin:12px 0; font-size:13.5px;}
   .guide-tip b{color:var(--green);}
   .guide-warn{background:var(--maroon-soft); border-left:4px solid var(--maroon); border-radius:6px; padding:10px 14px; margin:12px 0; font-size:13.5px;}
@@ -1006,24 +1008,30 @@ service cloud.firestore {
         <div class="card">
           <h2>Jump to a section</h2>
           <div class="guide-nav">
+            <div class="guide-nav-grp">Overview</div>
             <a href="#g-intro">Introduction</a>
             <a href="#g-login">Logging In</a>
             <a href="#g-schoolyear">School Years</a>
+            <div class="guide-nav-grp">Cash In</div>
             <a href="#g-dashboard">Dashboard</a>
             <a href="#g-students">Student Records</a>
             <a href="#g-payment">Payment Entry</a>
             <a href="#g-receipt">Print Receipt</a>
             <a href="#g-report">Report Summary</a>
             <a href="#g-sharelink">Sharing With Parents</a>
+            <div class="guide-nav-grp">Cash Out</div>
             <a href="#g-accounts">Chart of Accounts</a>
             <a href="#g-activities">Activities</a>
             <a href="#g-expense">Expense Entry</a>
             <a href="#g-ledger">Expense Ledger</a>
+            <div class="guide-nav-grp">Bank &amp; Access</div>
             <a href="#g-cashbalance">Cash Balance</a>
             <a href="#g-users">Manage Users</a>
+            <div class="guide-nav-grp">Setup</div>
             <a href="#g-settings">Settings</a>
             <a href="#g-firebase">Firebase Connection</a>
             <a href="#g-backup">Backup &amp; Restore</a>
+            <div class="guide-nav-grp">Help</div>
             <a href="#g-tips">Tips &amp; Troubleshooting</a>
           </div>
         </div>
