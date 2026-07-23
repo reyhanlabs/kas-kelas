@@ -365,6 +365,7 @@
   .receipt-foot{display:flex; justify-content:space-between; margin-top:26px; font-size:11.5px;}
   .receipt-foot .sign{text-align:center; width:45%;}
   .receipt-foot .line{margin-top:34px; border-top:1px solid var(--ink); padding-top:3px;}
+  .receipt-foot .role-label{font-size:10.5px; color:var(--ink-soft); margin-top:2px;}
   .stamp{
     position:absolute; top:50%; left:50%; transform:translate(-50%,-50%) rotate(-11deg);
     width:110px; height:110px; border-radius:50%; z-index:0; pointer-events:none;
@@ -2347,7 +2348,7 @@ function buildReceiptHTML(p, s, ta){
       <div class="receipt-total"><span>Total Paid</span><span>${rupiah(p.total)}</span></div>
       <div class="receipt-foot">
         <div class="sign">Parent / Guardian<div class="line">&nbsp;</div></div>
-        <div class="sign">${esc(ta?.bendahara || 'Class Treasurer')}<div class="line">&nbsp;</div></div>
+        <div class="sign">${esc(ta?.bendahara || 'Class Treasurer')}<div class="line">&nbsp;</div><div class="role-label">Class 4A Treasurer</div></div>
       </div>
       <div class="receipt-no">Receipt No.: ${noKwitansi}</div>
     </div>
