@@ -314,15 +314,19 @@
   .receipt-foot .sign{text-align:center; width:45%;}
   .receipt-foot .line{margin-top:34px; border-top:1px solid var(--ink); padding-top:3px;}
   .stamp{
-    position:absolute; top:60px; right:16px; width:88px; height:88px; border-radius:50%;
+    position:absolute; top:50%; left:50%; transform:translate(-50%,-50%) rotate(-11deg);
+    width:110px; height:110px; border-radius:50%; z-index:0; pointer-events:none;
     border:3px solid var(--maroon); color:var(--maroon); display:flex; align-items:center; justify-content:center;
-    transform:rotate(-11deg); font-family:'Fraunces',serif; font-weight:700; font-size:15px; text-align:center;
-    line-height:1.15; letter-spacing:.03em; opacity:.85;
+    font-family:'Fraunces',serif; font-weight:700; font-size:15px; text-align:center;
+    line-height:1.15; letter-spacing:.03em; opacity:.16;
   }
   .stamp::before{
     content:""; position:absolute; inset:5px; border:1.5px solid var(--maroon); border-radius:50%;
   }
-  .receipt-no{font-family:'JetBrains Mono'; font-size:10.5px; color:var(--ink-soft); text-align:center; margin-top:10px;}
+  .receipt-head, .receipt-title, .receipt-row, .receipt-total, .receipt-foot{
+    position:relative; z-index:1;
+  }
+  .receipt-no{font-family:'JetBrains Mono'; font-size:10.5px; color:var(--ink-soft); text-align:center; margin-top:10px; position:relative; z-index:1;}
 
   ::-webkit-scrollbar{height:8px; width:8px;}
   ::-webkit-scrollbar-thumb{background:#d9d2bf; border-radius:8px;}
