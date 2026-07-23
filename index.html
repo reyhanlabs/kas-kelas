@@ -9,6 +9,8 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
   :root{
     --navy:#1E2A44;
@@ -738,6 +740,14 @@ service cloud.firestore {
       <input type="text" id="siswaNama" placeholder="Nama siswa">
     </div>
     <div class="field">
+      <label>Nama Orang Tua / Wali</label>
+      <input type="text" id="siswaNamaOrtu" placeholder="mis. Bapak/Ibu ...">
+    </div>
+    <div class="field">
+      <label>No. HP / WhatsApp Orang Tua</label>
+      <input type="tel" id="siswaNoHp" placeholder="mis. 081234567890">
+    </div>
+    <div class="field">
       <label>Nominal Iuran Khusus (kosongkan jika ikut nominal default)</label>
       <input type="number" id="siswaNominalKhusus" placeholder="mis. 10000">
     </div>
@@ -999,7 +1009,9 @@ async function initFirebase(){
     if(!firebase.apps.length){ firebase.initializeApp(cfg); }
     DB = firebase.firestore();
     AUTH = firebase.auth();
-    await DB.collection('tahunAjaran').limit(1).get(); // uji koneksi
+    // Catatan: tidak melakukan tes-baca ke Firestore di sini, karena Firestore Rules
+    // mewajibkan login (isSignedIn()) — baca sebelum auth siap akan selalu ditolak
+    // walau config sudah benar. Validasi koneksi sesungguhnya terjadi saat login/baca data nanti.
     USE_FIRESTORE = true;
     setConnLabel();
     return true;
@@ -1138,7 +1150,7 @@ async function createNewTahunAjaranFromModal(){
     if(copyFromId){
       const toCopy = state.siswa.filter(s=>s.tahunAjaranId===copyFromId);
       for(const s of toCopy){
-        await dbAddSiswa({ noAbsen:s.noAbsen||0, nama:s.nama, nominalKhusus:(s.nominalKhusus??null) }, newId);
+        await dbAddSiswa({ noAbsen:s.noAbsen||0, nama:s.nama, namaOrtu:(s.namaOrtu||''), noHp:(s.noHp||''), nominalKhusus:(s.nominalKhusus??null) }, newId);
       }
       toast(`Tahun ajaran "${label}" dibuat, ${toCopy.length} siswa disalin`, 'ok');
     }else{
@@ -1326,6 +1338,8 @@ function renderSiswaTable(){
     <tr>
       <td class="num">${esc(s.noAbsen||'-')}</td>
       <td>${esc(s.nama)}</td>
+      <td>${esc(s.namaOrtu||'-')}</td>
+      <td>${esc(s.noHp||'-')}</td>
       <td class="right num">${rupiah(nominalUntukSiswa(s))} ${ (s.nominalKhusus===undefined||s.nominalKhusus===null||s.nominalKhusus==='') ? '<span class="helper">(default)</span>' : ''}</td>
       <td class="center">
         <button class="icon-btn" title="Edit" onclick='editSiswa("${s.id}")'>✎</button>
@@ -1333,7 +1347,7 @@ function renderSiswaTable(){
       </td>
     </tr>`).join('');
   document.getElementById('siswaTable').innerHTML = `
-    <table><thead><tr><th>No</th><th>Nama</th><th class="right">Nominal Iuran</th><th class="center">Aksi</th></tr></thead>
+    <table><thead><tr><th>No</th><th>Nama</th><th>Orang Tua/Wali</th><th>No. HP</th><th class="right">Nominal Iuran</th><th class="center">Aksi</th></tr></thead>
     <tbody>${rows}</tbody></table>`;
 }
 function openSiswaModal(){
@@ -1342,6 +1356,8 @@ function openSiswaModal(){
   const list = currentSiswaList();
   document.getElementById('siswaNoAbsen').value = (list.length ? Math.max(...list.map(s=>Number(s.noAbsen)||0))+1 : 1);
   document.getElementById('siswaNama').value = '';
+  document.getElementById('siswaNamaOrtu').value = '';
+  document.getElementById('siswaNoHp').value = '';
   document.getElementById('siswaNominalKhusus').value = '';
   openModal('modalSiswa');
 }
@@ -1352,6 +1368,8 @@ function editSiswa(id){
   document.getElementById('siswaId').value = s.id;
   document.getElementById('siswaNoAbsen').value = s.noAbsen||'';
   document.getElementById('siswaNama').value = s.nama||'';
+  document.getElementById('siswaNamaOrtu').value = s.namaOrtu||'';
+  document.getElementById('siswaNoHp').value = s.noHp||'';
   document.getElementById('siswaNominalKhusus').value = (s.nominalKhusus??'');
   openModal('modalSiswa');
 }
@@ -1362,6 +1380,8 @@ async function saveSiswa(){
   const obj = {
     noAbsen: Number(document.getElementById('siswaNoAbsen').value)||0,
     nama,
+    namaOrtu: document.getElementById('siswaNamaOrtu').value.trim(),
+    noHp: document.getElementById('siswaNoHp').value.trim(),
     nominalKhusus: document.getElementById('siswaNominalKhusus').value === '' ? null : Number(document.getElementById('siswaNominalKhusus').value)
   };
   try{
@@ -1508,23 +1528,23 @@ function renderCetakTable(){
       <td>${(p.bulanList||[]).map(b=>BULAN[b-1].slice(0,3)).join(', ')} ${esc(p.tahun)}</td>
       <td class="right num">${rupiah(p.total)}</td>
       <td>${esc(p.tanggal)}</td>
-      <td class="center"><button class="btn btn-sm btn-gold" onclick='cetakBukti("${p.id}")'>🖨 Cetak</button></td>
+      <td class="center" style="white-space:nowrap;">
+        <button class="btn btn-sm btn-gold" onclick='cetakBukti("${p.id}")' title="Cetak">🖨 Cetak</button>
+        <button class="btn btn-sm btn-outline" onclick='unduhBuktiGambar("${p.id}")' title="Unduh sebagai gambar (PNG)">🖼️ Gambar</button>
+        <button class="btn btn-sm btn-outline" onclick='unduhBuktiPDF("${p.id}")' title="Unduh sebagai PDF">📄 PDF</button>
+        <button class="btn btn-sm btn-outline" onclick='kirimBuktiWA("${p.id}")' title="Kirim ke WhatsApp orang tua">💬 WA</button>
+      </td>
     </tr>`;
   }).join('');
   document.getElementById('cetakTable').innerHTML = `
     <table><thead><tr><th>Nama</th><th>Bulan Dibayar</th><th class="right">Nominal</th><th>Tanggal</th><th class="center">Aksi</th></tr></thead>
     <tbody>${rows}</tbody></table>`;
 }
-function cetakBukti(paymentId){
-  const p = state.pembayaran.find(x=>x.id===paymentId);
-  if(!p){ toast('Data pembayaran tidak ditemukan','err'); return; }
-  const s = findSiswa(p.studentId);
-  const ta = currentTA();
+function buildReceiptHTML(p, s, ta){
   const bulanText = (p.bulanList||[]).map(b=>BULAN[b-1]).join(', ');
   const noKwitansi = 'KK-' + p.tahun + '-' + String(p.id).slice(-6).toUpperCase();
   const tgl = p.tanggal ? new Date(p.tanggal).toLocaleDateString('id-ID', {day:'numeric', month:'long', year:'numeric'}) : '-';
-
-  document.getElementById('printArea').innerHTML = `
+  return `
     <div class="receipt">
       <div class="stamp">LUNAS<br>KAS<br>KELAS</div>
       <div class="receipt-head">
@@ -1534,6 +1554,7 @@ function cetakBukti(paymentId){
       <div class="receipt-title">Bukti Pembayaran Kas Kelas</div>
       <div class="receipt-row"><span class="k">Nama Siswa</span><span class="v">${esc(s?.nama || '-')}</span></div>
       <div class="receipt-row"><span class="k">No. Absen</span><span class="v">${esc(s?.noAbsen ?? '-')}</span></div>
+      ${s?.namaOrtu ? `<div class="receipt-row"><span class="k">Orang Tua/Wali</span><span class="v">${esc(s.namaOrtu)}</span></div>` : ''}
       <div class="receipt-row"><span class="k">Bulan Dibayar</span><span class="v">${esc(bulanText)}</span></div>
       <div class="receipt-row"><span class="k">Tahun</span><span class="v">${esc(p.tahun)}</span></div>
       <div class="receipt-row"><span class="k">Nominal / Bulan</span><span class="v">${rupiah(p.nominalPerBulan)}</span></div>
@@ -1549,9 +1570,104 @@ function cetakBukti(paymentId){
       <div class="receipt-no">No. Kwitansi: ${noKwitansi}</div>
     </div>
   `;
+}
+function cetakBukti(paymentId){
+  const p = state.pembayaran.find(x=>x.id===paymentId);
+  if(!p){ toast('Data pembayaran tidak ditemukan','err'); return; }
+  const s = findSiswa(p.studentId);
+  const ta = currentTA();
+  document.getElementById('printArea').innerHTML = buildReceiptHTML(p, s, ta);
   setTimeout(()=> window.print(), 80);
 }
 window.addEventListener('afterprint', ()=>{ document.getElementById('printArea').innerHTML = ''; });
+
+/* ---- Render bukti ke canvas (dipakai untuk export gambar/PDF/WA) ---- */
+async function renderReceiptToCanvas(paymentId){
+  const p = state.pembayaran.find(x=>x.id===paymentId);
+  if(!p){ toast('Data pembayaran tidak ditemukan','err'); return null; }
+  if(typeof html2canvas === 'undefined'){
+    toast('Pustaka export gambar belum termuat. Periksa koneksi internet lalu muat ulang halaman.','err');
+    return null;
+  }
+  const s = findSiswa(p.studentId);
+  const ta = currentTA();
+  const holder = document.createElement('div');
+  holder.style.cssText = 'position:fixed; left:-9999px; top:0; background:#fff; padding:0; margin:0;';
+  holder.innerHTML = buildReceiptHTML(p, s, ta);
+  document.body.appendChild(holder);
+  const receiptEl = holder.querySelector('.receipt');
+  await new Promise(r=>setTimeout(r, 60));
+  let canvas;
+  try{
+    canvas = await html2canvas(receiptEl, {scale:3, backgroundColor:'#ffffff', useCORS:true});
+  } finally {
+    document.body.removeChild(holder);
+  }
+  return {canvas, p, s};
+}
+function safeFileName(nama){ return (nama||'siswa').replace(/[^a-zA-Z0-9]+/g,'_').replace(/^_+|_+$/g,''); }
+function normalizeWaNumber(noHp){
+  if(!noHp) return '';
+  let n = String(noHp).replace(/[^0-9]/g,'');
+  if(!n) return '';
+  if(n.startsWith('0')) n = '62' + n.slice(1);
+  else if(!n.startsWith('62')) n = '62' + n;
+  return n;
+}
+function pesanBuktiWA(p, s){
+  const bulanText = (p.bulanList||[]).map(b=>BULAN[b-1]).join(', ');
+  return `Assalamu'alaikum, berikut bukti pembayaran kas kelas a.n. *${s?.nama || '-'}* untuk bulan ${bulanText} ${p.tahun} sebesar ${rupiah(p.total)}. Terima kasih.`;
+}
+async function unduhBuktiGambar(paymentId){
+  const res = await renderReceiptToCanvas(paymentId);
+  if(!res) return;
+  const link = document.createElement('a');
+  link.download = `bukti-bayar-${safeFileName(res.s?.nama)}-${res.p.tahun}.png`;
+  link.href = res.canvas.toDataURL('image/png');
+  link.click();
+  toast('Gambar bukti bayar diunduh','ok');
+}
+async function unduhBuktiPDF(paymentId){
+  if(!window.jspdf){ toast('Pustaka export PDF belum termuat. Periksa koneksi internet lalu muat ulang halaman.','err'); return; }
+  const res = await renderReceiptToCanvas(paymentId);
+  if(!res) return;
+  const {jsPDF} = window.jspdf;
+  const pdf = new jsPDF({unit:'mm', format:'a5'});
+  const pageW = pdf.internal.pageSize.getWidth();
+  const pageH = pdf.internal.pageSize.getHeight();
+  const margin = 10;
+  const imgW = pageW - margin*2;
+  const imgH = Math.min((res.canvas.height * imgW) / res.canvas.width, pageH - margin*2);
+  const x = (pageW - imgW) / 2;
+  const y = margin;
+  pdf.addImage(res.canvas.toDataURL('image/png'), 'PNG', x, y, imgW, imgH);
+  pdf.save(`bukti-bayar-${safeFileName(res.s?.nama)}-${res.p.tahun}.pdf`);
+  toast('PDF bukti bayar diunduh','ok');
+}
+async function kirimBuktiWA(paymentId){
+  const res = await renderReceiptToCanvas(paymentId);
+  if(!res) return;
+  const {canvas, p, s} = res;
+  const pesan = pesanBuktiWA(p, s);
+  const noHpWA = normalizeWaNumber(s?.noHp);
+  canvas.toBlob(async (blob)=>{
+    if(!blob){ toast('Gagal membuat gambar bukti','err'); return; }
+    const file = new File([blob], `bukti-bayar-${safeFileName(s?.nama)}.png`, {type:'image/png'});
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      try{
+        await navigator.share({files:[file], text: pesan, title:'Bukti Pembayaran Kas Kelas'});
+        return;
+      }catch(err){ if(err && err.name==='AbortError') return; }
+    }
+    const link = document.createElement('a');
+    link.download = file.name;
+    link.href = URL.createObjectURL(blob);
+    link.click();
+    toast('Gambar bukti diunduh. Lampirkan manual di chat WhatsApp yang terbuka.', 'ok');
+    const waUrl = (noHpWA ? `https://wa.me/${noHpWA}` : 'https://wa.me/') + `?text=${encodeURIComponent(pesan)}`;
+    window.open(waUrl, '_blank');
+  }, 'image/png');
+}
 
 /* ============================================================
    LAPORAN / REKAP

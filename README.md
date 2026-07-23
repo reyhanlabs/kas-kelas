@@ -66,7 +66,7 @@ Admin juga bisa **Cabut Akses** seorang user kapan saja — akun Firebase Auth-n
 
 - `users/{uid}` → `{ email, role: 'admin'|'bendahara', addedAt, addedBy }`
 - `tahunAjaran/{id}` → `{ label, namaSekolah, namaKelas, waliKelas, bendahara, nominalDefault, createdAt }`
-- `siswa/{id}` → `{ tahunAjaranId, noAbsen, nama, nominalKhusus }`
+- `siswa/{id}` → `{ tahunAjaranId, noAbsen, nama, namaOrtu, noHp, nominalKhusus }`
 - `pembayaran/{id}` → `{ tahunAjaranId, studentId, tahun, bulanList: [1..12], nominalPerBulan, total, tanggal, metode, keterangan, createdAt }`
 
 ## Deploy ke GitHub + Vercel
@@ -81,6 +81,17 @@ git push -u origin main
 ```
 
 Di [vercel.com](https://vercel.com) → **Add New → Project** → import repo → Framework preset: **Other** (static HTML, tanpa build step) → **Deploy**.
+
+## Cetak Bukti Bayar — Kirim WA, Export Gambar & PDF
+
+Di tab **Cetak Bukti Bayar**, tiap transaksi punya 4 tombol aksi:
+
+- **🖨 Cetak** — cetak langsung / simpan sebagai PDF lewat dialog print browser.
+- **🖼️ Gambar** — unduh bukti sebagai file PNG.
+- **📄 PDF** — unduh bukti sebagai file PDF ukuran A5.
+- **💬 WA** — kirim bukti ke WhatsApp orang tua. Di HP (Android/iOS Chrome/Safari terbaru) tombol ini membuka jendela "Bagikan" bawaan sistem sehingga gambar bukti bisa langsung dipilih ke aplikasi WhatsApp beserta pesan teksnya. Jika browser tidak mendukung fitur bagikan file, gambar bukti akan otomatis terunduh dan tab WhatsApp (ke nomor **No. HP** siswa jika sudah diisi di Master Siswa) akan terbuka dengan pesan teks siap kirim — tinggal lampirkan gambar yang baru diunduh secara manual.
+
+> Isi field **No. HP / WhatsApp Orang Tua** di Master Siswa supaya tombol WA langsung membuka chat ke nomor yang tepat.
 
 ## Mode lokal / tanpa Firebase (opsional, untuk uji coba)
 
