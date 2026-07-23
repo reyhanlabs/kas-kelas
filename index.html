@@ -168,6 +168,13 @@
   @media(max-width:480px){
     .grid-stats{grid-template-columns:1fr;}
   }
+  /* Public "share with parents" viewer */
+  .public-view-screen{align-items:flex-start !important; padding:24px 16px !important;}
+  .public-view-card{max-width:760px !important; padding:26px 24px;}
+  @media(max-width:600px){
+    .public-view-card{padding:20px 16px;}
+    .public-view-card h2{font-size:19px;}
+  }
   /* Tables that overflow their card get their own horizontal scrollbar
      instead of being clipped by main's overflow-x:hidden. */
   .card div:has(> table){overflow-x:auto; -webkit-overflow-scrolling:touch;}
@@ -1148,8 +1155,8 @@ service cloud.firestore {
 <div id="printArea"></div>
 
 <!-- Public read-only "share with parents" viewer (no login). Shown only when the URL has ?public=<schoolYearId> -->
-<div class="auth-screen" id="publicViewScreen" style="display:none; align-items:flex-start; padding-top:40px;">
-  <div class="auth-card" style="max-width:760px;" id="publicViewCard"></div>
+<div class="auth-screen public-view-screen" id="publicViewScreen" style="display:none;">
+  <div class="auth-card public-view-card" id="publicViewCard"></div>
 </div>
 
 <script>
@@ -3118,7 +3125,7 @@ function renderPublicSummaryHTML(data){
     <div class="auth-brand"><div class="mark">K</div><div class="txt">Class Cash Book</div></div>
     <h2 style="margin:0 0 2px 0; color:var(--navy);">${esc(data.namaKelas || data.label || 'Class Cash')}</h2>
     <div class="helper" style="margin-bottom:16px;">${esc(data.namaSekolah||'')} &middot; School Year ${esc(data.label||'-')} &middot; ${esc(data.periode||'')}</div>
-    <div class="grid-stats" style="grid-template-columns:repeat(2,1fr); margin-bottom:18px;">
+    <div class="grid-stats" style="margin-bottom:18px;">
       <div class="stat"><div class="label">Total Collected</div><div class="value mono green">${rupiah(data.grandTotal)}</div></div>
       <div class="stat"><div class="label">Payment Completeness</div><div class="value">${data.persen}%</div></div>
       <div class="stat"><div class="label">Bank Balance</div><div class="value mono">${rupiah(data.saldoBankSaatIni)}</div></div>
