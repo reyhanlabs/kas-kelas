@@ -751,7 +751,10 @@
             <h1>Expense Ledger (Buku Besar)</h1>
             <div class="sub">Detailed cash usage per account, formatted for printing/handover</div>
           </div>
-          <button class="btn btn-outline" onclick="cetakLaporanPengeluaran()">🖨 Print Report</button>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button class="btn btn-outline" onclick="cetakLaporanPengeluaran()">🖨 Print Report</button>
+            <button class="btn btn-outline" onclick="unduhLaporanPengeluaranGambar()">🖼️ Save as Image (HD)</button>
+          </div>
         </div>
 
         <div class="grid-stats" id="pengeluaranStatGrid"></div>
@@ -2996,6 +2999,34 @@ function cetakLaporanPengeluaran(){
   const ta = currentTA();
   document.getElementById('printArea').innerHTML = `<div style="padding:6mm;">${buildLedgerReportHTML(groups, grandTotal, ta, true)}</div>`;
   setTimeout(()=> window.print(), 80);
+}
+async function unduhLaporanPengeluaranGambar(){
+  const { groups, grandTotal } = buildLedgerGroups();
+  if(groups.length===0){ toast('No expenses to save as image yet','err'); return; }
+  if(typeof html2canvas === 'undefined'){
+    toast('Image export library not loaded yet. Check your internet connection then reload the page.','err');
+    return;
+  }
+  const ta = currentTA();
+  const holder = document.createElement('div');
+  holder.style.cssText = 'position:fixed; left:-9999px; top:0; width:900px; background:#fff; padding:24px;';
+  holder.innerHTML = buildLedgerReportHTML(groups, grandTotal, ta, true);
+  document.body.appendChild(holder);
+  await new Promise(r=>setTimeout(r, 60));
+  let canvas;
+  try{
+    canvas = await html2canvas(holder, {scale:2.5, backgroundColor:'#ffffff', useCORS:true});
+  }catch(e){
+    document.body.removeChild(holder);
+    toast('Failed to generate image: '+e.message, 'err');
+    return;
+  }
+  document.body.removeChild(holder);
+  const link = document.createElement('a');
+  link.download = `expense-ledger-${safeFileName(ta?.namaKelas||ta?.label||'class')}.png`;
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+  toast('Expense ledger image downloaded','ok');
 }
 
 /* ============================================================
