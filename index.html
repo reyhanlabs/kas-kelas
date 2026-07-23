@@ -409,6 +409,21 @@
   @media print{
     #printArea .ledger-account{break-inside:avoid;}
   }
+
+  /* ===== User Guide tab ===== */
+  .guide-nav{display:flex; flex-wrap:wrap; gap:6px;}
+  .guide-nav a{font-size:12px; font-weight:600; color:var(--navy); background:var(--paper); border:1px solid var(--paper-line); padding:5px 11px; border-radius:20px; text-decoration:none; scroll-margin-top:14px;}
+  .guide-nav a:hover{background:var(--gold-soft);}
+  .guide-tip{background:var(--green-soft); border-left:4px solid var(--green); border-radius:6px; padding:10px 14px; margin:12px 0; font-size:13.5px;}
+  .guide-tip b{color:var(--green);}
+  .guide-warn{background:var(--maroon-soft); border-left:4px solid var(--maroon); border-radius:6px; padding:10px 14px; margin:12px 0; font-size:13.5px;}
+  .guide-warn b{color:var(--maroon);}
+  .guide-steps{counter-reset:gstep; padding-left:26px; margin:10px 0;}
+  .guide-steps li{list-style:none; position:relative; padding-left:6px; margin-bottom:10px;}
+  .guide-steps li::before{counter-increment:gstep; content:counter(gstep); position:absolute; left:-26px; top:0; width:19px; height:19px; background:var(--navy); color:#fff; border-radius:50%; font-size:10.5px; font-weight:700; display:flex; align-items:center; justify-content:center;}
+  .guide-card h3{font-size:16px; margin:0 0 8px 0; color:var(--navy); scroll-margin-top:14px;}
+  .guide-card p, .guide-card li{font-size:13.5px;}
+  .guide-card table{font-size:13px;}
 </style>
 </head>
 <body>
@@ -507,6 +522,10 @@
       <button class="tab-btn" data-tab="pengaturan">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
         Settings
+      </button>
+      <button class="tab-btn" data-tab="guide">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><path d="M9 7h7"/><path d="M9 11h7"/></svg>
+        User Guide
       </button>
     </nav>
     <div class="sidebar-foot">
@@ -972,6 +991,259 @@ service cloud.firestore {
             </label>
           </div>
           <p class="helper">This button is only relevant for local mode (without Firebase). If connected to Firebase, the best backup method is via the Firebase Console (Firestore &rarr; Export).</p>
+        </div>
+      </section>
+
+      <!-- ================= USER GUIDE ================= -->
+      <section id="tab-guide" class="tab-panel" style="display:none;">
+        <div class="topbar">
+          <div>
+            <h1>User Guide</h1>
+            <div class="sub">How to use every part of Class Cash Book</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Jump to a section</h2>
+          <div class="guide-nav">
+            <a href="#g-intro">Introduction</a>
+            <a href="#g-login">Logging In</a>
+            <a href="#g-schoolyear">School Years</a>
+            <a href="#g-dashboard">Dashboard</a>
+            <a href="#g-students">Student Records</a>
+            <a href="#g-payment">Payment Entry</a>
+            <a href="#g-receipt">Print Receipt</a>
+            <a href="#g-report">Report Summary</a>
+            <a href="#g-sharelink">Sharing With Parents</a>
+            <a href="#g-accounts">Chart of Accounts</a>
+            <a href="#g-activities">Activities</a>
+            <a href="#g-expense">Expense Entry</a>
+            <a href="#g-ledger">Expense Ledger</a>
+            <a href="#g-cashbalance">Cash Balance</a>
+            <a href="#g-users">Manage Users</a>
+            <a href="#g-settings">Settings</a>
+            <a href="#g-firebase">Firebase Connection</a>
+            <a href="#g-backup">Backup &amp; Restore</a>
+            <a href="#g-tips">Tips &amp; Troubleshooting</a>
+          </div>
+        </div>
+
+        <div class="card guide-card" id="g-intro">
+          <h3>Introduction</h3>
+          <p>Class Cash Book is a single app for running your class's cash (<i>kas kelas</i>) from end to end: recording each student's monthly dues, printing receipts for parents, logging what the money was spent on, and always knowing the real bank balance.</p>
+          <p>It works two ways:</p>
+          <ul>
+            <li><b>Connected to Firebase</b> — your data is saved online and synced in real time. This is what lets you share a public report link, add other users, and access your data from any device.</li>
+            <li><b>Local mode</b> — if there's no internet connection or Firebase isn't set up, the app still works and saves data in your browser only (good for a quick trial, but data won't sync across devices).</li>
+          </ul>
+          <p>The sidebar is your main menu. This guide is grouped the same way: money coming in first, then money going out, then the bank position and account access, then setup.</p>
+        </div>
+
+        <div class="card guide-card" id="g-login">
+          <h3>Logging In</h3>
+          <p>When Firebase is connected, you'll see a login screen first.</p>
+          <ol class="guide-steps">
+            <li>Enter the email and password given to you by your class admin/treasurer.</li>
+            <li>Click <b>Log In</b>.</li>
+            <li>Forgot your password? Enter your email in the field, then click <b>Forgot password? Send a reset link to the email above</b>.</li>
+          </ol>
+          <div class="guide-warn"><b>No account yet?</b> This app doesn't have public sign-up. Ask your class admin to add your email under <a href="#g-users">Manage Users</a> first.</div>
+          <p>If you log in successfully but see a message that your account has no access yet, it means your email was authenticated but hasn't been added to this class's user list — ask the admin to add you.</p>
+        </div>
+
+        <div class="card guide-card" id="g-schoolyear">
+          <h3>School Years</h3>
+          <p>Every school year is its own separate "book." Students, payments, accounts, activities, and expenses for one school year are never mixed with another — but old years are never deleted either; you can switch back and view them anytime.</p>
+          <p><b>Switching years:</b> use the <b>School Year</b> dropdown at the top of the sidebar. Whatever you pick there applies to every tab in the app until you change it again.</p>
+          <p>To create a new school year, click <b>+ New School Year</b> in the sidebar, or go to <a href="#g-settings">Settings → Manage School Years</a>. You can optionally copy the student list from a previous year — <b>only the student roster copies over</b>, payment history always starts fresh at zero for a new year.</p>
+        </div>
+
+        <div class="card guide-card" id="g-dashboard">
+          <h3>Dashboard</h3>
+          <p>Your at-a-glance summary for the currently selected school year:</p>
+          <table>
+            <tr><th>Card</th><th>What it means</th></tr>
+            <tr><td>Total Students</td><td>How many students are on the roster this school year</td></tr>
+            <tr><td>Paid This Month</td><td>How many students have paid for the actual current calendar month</td></tr>
+            <tr><td>Collected This Month</td><td>Total amount collected for the current month</td></tr>
+            <tr><td>Total Cash This School Year</td><td>Everything collected so far this school year</td></tr>
+            <tr><td>Total Expenses This School Year</td><td>Everything spent so far this school year</td></tr>
+            <tr><td>Bank Balance (Bank Mandiri)</td><td>The real running balance — see <a href="#g-cashbalance">Cash Balance</a></td></tr>
+          </table>
+          <p><b>Payment Status table</b> below the stat cards is filterable:</p>
+          <ul>
+            <li><b>Month</b> — pick any month within the school year period, not just the current one.</li>
+            <li><b>Status</b> — All / Unpaid only / Paid only.</li>
+            <li><b>Search</b> — filter by student name.</li>
+          </ul>
+          <div class="guide-tip"><b>Tip:</b> switch Status to <i>Unpaid only</i> to instantly get your "who still needs to pay" list for any month.</div>
+        </div>
+
+        <div class="card guide-card" id="g-students">
+          <h3>Student Records</h3>
+          <p>This is your class roster for the selected school year.</p>
+          <ol class="guide-steps">
+            <li>Click <b>+ Add Student</b>.</li>
+            <li>Fill in roll number, full name, parent/guardian name, and phone/WhatsApp number (all optional except name).</li>
+            <li><b>Special Dues Amount</b> is optional — leave it blank if the student pays the same default amount as everyone else (set in <a href="#g-settings">Settings</a>). Only fill it in if this student's dues are different.</li>
+            <li>Click <b>Save</b>.</li>
+          </ol>
+          <p>Use the search box to find a student by name. Click <b>✎</b> to edit, or <b>🗑</b> to delete.</p>
+          <div class="guide-warn"><b>Note:</b> a student can't be deleted if they already have payment history — delete their payment records first (in <a href="#g-payment">Payment Entry</a>'s history table) if you really need to remove them.</div>
+        </div>
+
+        <div class="card guide-card" id="g-payment">
+          <h3>Payment Entry</h3>
+          <p>This is where you record a student paying their monthly dues.</p>
+          <ol class="guide-steps">
+            <li>Select the student from the dropdown.</li>
+            <li>Click each month the student is paying for — a highlighted chip means already paid and can't be selected again; select one or several months in a single transaction (e.g. paying 3 months at once).</li>
+            <li>Set the payment date, method (Cash, Transfer, or QRIS), and an optional note.</li>
+            <li>Check the <b>Total Amount</b> preview, then click <b>Save Payment</b>.</li>
+          </ol>
+          <div class="guide-tip"><b>Tip:</b> the payment period always runs July → June regardless of calendar year.</div>
+          <p><b>Payment History</b> below the form lets you search, and from there: <b>✎ Edit</b> a payment's months/amount/date/method/note, <b>🗑 Delete</b> it (the related months go back to unpaid), or jump straight to <b>🖨 Print Receipt</b>.</p>
+        </div>
+
+        <div class="card guide-card" id="g-receipt">
+          <h3>Print Receipt</h3>
+          <p>Find any payment transaction (search by student name) and generate a proof-of-payment receipt for parents.</p>
+          <table>
+            <tr><th>Button</th><th>What it does</th></tr>
+            <tr><td>🖨 Print</td><td>Opens the browser's print dialog with a formatted receipt</td></tr>
+            <tr><td>🖼️ Image</td><td>Downloads the receipt as a PNG image</td></tr>
+            <tr><td>📄 PDF</td><td>Downloads the receipt as a PDF file</td></tr>
+            <tr><td>💬 WA</td><td>Opens WhatsApp with a pre-written message to the parent's saved phone number</td></tr>
+          </table>
+          <p>The receipt includes school/class name, student and parent name, months paid, period, amount, method, date, receipt number, and signature lines. A student who has paid the full school year gets a "PAID · 1 YEAR · CLASS" stamp automatically.</p>
+        </div>
+
+        <div class="card guide-card" id="g-report">
+          <h3>Report Summary</h3>
+          <p>The full-class view of who has paid which months — a 12-column matrix with every student as a row, plus Total Collected, Payment Completeness %, and Paid Slots.</p>
+          <p>Click <b>🖨 Print Report</b> to print the whole matrix — it automatically switches the page to landscape (since the table is wide) and switches back afterward.</p>
+        </div>
+
+        <div class="card guide-card" id="g-sharelink">
+          <h3>Sharing With Parents (Public Link)</h3>
+          <p>At the bottom of Report Summary is <b>Share With Parents (Public Link)</b> — creates a link anyone can open, no login required, showing a safe read-only snapshot.</p>
+          <div class="guide-warn"><b>Privacy by design:</b> the public link never includes phone numbers or parent names — only student names, monthly paid/unpaid status, total collected, and the bank balance.</div>
+          <ol class="guide-steps">
+            <li>Click <b>Publish / Update Public Link</b>.</li>
+            <li>Copy the link and share it in your class group.</li>
+          </ol>
+          <div class="guide-tip"><b>Important:</b> this is not live. It only shows data as of your last Publish click — click it again after new payments if you want parents to see updated numbers.</div>
+          <p><span class="badge">Requires Firebase</span> won't work in local mode.</p>
+        </div>
+
+        <div class="card guide-card" id="g-accounts">
+          <h3>Chart of Accounts</h3>
+          <p>Found in <a href="#g-settings">Settings</a>. The list of expense categories your Expense Ledger is grouped by — e.g. <code class="mono">6900-00-011</code> — Class Supplies.</p>
+          <ol class="guide-steps">
+            <li>Click <b>+ Add Account</b>.</li>
+            <li>Enter an account code and a name.</li>
+            <li>Click <b>Save</b>.</li>
+          </ol>
+          <div class="guide-warn">An account can't be deleted while any Activity is linked to it, and each account code must be unique within the school year.</div>
+        </div>
+
+        <div class="card guide-card" id="g-activities">
+          <h3>Activities</h3>
+          <p>Also in Settings, right below Chart of Accounts. Activities are what you actually pick when logging an expense — each one is mapped to one account above.</p>
+          <ol class="guide-steps">
+            <li>Click <b>+ Add Activity</b> (need at least one account first).</li>
+            <li>Name the activity and choose its linked account.</li>
+            <li>Click <b>Save</b>.</li>
+          </ol>
+          <p><b>Setting a default:</b> click the <b>⭐</b> icon next to the activity you use most often. It gets a Default badge and is pre-selected automatically in <a href="#g-expense">Expense Entry</a>. The first activity you create for a school year becomes default automatically.</p>
+          <div class="guide-warn">An activity can't be deleted while it already has expense records.</div>
+        </div>
+
+        <div class="card guide-card" id="g-expense">
+          <h3>Expense Entry</h3>
+          <p>Where you log class operational spending.</p>
+          <ol class="guide-steps">
+            <li>The Activity dropdown is pre-filled with your default — change it if needed.</li>
+            <li>Enter the date, amount, and a short description.</li>
+            <li>Click <b>Save Expense</b>.</li>
+          </ol>
+          <p>A reference number (e.g. <span class="mono">CD000007</span>) is generated automatically. <b>Expense History</b> below lets you search, edit, or delete past entries.</p>
+        </div>
+
+        <div class="card guide-card" id="g-ledger">
+          <h3>Expense Ledger</h3>
+          <p>A detailed "general ledger" style report (<i>Buku Besar</i>), grouping every expense by account with a running balance.</p>
+          <ul>
+            <li>Each account gets its own section: starting balance, every transaction with a running total, and an ending balance.</li>
+            <li><b>🖨 Print Report</b> prints the full ledger.</li>
+            <li><b>🖼️ Save as Image (HD)</b> downloads a high-resolution PNG of the whole report.</li>
+          </ul>
+        </div>
+
+        <div class="card guide-card" id="g-cashbalance">
+          <h3>Cash Balance</h3>
+          <p>The single running bank account (e.g. Bank Mandiri) that combines money in and money out into one real balance:</p>
+          <p class="mono" style="text-align:center; background:#faf8f2; padding:10px; border-radius:8px;">Current Balance = Opening Balance + All Payments − All Expenses</p>
+          <p><b>Setting the opening balance</b> — do this once, entering whatever the account balance already was before you started using this app. Every payment and expense afterward (in any school year) is added or subtracted automatically.</p>
+          <div class="guide-tip"><b>Carries over across school years:</b> unlike almost everything else in the app, this balance is not reset per school year — it's one continuous account.</div>
+          <p><b>Cash Flow Mutation</b> is a chronological list of every payment and expense across all school years with a running balance. <b>🖨 Print Report</b> and <b>🖼️ Save as Image (HD)</b> work the same as the Expense Ledger.</p>
+        </div>
+
+        <div class="card guide-card" id="g-users">
+          <h3>Manage Users</h3>
+          <p><span class="badge">Admin only</span> — add other teachers or treasurers who need access.</p>
+          <ol class="guide-steps">
+            <li>Enter their email and a temporary password (at least 6 characters).</li>
+            <li>Choose their role: <b>Treasurer</b> (enter/view data) or <b>Admin</b> (also manage users).</li>
+            <li>Click <b>+ Add User</b>.</li>
+            <li>Share the email/password privately — they can change the password via "Forgot password" on the login screen.</li>
+          </ol>
+          <p>Click <b>Revoke Access</b> to remove someone's access to this class's data (their login account itself still exists).</p>
+        </div>
+
+        <div class="card guide-card" id="g-settings">
+          <h3>Settings</h3>
+          <p>Everything configuration-related, top to bottom:</p>
+          <ul>
+            <li><b>Class Identity</b> — school name, class name, default dues amount, homeroom teacher, treasurer name.</li>
+            <li><b>Manage School Years</b> — see <a href="#g-schoolyear">School Years</a>.</li>
+            <li><b>Chart of Accounts</b> and <b>Activities</b> — see above.</li>
+            <li><a href="#g-firebase">Firebase Connection</a> and Firestore security rules.</li>
+            <li><a href="#g-backup">Backup / Restore</a>.</li>
+          </ul>
+        </div>
+
+        <div class="card guide-card" id="g-firebase">
+          <h3>Firebase Connection</h3>
+          <p>The app comes with a Firebase project built in by default — most classes never need to touch this. It's only relevant to connect your own separate Firebase project instead.</p>
+          <ol class="guide-steps">
+            <li>Paste your own Firebase config (JSON) into the text box.</li>
+            <li>Click <b>Connect to This Config</b> — the page reloads and connects to your project.</li>
+            <li><b>Restore Default Config</b> goes back to the built-in project.</li>
+            <li><b>Force Local Mode</b> temporarily disables Firebase on this device for testing, without affecting the online database.</li>
+          </ol>
+          <p><b>Security Rules</b> — whenever a new feature needing new data is added, its Firestore rules need publishing in the Firebase Console, or you'll see "Missing or insufficient permissions" errors. The exact rules text to copy is always shown in Settings.</p>
+          <div class="guide-warn">Still seeing permission errors after publishing? Wait 30–60 seconds for the rules to propagate, then fully close/reopen the tab (or hard refresh).</div>
+        </div>
+
+        <div class="card guide-card" id="g-backup">
+          <h3>Backup &amp; Restore</h3>
+          <p><span class="badge">Local mode only</span></p>
+          <ul>
+            <li><b>⬇ Download Backup (.json)</b> — saves everything: school years, students, payments, accounts, activities, expenses, and the bank balance.</li>
+            <li><b>⬆ Restore from Backup</b> — overwrites current local data with a previously downloaded file.</li>
+          </ul>
+          <div class="guide-warn">Restoring completely replaces all current local data — there's no undo.</div>
+          <p>If connected to Firebase, use <b>Firebase Console → Firestore → Export</b> instead.</p>
+        </div>
+
+        <div class="card guide-card" id="g-tips">
+          <h3>Tips &amp; Troubleshooting</h3>
+          <p><b>"Missing or insufficient permissions" errors</b> — the Firestore Security Rules in <a href="#g-settings">Settings</a> haven't been published yet (or a new one was added since your last publish). Re-copy and re-publish, wait a minute, then hard-refresh.</p>
+          <p><b>Sidebar shows "Local mode (not connected)"</b> — either Firebase couldn't be reached, or someone clicked Force Local Mode on this device. Check Settings → Firebase Connection for the status message.</p>
+          <p><b>A print looks empty or has an extra blank page</b> — reload the page and try the Print button again; each report builds its own printable copy right before printing.</p>
+          <p><b>Numbers don't match what I expect</b> — Dashboard and Report Summary are scoped to the currently selected school year only. <a href="#g-cashbalance">Cash Balance</a> is the exception — it always reflects all school years combined.</p>
+          <p><b>I changed an Activity's linked account</b> — existing expense history moves with it; the Expense Ledger groups by account as it stands today, not as it was when the expense was recorded.</p>
         </div>
       </section>
 

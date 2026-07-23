@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Class Cash Book — User Guide</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap');
+  :root{
+    --navy:#1E2A44; --navy-deep:#141d31;
+    --paper:#FBF7EF; --paper-line:#E4DAC4;
+    --ink:#2A2620; --ink-soft:#6b6455;
+    --gold:#C99A3E; --gold-soft:#e8d3a1;
+    --green:#3B7A57; --green-soft:#e3efe7;
+    --maroon:#8B2E2E; --maroon-soft:#f5e3e1;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; font-family:'Public Sans',sans-serif; background:var(--paper); color:var(--ink); line-height:1.55;}
+  a{color:var(--navy);}
+  code, .mono{font-family:'JetBrains Mono',monospace; font-size:.92em;}
+  code.inl{background:#eee6cf; padding:1px 6px; border-radius:4px;}
+
+  .layout{display:flex; min-height:100vh;}
+  .toc{
+    width:270px; flex-shrink:0; background:linear-gradient(180deg, var(--navy) 0%, var(--navy-deep) 100%);
+    color:#e7e9ef; padding:26px 20px; position:sticky; top:0; height:100vh; overflow-y:auto;
+  }
+  .toc .brand{display:flex; align-items:center; gap:10px; margin-bottom:22px;}
+  .toc .brand .mark{width:34px; height:34px; border-radius:8px; background:var(--gold); color:#2a2107; display:flex; align-items:center; justify-content:center; font-family:'Fraunces',serif; font-weight:700;}
+  .toc .brand .txt{font-family:'Fraunces',serif; font-weight:700; font-size:15px;}
+  .toc .sub{font-size:11.5px; color:#b9c0d1; margin-bottom:20px;}
+  .toc nav a{display:block; padding:7px 10px; border-radius:7px; color:#c9cfdd; text-decoration:none; font-size:13px; margin-bottom:2px;}
+  .toc nav a:hover, .toc nav a.active{background:rgba(255,255,255,0.08); color:#fff;}
+  .toc nav .grp{font-size:10.5px; text-transform:uppercase; letter-spacing:.06em; color:#7d859c; margin:16px 0 4px 10px;}
+
+  .content{flex:1; padding:46px 56px; max-width:880px;}
+  .content h1{font-family:'Fraunces',serif; font-size:34px; margin:0 0 6px 0; color:var(--navy);}
+  .content .lead{color:var(--ink-soft); font-size:15.5px; margin-bottom:30px;}
+  section{margin-bottom:44px; scroll-margin-top:20px;}
+  section h2{font-family:'Fraunces',serif; font-size:23px; color:var(--navy); border-bottom:2px solid var(--paper-line); padding-bottom:8px; margin-bottom:14px; display:flex; align-items:center; gap:10px;}
+  section h2 .num{background:var(--gold); color:#2a2107; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:14px; font-family:'Public Sans'; font-weight:700; flex-shrink:0;}
+  h3{font-size:16px; color:var(--navy); margin:20px 0 8px 0;}
+  p{margin:0 0 12px 0;}
+  ul, ol{margin:0 0 14px 0; padding-left:22px;}
+  li{margin-bottom:6px;}
+  .card{background:#fff; border:1px solid var(--paper-line); border-radius:var(--radius); padding:16px 18px; margin:14px 0; box-shadow:0 1px 2px rgba(30,42,68,0.05);}
+  .tip{background:var(--green-soft); border-left:4px solid var(--green); border-radius:6px; padding:10px 14px; margin:14px 0; font-size:14px;}
+  .tip b{color:var(--green);}
+  .warn{background:var(--maroon-soft); border-left:4px solid var(--maroon); border-radius:6px; padding:10px 14px; margin:14px 0; font-size:14px;}
+  .warn b{color:var(--maroon);}
+  .steps{counter-reset:step;}
+  .steps li{list-style:none; position:relative; padding-left:6px; margin-bottom:12px;}
+  .steps li::before{counter-increment:step; content:counter(step); position:absolute; left:-26px; top:0; width:20px; height:20px; background:var(--navy); color:#fff; border-radius:50%; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center;}
+  .steps{padding-left:26px;}
+  table{width:100%; border-collapse:collapse; font-size:13.5px; margin:12px 0;}
+  th, td{padding:8px 10px; border-bottom:1px solid var(--paper-line); text-align:left;}
+  th{background:#f5f1e6; color:var(--ink-soft); font-size:11.5px; text-transform:uppercase; letter-spacing:.03em;}
+  .badge{display:inline-block; background:var(--gold-soft); color:#7A4600; font-size:11px; font-weight:700; padding:2px 9px; border-radius:20px; text-transform:uppercase; letter-spacing:.03em;}
+  .kbd{background:#2A2620; color:#fff; padding:2px 7px; border-radius:5px; font-family:'JetBrains Mono'; font-size:11.5px;}
+  footer{margin-top:60px; padding-top:20px; border-top:1px solid var(--paper-line); color:var(--ink-soft); font-size:12.5px;}
+  @media(max-width:900px){
+    .layout{flex-direction:column;}
+    .toc{width:100%; height:auto; position:relative;}
+    .content{padding:30px 22px;}
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+
+  <aside class="toc">
+    <div class="brand"><div class="mark">K</div><div class="txt">Class Cash Book</div></div>
+    <div class="sub">User Guide</div>
+    <nav id="tocNav">
+      <div class="grp">Overview</div>
+      <a href="#intro">Introduction</a>
+      <a href="#login">Logging In</a>
+      <a href="#schoolyear">School Years</a>
+      <div class="grp">Cash In</div>
+      <a href="#dashboard">Dashboard</a>
+      <a href="#students">Student Records</a>
+      <a href="#payment">Payment Entry</a>
+      <a href="#receipt">Print Receipt</a>
+      <a href="#report">Report Summary</a>
+      <a href="#sharelink">Sharing With Parents</a>
+      <div class="grp">Cash Out</div>
+      <a href="#accounts">Chart of Accounts</a>
+      <a href="#activities">Activities</a>
+      <a href="#expense">Expense Entry</a>
+      <a href="#ledger">Expense Ledger</a>
+      <div class="grp">Bank &amp; Access</div>
+      <a href="#cashbalance">Cash Balance</a>
+      <a href="#users">Manage Users</a>
+      <div class="grp">Setup</div>
+      <a href="#settings">Settings</a>
+      <a href="#firebase">Firebase Connection</a>
+      <a href="#backup">Backup &amp; Restore</a>
+      <div class="grp">Help</div>
+      <a href="#tips">Tips &amp; Troubleshooting</a>
+    </nav>
+  </aside>
+
+  <main class="content">
+    <h1>Class Cash Book</h1>
+    <div class="lead">A complete guide to recording class dues, tracking expenses, and reporting the class cash position — for treasurers, homeroom teachers, and anyone helping manage it.</div>
+
+    <section id="intro">
+      <h2><span class="num">1</span>Introduction</h2>
+      <p>Class Cash Book is a single web app for running your class's cash (<i>kas kelas</i>) from end to end: recording each student's monthly dues, printing receipts for parents, logging what the money was spent on, and always knowing the real bank balance.</p>
+      <p>It works two ways:</p>
+      <ul>
+        <li><b>Connected to Firebase</b> — your data is saved online and synced in real time. This is what lets you share a public report link, add other users, and access your data from any device.</li>
+        <li><b>Local mode</b> — if there's no internet connection or Firebase isn't set up, the app still works and saves data in your browser only (good for a quick trial, but data won't sync across devices).</li>
+      </ul>
+      <p>The sidebar on the left is your main menu. Everything below is grouped the same way it's organized there: money coming in first, then money going out, then the bank position and account access, then setup.</p>
+    </section>
+
+    <section id="login">
+      <h2><span class="num">2</span>Logging In</h2>
+      <p>When Firebase is connected, you'll see a login screen first.</p>
+      <ol class="steps">
+        <li>Enter the email and password given to you by your class admin/treasurer.</li>
+        <li>Click <b>Log In</b>.</li>
+        <li>Forgot your password? Enter your email in the field, then click <b>Forgot password? Send a reset link to the email above</b>.</li>
+      </ol>
+      <div class="warn"><b>No account yet?</b> This app doesn't have public sign-up. Ask your class admin to add your email under <a href="#users">Manage Users</a> first.</div>
+      <p>If you log in successfully but see a message that your account has no access yet, it means your email was authenticated but hasn't been added to this class's user list — ask the admin to add you.</p>
+    </section>
+
+    <section id="schoolyear">
+      <h2><span class="num">3</span>School Years</h2>
+      <p>Every school year is its own separate "book." Students, payments, accounts, activities, and expenses for one school year are never mixed with another — but old years are never deleted either; you can switch back and view them anytime.</p>
+      <div class="card">
+        <b>Switching years:</b> use the <b>School Year</b> dropdown at the top of the sidebar. Whatever you pick there applies to every tab in the app until you change it again.
+      </div>
+      <p>To create a new school year, click <b>+ New School Year</b> in the sidebar, or go to <a href="#settings">Settings → Manage School Years</a>. You can optionally copy the student list from a previous year — <b>only the student roster copies over</b>, payment history always starts fresh at zero for a new year.</p>
+    </section>
+
+    <section id="dashboard">
+      <h2><span class="num">4</span>Dashboard</h2>
+      <p>Your at-a-glance summary for the currently selected school year. It shows:</p>
+      <table>
+        <tr><th>Card</th><th>What it means</th></tr>
+        <tr><td>Total Students</td><td>How many students are on the roster this school year</td></tr>
+        <tr><td>Paid This Month</td><td>How many students have paid for the actual current calendar month</td></tr>
+        <tr><td>Collected This Month</td><td>Total amount collected for the current month</td></tr>
+        <tr><td>Total Cash This School Year</td><td>Everything collected so far this school year</td></tr>
+        <tr><td>Total Expenses This School Year</td><td>Everything spent so far this school year</td></tr>
+        <tr><td>Bank Balance (Bank Mandiri)</td><td>The real running balance — see <a href="#cashbalance">Cash Balance</a></td></tr>
+      </table>
+      <h3>Payment Status table</h3>
+      <p>Below the stat cards is a filterable list of every student's paid/unpaid status:</p>
+      <ul>
+        <li><b>Month</b> — pick any month within the school year period, not just the current one.</li>
+        <li><b>Status</b> — All / Unpaid only / Paid only.</li>
+        <li><b>Search</b> — filter by student name.</li>
+      </ul>
+      <div class="tip"><b>Tip:</b> switch Status to <i>Unpaid only</i> to instantly get your "who still needs to pay" list for any month.</div>
+    </section>
+
+    <section id="students">
+      <h2><span class="num">5</span>Student Records</h2>
+      <p>This is your class roster for the selected school year.</p>
+      <ol class="steps">
+        <li>Click <b>+ Add Student</b>.</li>
+        <li>Fill in roll number, full name, parent/guardian name, and phone/WhatsApp number (all optional except name).</li>
+        <li><b>Special Dues Amount</b> is optional — leave it blank if the student pays the same default amount as everyone else (set in <a href="#settings">Settings</a>). Only fill it in if this particular student's dues are different.</li>
+        <li>Click <b>Save</b>.</li>
+      </ol>
+      <p>Use the search box to find a student by name. Click the <b>✎</b> icon to edit, or <b>🗑</b> to delete.</p>
+      <div class="warn"><b>Note:</b> a student can't be deleted if they already have payment history — delete their payment records first (in <a href="#payment">Payment Entry</a>'s history table) if you really need to remove them.</div>
+    </section>
+
+    <section id="payment">
+      <h2><span class="num">6</span>Payment Entry</h2>
+      <p>This is where you record a student paying their monthly dues.</p>
+      <ol class="steps">
+        <li>Select the student from the dropdown.</li>
+        <li>Click each month the student is paying for — a green/highlighted chip means already paid and can't be selected again; click to select one or several months in a single transaction (e.g. paying 3 months at once).</li>
+        <li>Set the payment date, method (Cash, Transfer, or QRIS), and an optional note.</li>
+        <li>Check the <b>Total Amount</b> preview, then click <b>Save Payment</b>.</li>
+      </ol>
+      <div class="tip"><b>Tip:</b> months are shown by their full name now (not abbreviated) so there's no ambiguity, and the payment period always runs July → June regardless of calendar year.</div>
+      <h3>Payment History</h3>
+      <p>Below the form is a searchable list of every payment recorded this school year. From here you can:</p>
+      <ul>
+        <li><b>✎ Edit</b> — change the months, amount, date, method, or note on an existing payment.</li>
+        <li><b>🗑 Delete</b> — removes the payment; the related month(s) go back to unpaid.</li>
+        <li><b>🖨 Print Receipt</b> — jumps straight to the <a href="#receipt">Print Receipt</a> tab for that transaction.</li>
+      </ul>
+    </section>
+
+    <section id="receipt">
+      <h2><span class="num">7</span>Print Receipt</h2>
+      <p>Find any payment transaction here (search by student name) and generate a proof-of-payment receipt for parents.</p>
+      <table>
+        <tr><th>Button</th><th>What it does</th></tr>
+        <tr><td>🖨 Print</td><td>Opens the browser's print dialog with a nicely formatted receipt</td></tr>
+        <tr><td>🖼️ Image</td><td>Downloads the receipt as a PNG image, ready to send via chat</td></tr>
+        <tr><td>📄 PDF</td><td>Downloads the receipt as a PDF file</td></tr>
+        <tr><td>💬 WA</td><td>Opens WhatsApp with a pre-written message to the parent's saved phone number (requires the student to have a phone number on file)</td></tr>
+      </table>
+      <p>The receipt includes the school and class name, student and parent name, months paid, period, amount, payment method and date, a receipt number, and signature lines for the parent and the class treasurer. If a student has paid in full for the entire school year, a "PAID · 1 YEAR · CLASS" stamp appears automatically.</p>
+    </section>
+
+    <section id="report">
+      <h2><span class="num">8</span>Report Summary</h2>
+      <p>The full-class view of who has paid for which months — a 12-column matrix (one column per month of the school year) with every student as a row.</p>
+      <ul>
+        <li><b>Total Collected</b>, <b>Payment Completeness</b> (% of all possible student-months paid), and <b>Paid Slots</b> are shown as summary stats above the table.</li>
+        <li>Click <b>🖨 Print Report</b> to print the whole matrix — it automatically switches the page to landscape (since the table is wide) and switches back afterward.</li>
+      </ul>
+    </section>
+
+    <section id="sharelink">
+      <h2><span class="num">9</span>Sharing With Parents (Public Link)</h2>
+      <p>At the bottom of the Report Summary tab is a card called <b>Share With Parents (Public Link)</b>. This creates a link anyone can open — no login required — showing a safe, read-only snapshot of the class cash position.</p>
+      <div class="warn"><b>Privacy by design:</b> the public link never includes phone numbers or parent names. It only shows student names, monthly paid/unpaid status, total collected, and the bank balance.</div>
+      <ol class="steps">
+        <li>Click <b>Publish / Update Public Link</b>.</li>
+        <li>Copy the link that appears and share it in your class WhatsApp group or similar.</li>
+      </ol>
+      <div class="tip"><b>Important:</b> this is <u>not</u> live/real-time. The link only shows data as of the last time you clicked Publish. After recording new payments, click <b>Publish / Update Public Link</b> again whenever you want parents to see the latest numbers.</div>
+      <p><span class="badge">Requires Firebase</span> this feature needs an online connection — it won't work in local mode, since there's nowhere shared to publish the link to.</p>
+    </section>
+
+    <section id="accounts">
+      <h2><span class="num">10</span>Chart of Accounts</h2>
+      <p>Found in <a href="#settings">Settings</a>. This is the list of expense categories your Expense Ledger report will be grouped by — for example <code class="inl">6900-00-011</code> — Class Supplies, matching the account-code style used in formal bookkeeping software.</p>
+      <ol class="steps">
+        <li>Click <b>+ Add Account</b>.</li>
+        <li>Enter an account code (e.g. <code class="inl">6900-00-012</code>) and a name (e.g. "Market Day 2025").</li>
+        <li>Click <b>Save</b>.</li>
+      </ol>
+      <div class="warn">An account can't be deleted while any Activity is still linked to it, and each account code must be unique within the school year.</div>
+    </section>
+
+    <section id="activities">
+      <h2><span class="num">11</span>Activities</h2>
+      <p>Also in <a href="#settings">Settings</a>, right below Chart of Accounts. Activities are what you actually pick when logging an expense — each one is mapped to one account above.</p>
+      <ol class="steps">
+        <li>Click <b>+ Add Activity</b> (you need at least one account created first).</li>
+        <li>Name the activity (e.g. "Daily Class Needs", "Market Day 2025") and choose its linked account.</li>
+        <li>Click <b>Save</b>.</li>
+      </ol>
+      <h3>Setting a default activity</h3>
+      <p>Click the <b>⭐</b> icon next to whichever activity you use most often (e.g. "Daily Class Needs"). It gets a <span class="badge">Default</span> badge and will be pre-selected automatically every time you open <a href="#expense">Expense Entry</a> — no more picking it from the dropdown each time. The very first activity you create for a school year is set as default automatically.</p>
+      <div class="warn">An activity can't be deleted while it already has expense records — delete those expenses first.</div>
+    </section>
+
+    <section id="expense">
+      <h2><span class="num">12</span>Expense Entry</h2>
+      <p>Where you log class operational spending.</p>
+      <ol class="steps">
+        <li>The <b>Activity</b> dropdown is pre-filled with your default (see <a href="#activities">Activities</a>) — change it if this expense belongs to a different activity.</li>
+        <li>Enter the date, amount, and a short description (e.g. "Oasis gallon refill + bank admin fee").</li>
+        <li>Click <b>Save Expense</b>.</li>
+      </ol>
+      <p>A reference number (e.g. <span class="mono">CD000007</span>) is generated automatically, matching the style used by formal accounting exports. The <b>Expense History</b> table below lets you search, edit, or delete past entries.</p>
+    </section>
+
+    <section id="ledger">
+      <h2><span class="num">13</span>Expense Ledger</h2>
+      <p>A detailed "general ledger" style report (<i>Buku Besar</i>), grouping every expense by account with a running balance — the same format used by formal school bookkeeping exports.</p>
+      <ul>
+        <li>Each account gets its own section: starting balance, every transaction with a running total, and an ending balance.</li>
+        <li><b>🖨 Print Report</b> — prints the full ledger.</li>
+        <li><b>🖼️ Save as Image (HD)</b> — downloads a high-resolution PNG of the whole report, handy for sharing digitally or archiving.</li>
+      </ul>
+    </section>
+
+    <section id="cashbalance">
+      <h2><span class="num">14</span>Cash Balance</h2>
+      <p>This is the single running bank account (e.g. Bank Mandiri) that ties everything together — it's the only place in the app that combines money in and money out into one real balance:</p>
+      <div class="card" style="font-family:'JetBrains Mono'; text-align:center; font-size:14px;">
+        Current Balance &nbsp;=&nbsp; Opening Balance &nbsp;+&nbsp; All Payments &nbsp;−&nbsp; All Expenses
+      </div>
+      <h3>Setting the opening balance</h3>
+      <p>Do this <b>once</b> — enter whatever the account balance already was before you started using this app. Every payment and expense recorded afterward (in <i>any</i> school year) is added or subtracted automatically; you never need to touch this number again unless it needs correcting.</p>
+      <div class="tip"><b>Carries over across school years:</b> unlike almost everything else in the app, this balance is <u>not</u> reset per school year — it's one continuous account.</div>
+      <h3>Cash Flow Mutation</h3>
+      <p>A chronological list of every payment (cash in) and expense (cash out) across all school years, with a running balance next to each row — this is your day-by-day bank ledger.</p>
+      <p><b>🖨 Print Report</b> and <b>🖼️ Save as Image (HD)</b> work the same way as the Expense Ledger, formatted as a proper account statement.</p>
+    </section>
+
+    <section id="users">
+      <h2><span class="num">15</span>Manage Users</h2>
+      <p><span class="badge">Admin only</span> — add other teachers or treasurers who need access.</p>
+      <ol class="steps">
+        <li>Enter their email and a temporary password (at least 6 characters).</li>
+        <li>Choose their role: <b>Treasurer</b> (can enter and view data) or <b>Admin</b> (can also manage other users).</li>
+        <li>Click <b>+ Add User</b>.</li>
+        <li>Share the email and temporary password with them privately — they can change the password themselves via "Forgot password" on the login screen.</li>
+      </ol>
+      <p>To remove someone's access, click <b>Revoke Access</b> next to their name. Their login account still exists, but they can no longer read or write this class's data.</p>
+    </section>
+
+    <section id="settings">
+      <h2><span class="num">16</span>Settings</h2>
+      <p>Everything configuration-related lives here, organized top to bottom:</p>
+      <ul>
+        <li><b>Class Identity</b> — school name, class name, default dues amount, homeroom teacher, and treasurer name for the current school year.</li>
+        <li><b>Manage School Years</b> — see <a href="#schoolyear">School Years</a> above.</li>
+        <li><b>Chart of Accounts</b> and <b>Activities</b> — see sections <a href="#accounts">10</a> and <a href="#activities">11</a>.</li>
+        <li><a href="#firebase">Firebase Connection</a> and Firestore security rules.</li>
+        <li><a href="#backup">Backup / Restore</a>.</li>
+      </ul>
+    </section>
+
+    <section id="firebase">
+      <h2><span class="num">17</span>Firebase Connection</h2>
+      <p>The app comes with a Firebase project built in by default, so most classes never need to touch this section. It's only relevant if you want to connect your own separate Firebase project instead.</p>
+      <ol class="steps">
+        <li>Paste your own Firebase config (JSON) into the text box.</li>
+        <li>Click <b>Connect to This Config</b>. The page will reload and connect to your project.</li>
+        <li>To go back to the built-in project, click <b>Restore Default Config</b>.</li>
+        <li><b>Force Local Mode</b> temporarily disables Firebase on this device only, for testing without logging in. Nothing on the online database is affected.</li>
+      </ol>
+      <h3>Security Rules</h3>
+      <p>Whenever a new feature needing a new type of data is added, its Firestore Security Rules need to be published in the Firebase Console, or you'll see "Missing or insufficient permissions" errors. The exact rules text to copy is always shown in this section — copy it, go to <b>Firebase Console → Firestore Database → Rules</b>, paste over everything, and click <b>Publish</b>.</p>
+      <div class="warn"><b>If you still see permission errors after publishing:</b> wait 30–60 seconds for the rules to propagate, then fully close and reopen the browser tab (a hard refresh with <span class="kbd">Ctrl</span>+<span class="kbd">Shift</span>+<span class="kbd">R</span> often works too).</div>
+    </section>
+
+    <section id="backup">
+      <h2><span class="num">18</span>Backup &amp; Restore</h2>
+      <p><span class="badge">Local mode only</span> — relevant only if you're not connected to Firebase.</p>
+      <ul>
+        <li><b>⬇ Download Backup (.json)</b> — saves everything (school years, students, payments, accounts, activities, expenses, and the bank balance) to a file.</li>
+        <li><b>⬆ Restore from Backup</b> — pick a previously downloaded file to overwrite the current local data with it.</li>
+      </ul>
+      <div class="warn">Restoring completely replaces all current local data — there's no undo, so only restore a backup if you're sure.</div>
+      <p>If you're connected to Firebase, the best way to back up is through the <b>Firebase Console → Firestore → Export</b> feature instead.</p>
+    </section>
+
+    <section id="tips">
+      <h2><span class="num">19</span>Tips &amp; Troubleshooting</h2>
+      <h3>"Missing or insufficient permissions" errors</h3>
+      <p>This almost always means the Firestore Security Rules shown in <a href="#firebase">Settings</a> haven't been published yet (or a new one was added after your last publish). Re-copy and re-publish the full rules text, wait a minute, then hard-refresh.</p>
+      <h3>The sidebar shows "Local mode (not connected)"</h3>
+      <p>Either Firebase couldn't be reached (check your internet connection) or someone clicked <b>Force Local Mode</b> on this device. Check <a href="#firebase">Settings → Firebase Connection</a> for the exact status message.</p>
+      <h3>A print looks empty or has an extra blank page</h3>
+      <p>Try the Print button again after a fresh page load. Each report tab builds its own printable copy right before printing, so if a print looks wrong, reloading the page and trying again usually resolves it.</p>
+      <h3>Numbers don't match what I expect</h3>
+      <ul>
+        <li>Dashboard stats and the Report Summary matrix are scoped to the <b>currently selected school year</b> only.</li>
+        <li><a href="#cashbalance">Cash Balance</a> is the one exception — it always reflects <b>all school years combined</b>, since it's one continuous bank account.</li>
+      </ul>
+      <h3>I changed an Activity's linked account</h3>
+      <p>Existing expense history for that activity moves with it — the Expense Ledger groups by account at the time you view the report, not at the time the expense was recorded. Keep this in mind if you reorganize your Chart of Accounts later.</p>
+    </section>
+
+    <footer>
+      Class Cash Book — User Guide. Written to match the app as configured for your class; menu names may vary slightly if your admin has customized labels.
+    </footer>
+  </main>
+</div>
+
+<script>
+  // Highlight the current section in the sidebar as the reader scrolls
+  const links = Array.from(document.querySelectorAll('#tocNav a'));
+  const sections = links.map(a => document.querySelector(a.getAttribute('href')));
+  function onScroll(){
+    let idx = 0;
+    const y = window.scrollY + 100;
+    sections.forEach((sec, i) => { if(sec && sec.offsetTop <= y) idx = i; });
+    links.forEach((a,i) => a.classList.toggle('active', i===idx));
+  }
+  document.addEventListener('scroll', onScroll);
+  onScroll();
+</script>
+</body>
+</html>
