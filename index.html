@@ -1322,7 +1322,7 @@ function renderDashboard(){
       const s = findSiswa(p.studentId);
       return `<tr>
         <td>${esc(s?.nama || '(siswa dihapus)')}</td>
-        <td>${(p.bulanList||[]).map(b=>BULAN[b-1].slice(0,3)).join(', ')} ${esc(p.tahun)}</td>
+        <td>${esc(formatBulanTahunText(p, false))}</td>
         <td class="right num">${rupiah(p.total)}</td>
         <td>${esc(p.tanggal)}</td>
       </tr>`;
@@ -1342,8 +1342,34 @@ function emptyState(msg){
 function isTahunAjaranLunasPenuh(studentId, taLabel){
   return PERIODE_URUT.every(bulan => isBulanLunas(studentId, bulan, tahunUntukBulan(taLabel, bulan)));
 }
+/* Normalisasi bulanList satu record pembayaran jadi array {bulan,tahun}.
+   Format baru: bulanList berisi object {bulan,tahun} (bisa lintas 2 tahun kalender dalam 1 transaksi).
+   Format lama (sebelum periode Juli-Juni): bulanList berisi angka polos + field p.tahun di level record. */
+function getBulanTahunPairs(p){
+  return (p.bulanList||[]).map(item=>{
+    if(item && typeof item==='object') return { bulan:Number(item.bulan), tahun:Number(item.tahun) };
+    return { bulan:Number(item), tahun:Number(p.tahun) };
+  }).sort((a,b)=> PERIODE_URUT.indexOf(a.bulan) - PERIODE_URUT.indexOf(b.bulan));
+}
+function tahunAwalPembayaran(p){
+  const pairs = getBulanTahunPairs(p);
+  return pairs.length ? Math.min(...pairs.map(x=>x.tahun)) : (p.tahun || new Date().getFullYear());
+}
+function formatBulanTahunText(p, full){
+  const groups = [];
+  getBulanTahunPairs(p).forEach(it=>{
+    const nama = full ? BULAN[it.bulan-1] : BULAN[it.bulan-1].slice(0,3);
+    const last = groups[groups.length-1];
+    if(last && last.tahun===it.tahun) last.names.push(nama);
+    else groups.push({ tahun:it.tahun, names:[nama] });
+  });
+  return groups.map(g=> g.names.join(', ') + ' ' + g.tahun).join(', ');
+}
 function isBulanLunas(studentId, bulan, tahun){
-  return state.pembayaran.some(p => p.tahunAjaranId===currentTahunAjaranId && p.studentId===studentId && Number(p.tahun)===Number(tahun) && (p.bulanList||[]).includes(bulan));
+  return state.pembayaran.some(p => {
+    if(p.tahunAjaranId!==currentTahunAjaranId || p.studentId!==studentId) return false;
+    return getBulanTahunPairs(p).some(it=> it.bulan===Number(bulan) && it.tahun===Number(tahun));
+  });
 }
 
 /* ============================================================
@@ -1482,24 +1508,20 @@ async function simpanPembayaran(){
   if(bayarSelectedMonths.size===0){ toast('Pilih minimal satu bulan yang dibayar','err'); return; }
   if(!tanggal){ toast('Tanggal bayar wajib diisi','err'); return; }
   const nominal = nominalUntukSiswa(s);
-  // Kelompokkan bulan terpilih per tahun kalender (periode Juli-Juni bisa lintas 2 tahun kalender)
-  const grup = {};
-  bayarSelectedMonths.forEach(bulan=>{
-    const tahun = tahunUntukBulan(ta?.label, bulan);
-    (grup[tahun] = grup[tahun] || []).push(bulan);
-  });
+  // Simpan sebagai satu transaksi, tiap bulan membawa tahun kalendernya sendiri
+  // (periode Juli-Juni bisa mencakup 2 tahun kalender sekaligus, tapi tetap 1 catatan riwayat)
+  const bulanList = Array.from(bayarSelectedMonths)
+    .map(bulan => ({ bulan, tahun: tahunUntukBulan(ta?.label, bulan) }))
+    .sort((a,b)=> PERIODE_URUT.indexOf(a.bulan) - PERIODE_URUT.indexOf(b.bulan));
+  const obj = {
+    studentId, bulanList,
+    nominalPerBulan: nominal,
+    total: nominal * bulanList.length,
+    tanggal, metode, keterangan,
+    createdAt: Date.now()
+  };
   try{
-    for(const tahun of Object.keys(grup)){
-      const bulanList = grup[tahun].sort((a,b)=>a-b);
-      const obj = {
-        studentId, tahun:Number(tahun), bulanList,
-        nominalPerBulan: nominal,
-        total: nominal * bulanList.length,
-        tanggal, metode, keterangan,
-        createdAt: Date.now()
-      };
-      await dbAddPembayaran(obj);
-    }
+    await dbAddPembayaran(obj);
     toast('Pembayaran berhasil dicatat','ok');
     bayarSelectedMonths = new Set();
     document.getElementById('bayarKeterangan').value = '';
@@ -1520,7 +1542,7 @@ function renderRiwayatTable(){
     const s = findSiswa(p.studentId);
     return `<tr>
       <td>${esc(s?.nama || '(siswa dihapus)')}</td>
-      <td>${(p.bulanList||[]).map(b=>BULAN[b-1].slice(0,3)).join(', ')} ${esc(p.tahun)}</td>
+      <td>${esc(formatBulanTahunText(p, false))}</td>
       <td class="right num">${rupiah(p.total)}</td>
       <td>${esc(p.tanggal)}</td>
       <td>${esc(p.metode)}</td>
@@ -1557,7 +1579,7 @@ function renderCetakTable(){
     const s = findSiswa(p.studentId);
     return `<tr>
       <td>${esc(s?.nama || '(siswa dihapus)')}</td>
-      <td>${(p.bulanList||[]).map(b=>BULAN[b-1].slice(0,3)).join(', ')} ${esc(p.tahun)}</td>
+      <td>${esc(formatBulanTahunText(p, false))}</td>
       <td class="right num">${rupiah(p.total)}</td>
       <td>${esc(p.tanggal)}</td>
       <td class="center" style="white-space:nowrap;">
@@ -1573,8 +1595,8 @@ function renderCetakTable(){
     <tbody>${rows}</tbody></table>`;
 }
 function buildReceiptHTML(p, s, ta){
-  const bulanText = (p.bulanList||[]).map(b=>BULAN[b-1]).join(', ');
-  const noKwitansi = 'KK-' + p.tahun + '-' + String(p.id).slice(-6).toUpperCase();
+  const bulanText = formatBulanTahunText(p, true);
+  const noKwitansi = 'KK-' + tahunAwalPembayaran(p) + '-' + String(p.id).slice(-6).toUpperCase();
   const tgl = p.tanggal ? new Date(p.tanggal).toLocaleDateString('id-ID', {day:'numeric', month:'long', year:'numeric'}) : '-';
   const lunasPenuh = isTahunAjaranLunasPenuh(s?.id, ta?.label);
   return `
@@ -1589,7 +1611,7 @@ function buildReceiptHTML(p, s, ta){
       <div class="receipt-row"><span class="k">No. Absen</span><span class="v">${esc(s?.noAbsen ?? '-')}</span></div>
       ${s?.namaOrtu ? `<div class="receipt-row"><span class="k">Orang Tua/Wali</span><span class="v">${esc(s.namaOrtu)}</span></div>` : ''}
       <div class="receipt-row"><span class="k">Bulan Dibayar</span><span class="v">${esc(bulanText)}</span></div>
-      <div class="receipt-row"><span class="k">Tahun</span><span class="v">${esc(p.tahun)}</span></div>
+      <div class="receipt-row"><span class="k">Periode</span><span class="v">${esc(periodeLabelTA(ta?.label))}</span></div>
       <div class="receipt-row"><span class="k">Nominal / Bulan</span><span class="v">${rupiah(p.nominalPerBulan)}</span></div>
       <div class="receipt-row"><span class="k">Jumlah Bulan</span><span class="v">${(p.bulanList||[]).length}</span></div>
       <div class="receipt-row"><span class="k">Metode Bayar</span><span class="v">${esc(p.metode)}</span></div>
@@ -1648,14 +1670,14 @@ function normalizeWaNumber(noHp){
   return n;
 }
 function pesanBuktiWA(p, s){
-  const bulanText = (p.bulanList||[]).map(b=>BULAN[b-1]).join(', ');
-  return `Assalamu'alaikum, berikut bukti pembayaran kas kelas a.n. *${s?.nama || '-'}* untuk bulan ${bulanText} ${p.tahun} sebesar ${rupiah(p.total)}. Terima kasih.`;
+  const bulanText = formatBulanTahunText(p, true);
+  return `Assalamu'alaikum, berikut bukti pembayaran kas kelas a.n. *${s?.nama || '-'}* untuk bulan ${bulanText} sebesar ${rupiah(p.total)}. Terima kasih.`;
 }
 async function unduhBuktiGambar(paymentId){
   const res = await renderReceiptToCanvas(paymentId);
   if(!res) return;
   const link = document.createElement('a');
-  link.download = `bukti-bayar-${safeFileName(res.s?.nama)}-${res.p.tahun}.png`;
+  link.download = `bukti-bayar-${safeFileName(res.s?.nama)}-${tahunAwalPembayaran(res.p)}.png`;
   link.href = res.canvas.toDataURL('image/png');
   link.click();
   toast('Gambar bukti bayar diunduh','ok');
@@ -1674,7 +1696,7 @@ async function unduhBuktiPDF(paymentId){
   const x = (pageW - imgW) / 2;
   const y = margin;
   pdf.addImage(res.canvas.toDataURL('image/png'), 'PNG', x, y, imgW, imgH);
-  pdf.save(`bukti-bayar-${safeFileName(res.s?.nama)}-${res.p.tahun}.pdf`);
+  pdf.save(`bukti-bayar-${safeFileName(res.s?.nama)}-${tahunAwalPembayaran(res.p)}.pdf`);
   toast('PDF bukti bayar diunduh','ok');
 }
 async function kirimBuktiWA(paymentId){
