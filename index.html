@@ -524,6 +524,10 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8.5" cy="7" r="4"/><path d="M2 21v-2a6 6 0 0 1 6-6h1a6 6 0 0 1 6 6v2"/><path d="M17 11l2 2 4-4"/></svg>
         Manage Users
       </button>
+      <button class="tab-btn" data-tab="auditLog" id="navAuditLogBtn" style="display:none;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>
+        Audit Log
+      </button>
       <button class="tab-btn" data-tab="pengaturan">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
         Settings
@@ -557,6 +561,15 @@
         </div>
 
         <div class="grid-stats" id="statGrid"></div>
+
+        <div class="card">
+          <h2>Cash Flow Trend <span class="badge" id="trendPeriodeBadge"></span></h2>
+          <div id="trendChart"></div>
+          <div style="display:flex; gap:16px; margin-top:8px; font-size:12px; color:var(--ink-soft);">
+            <span><span style="display:inline-block; width:10px; height:10px; background:var(--green); border-radius:2px; margin-right:5px;"></span>Cash In</span>
+            <span><span style="display:inline-block; width:10px; height:10px; background:var(--maroon); border-radius:2px; margin-right:5px;"></span>Cash Out</span>
+          </div>
+        </div>
 
         <div class="card">
           <h2>Payment Status <span class="badge" id="badgeBulanIni"></span></h2>
@@ -702,6 +715,7 @@
           <div style="display:flex; gap:10px; align-items:center;">
             <span class="pill" id="rekapPeriodeBadge" style="background:var(--gold-soft); color:#6b5217;">-</span>
             <button class="btn btn-outline" onclick="cetakLaporanKasMasuk()">🖨 Print Report</button>
+            <button class="btn btn-outline" onclick="exportRekapCSV()">⬇ Export CSV</button>
           </div>
         </div>
 
@@ -783,6 +797,7 @@
           <div style="display:flex; gap:8px; flex-wrap:wrap;">
             <button class="btn btn-outline" onclick="cetakLaporanPengeluaran()">🖨 Print Report</button>
             <button class="btn btn-outline" onclick="unduhLaporanPengeluaranGambar()">🖼️ Save as Image (HD)</button>
+            <button class="btn btn-outline" onclick="exportLedgerCSV()">⬇ Export CSV</button>
           </div>
         </div>
 
@@ -868,6 +883,52 @@
         <div class="card">
           <h2>User List</h2>
           <div id="usersTable"></div>
+        </div>
+      </section>
+
+      <!-- ================= AUDIT LOG ================= -->
+      <section id="tab-auditLog" class="tab-panel" style="display:none;">
+        <div class="topbar">
+          <div>
+            <h1>Audit Log</h1>
+            <div class="sub">Who changed what, and when &mdash; across every school year</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div style="display:flex; gap:10px; margin-bottom:12px; flex-wrap:wrap;">
+            <div class="field" style="margin-bottom:0; max-width:170px;">
+              <label>Action</label>
+              <select id="auditActionFilter" onchange="renderAuditLogTable()">
+                <option value="all">All</option>
+                <option value="add">Added</option>
+                <option value="edit">Edited</option>
+                <option value="delete">Deleted</option>
+                <option value="publish">Published</option>
+              </select>
+            </div>
+            <div class="field" style="margin-bottom:0; max-width:170px;">
+              <label>Entity</label>
+              <select id="auditEntityFilter" onchange="renderAuditLogTable()">
+                <option value="all">All</option>
+                <option value="siswa">Student</option>
+                <option value="pembayaran">Payment</option>
+                <option value="akun">Account</option>
+                <option value="kegiatan">Activity</option>
+                <option value="pengeluaran">Expense</option>
+                <option value="user">User</option>
+                <option value="tahunAjaran">School Year</option>
+                <option value="saldoBank">Bank Balance</option>
+                <option value="publicSummary">Public Link</option>
+              </select>
+            </div>
+            <div class="search-box" style="flex:1; min-width:160px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+              <input type="text" id="auditSearch" placeholder="Search by detail or user email..." oninput="renderAuditLogTable()">
+            </div>
+          </div>
+          <div id="auditLogTable"></div>
+          <p class="helper" style="margin-top:10px;">Showing the most recent 500 entries.</p>
         </div>
       </section>
 
@@ -982,6 +1043,7 @@ service cloud.firestore {
     match /pengeluaran/{doc} { allow read, write: if isSignedIn(); }
     match /globalSettings/{doc} { allow read, write: if isSignedIn(); }
     match /publicSummary/{doc} { allow read: if true; allow write: if isSignedIn(); }
+    match /auditLog/{doc} { allow read, write: if isSignedIn(); }
   }
 }</pre>
         </div>
@@ -1528,6 +1590,8 @@ let currentTahunAjaranId = null;
 let saldoBank = { saldoAwal: 0, tanggalSaldoAwal: '', keterangan: '' };
 // Published (sanitized) snapshots for the public "share with parents" link — one doc per school year, doc id = tahunAjaranId
 let publicSummaryList = [];
+// Who changed what and when — visible in the Audit Log tab (admin only)
+let auditLogList = [];
 
 let state = {
   siswa: [],       // {id, tahunAjaranId, noAbsen, nama, nominalKhusus}
@@ -1626,6 +1690,7 @@ function switchTab(tab){
   if(tab==='laporanPengeluaran') renderLaporanPengeluaranTab();
   if(tab==='saldoKas') renderSaldoKasTab();
   if(tab==='users') renderUsersTable();
+  if(tab==='auditLog') renderAuditLogTable();
   if(tab==='pengaturan') renderPengaturanTab();
 }
 
@@ -1677,6 +1742,7 @@ async function onAuthReady(user){
     if(doc.exists){
       currentUser = {uid:user.uid, email:user.email, role: doc.data().role || 'bendahara'};
       document.getElementById('navUsersBtn').style.display = currentUser.role==='admin' ? 'flex' : 'none';
+      document.getElementById('navAuditLogBtn').style.display = currentUser.role==='admin' ? 'flex' : 'none';
       document.getElementById('whoEmail').textContent = currentUser.email;
       showScreen('app');
       await bootAppData();
@@ -1705,6 +1771,7 @@ function loadLocal(){
       state.kegiatan = parsed.kegiatan || [];
       state.pengeluaran = parsed.pengeluaran || [];
       saldoBank = parsed.saldoBank || { saldoAwal:0, tanggalSaldoAwal:'', keterangan:'' };
+      auditLogList = parsed.auditLogList || [];
     }
   }catch(e){ console.error(e); }
 }
@@ -1712,7 +1779,7 @@ function saveLocal(){
   localStorage.setItem(LS_KEY, JSON.stringify({
     tahunAjaranList, siswa: state.siswa, pembayaran: state.pembayaran,
     akun: state.akun, kegiatan: state.kegiatan, pengeluaran: state.pengeluaran,
-    saldoBank
+    saldoBank, auditLogList
   }));
 }
 function setConnLabel(){
@@ -1801,6 +1868,11 @@ async function bootAppData(){
       publicSummaryList = snap.docs.map(d=>({id:d.id, ...d.data()}));
       refreshCurrentTab();
     }, err=>toast('Failed to load public link status: '+err.message,'err')));
+
+    unsubscribers.push(DB.collection('auditLog').orderBy('timestamp','desc').limit(500).onSnapshot(snap=>{
+      auditLogList = snap.docs.map(d=>({id:d.id, ...d.data()}));
+      refreshCurrentTab();
+    }, err=>console.error('Failed to load audit log:', err.message)));
   }else{
     loadLocal();
     afterTahunAjaranListLoaded();
@@ -1913,6 +1985,7 @@ async function createNewTahunAjaranFromModal(){
     }
     currentTahunAjaranId = newId;
     localStorage.setItem(LS_CURRENT_TA, newId);
+    logAudit('add','tahunAjaran', label);
     closeModal('modalTahunAjaran');
     refreshCurrentTab();
   }catch(e){ toast('Failed to create school year: '+e.message, 'err'); }
@@ -1951,12 +2024,16 @@ function renameTA(id){
   const t = tahunAjaranList.find(x=>x.id===id);
   const label = prompt('New label for this school year:', t?.label||'');
   if(label && label.trim()){
-    updateTahunAjaran(id, {label:label.trim()}).then(()=>toast('Label updated','ok'));
+    updateTahunAjaran(id, {label:label.trim()}).then(()=>{
+      toast('Label updated','ok');
+      logAudit('edit','tahunAjaran', `${t?.label||id} → ${label.trim()}`);
+    });
   }
 }
 function deleteTAConfirm(id){
+  const t = tahunAjaranList.find(x=>x.id===id);
   confirmAction('Delete this school year? This can only be done if it has no students, payments, accounts, activities, or expenses yet.', async ()=>{
-    try{ await deleteTahunAjaran(id); toast('School year deleted','ok'); }
+    try{ await deleteTahunAjaran(id); toast('School year deleted','ok'); logAudit('delete','tahunAjaran', t?.label||id); }
     catch(e){ toast('Failed to delete: '+e.message,'err'); }
   });
 }
@@ -2169,6 +2246,62 @@ function generateNoRefPengeluaran(){
   return 'CD' + String(max+1).padStart(6,'0');
 }
 
+/* ---- Audit Log: records who did what and when, across every entity in the app ---- */
+function logAudit(action, entity, label){
+  const entry = {
+    timestamp: Date.now(),
+    userEmail: currentUser?.email || 'local',
+    action,     // 'add' | 'edit' | 'delete' | 'publish'
+    entity,     // 'siswa' | 'pembayaran' | 'akun' | 'kegiatan' | 'pengeluaran' | 'user' | 'tahunAjaran' | 'saldoBank' | 'publicSummary'
+    label,      // human-readable description, e.g. a student's name or a reference number
+    tahunAjaranId: currentTahunAjaranId
+  };
+  if(USE_FIRESTORE){
+    DB.collection('auditLog').add(entry).catch(e=>console.error('Failed to write audit log:', e.message));
+  }else{
+    auditLogList.unshift({id:uid(), ...entry});
+    if(auditLogList.length>500) auditLogList.length = 500;
+    saveLocal();
+  }
+}
+const AUDIT_ENTITY_LABELS = {
+  siswa:'Student', pembayaran:'Payment', akun:'Account', kegiatan:'Activity',
+  pengeluaran:'Expense', user:'User', tahunAjaran:'School Year', saldoBank:'Bank Balance', publicSummary:'Public Link'
+};
+const AUDIT_ACTION_LABELS = { add:'Added', edit:'Edited', delete:'Deleted', publish:'Published' };
+function renderAuditLogTable(){
+  const actionFilter = document.getElementById('auditActionFilter').value;
+  const entityFilter = document.getElementById('auditEntityFilter').value;
+  const q = (document.getElementById('auditSearch').value||'').toLowerCase();
+  const rows = auditLogList
+    .filter(a=> actionFilter==='all' ? true : a.action===actionFilter)
+    .filter(a=> entityFilter==='all' ? true : a.entity===entityFilter)
+    .filter(a=> ((a.label||'')+' '+(a.userEmail||'')).toLowerCase().includes(q))
+    .sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
+
+  if(rows.length===0){
+    document.getElementById('auditLogTable').innerHTML = emptyState('No audit log entries match this filter yet.');
+    return;
+  }
+  const actionPillColor = { add:'lunas', edit:'', delete:'belum', publish:'lunas' };
+  const trs = rows.map(a=>{
+    const when = a.timestamp ? new Date(a.timestamp).toLocaleString('en-US', {dateStyle:'medium', timeStyle:'short'}) : '-';
+    const pillClass = actionPillColor[a.action] || '';
+    return `<tr>
+      <td class="mono" style="white-space:nowrap;">${esc(when)}</td>
+      <td>${esc(a.userEmail||'-')}</td>
+      <td class="center"><span class="pill ${pillClass}">${esc(AUDIT_ACTION_LABELS[a.action]||a.action)}</span></td>
+      <td>${esc(AUDIT_ENTITY_LABELS[a.entity]||a.entity)}</td>
+      <td>${esc(a.label||'-')}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('auditLogTable').innerHTML = `
+    <div class="table-scroll">
+      <table><thead><tr><th>When</th><th>User</th><th class="center">Action</th><th>Entity</th><th>Details</th></tr></thead>
+      <tbody>${trs}</tbody></table>
+    </div>`;
+}
+
 /* ============================================================
    DASHBOARD
    ============================================================ */
@@ -2242,6 +2375,7 @@ function renderDashboard(){
   `;
 
   renderDashBulanIniTable();
+  renderTrendChart();
 
   const recent = state.pembayaran.filter(p=>p.tahunAjaranId===currentTahunAjaranId)
     .slice().sort((a,b)=> (b.createdAt||0)-(a.createdAt||0)).slice(0,8);
@@ -2261,6 +2395,48 @@ function renderDashboard(){
       <table><thead><tr><th>Name</th><th>Month</th><th class="right">Amount</th><th>Date</th></tr></thead>
       <tbody>${rows}</tbody></table>`;
   }
+}
+/* Simple hand-rolled SVG grouped bar chart — Cash In vs Cash Out per calendar month of the school year period.
+   Uses the actual transaction date (not which month dues were "for"), so it reflects real cash flow timing. */
+function renderTrendChart(){
+  const ta = currentTA();
+  document.getElementById('trendPeriodeBadge').textContent = periodeLabelTA(ta?.label);
+
+  const pembayaranTA = state.pembayaran.filter(p=>p.tahunAjaranId===currentTahunAjaranId);
+  const pengeluaranTA = currentPengeluaranList();
+
+  const perMonth = PERIODE_URUT.map(bulanNum=>{
+    const tahun = tahunUntukBulan(ta?.label, bulanNum);
+    const cashIn = pembayaranTA
+      .filter(p=>{ const d = new Date(p.tanggal); return !isNaN(d) && d.getMonth()+1===bulanNum && d.getFullYear()===tahun; })
+      .reduce((s,p)=>s+Number(p.total||0),0);
+    const cashOut = pengeluaranTA
+      .filter(p=>{ const d = new Date(p.tanggal); return !isNaN(d) && d.getMonth()+1===bulanNum && d.getFullYear()===tahun; })
+      .reduce((s,p)=>s+Number(p.nominal||0),0);
+    return { bulanNum, tahun, cashIn, cashOut };
+  });
+
+  const maxVal = Math.max(1, ...perMonth.map(m=>Math.max(m.cashIn, m.cashOut)));
+  const W = 760, H = 200, padL = 6, padR = 6, padB = 26, padT = 10;
+  const chartH = H - padT - padB;
+  const groupW = (W - padL - padR) / 12;
+  const barW = groupW * 0.32;
+
+  let bars = '';
+  perMonth.forEach((m, i)=>{
+    const groupX = padL + i*groupW;
+    const hIn = (m.cashIn/maxVal) * chartH;
+    const hOut = (m.cashOut/maxVal) * chartH;
+    const xIn = groupX + groupW*0.14;
+    const xOut = groupX + groupW*0.54;
+    bars += `<rect x="${xIn.toFixed(1)}" y="${(padT+chartH-hIn).toFixed(1)}" width="${barW.toFixed(1)}" height="${hIn.toFixed(1)}" rx="2" fill="var(--green)"><title>${BULAN[m.bulanNum-1]} ${m.tahun} — Cash In: ${rupiah(m.cashIn)}</title></rect>`;
+    bars += `<rect x="${xOut.toFixed(1)}" y="${(padT+chartH-hOut).toFixed(1)}" width="${barW.toFixed(1)}" height="${hOut.toFixed(1)}" rx="2" fill="var(--maroon)"><title>${BULAN[m.bulanNum-1]} ${m.tahun} — Cash Out: ${rupiah(m.cashOut)}</title></rect>`;
+    bars += `<text x="${(groupX+groupW/2).toFixed(1)}" y="${H-8}" text-anchor="middle" font-size="10" fill="var(--ink-soft)">${BULAN[m.bulanNum-1].slice(0,3)}</text>`;
+  });
+  const baseline = `<line x1="${padL}" y1="${padT+chartH}" x2="${W-padR}" y2="${padT+chartH}" stroke="var(--paper-line)" stroke-width="1"/>`;
+
+  document.getElementById('trendChart').innerHTML = `
+    <svg viewBox="0 0 ${W} ${H}" style="width:100%; height:200px; display:block;">${baseline}${bars}</svg>`;
 }
 function emptyState(msg){
   return `<div class="empty">
@@ -2390,8 +2566,8 @@ async function saveSiswa(){
     nominalKhusus: document.getElementById('siswaNominalKhusus').value === '' ? null : Number(document.getElementById('siswaNominalKhusus').value)
   };
   try{
-    if(id){ await dbUpdateSiswa(id, obj); toast('Student data updated','ok'); }
-    else{ await dbAddSiswa(obj); toast('Student added','ok'); }
+    if(id){ await dbUpdateSiswa(id, obj); toast('Student data updated','ok'); logAudit('edit','siswa',nama); }
+    else{ await dbAddSiswa(obj); toast('Student added','ok'); logAudit('add','siswa',nama); }
     closeModal('modalSiswa');
     if(!USE_FIRESTORE) renderSiswaTable();
   }catch(e){ toast('Failed to save: '+e.message, 'err'); }
@@ -2403,7 +2579,7 @@ function deleteSiswaConfirm(id, nama){
     return;
   }
   confirmAction(`Delete student "${nama}"?`, async ()=>{
-    try{ await dbDeleteSiswa(id); toast('Student deleted','ok'); if(!USE_FIRESTORE) renderSiswaTable(); }
+    try{ await dbDeleteSiswa(id); toast('Student deleted','ok'); logAudit('delete','siswa',nama); if(!USE_FIRESTORE) renderSiswaTable(); }
     catch(e){ toast('Failed to delete: '+e.message,'err'); }
   });
 }
@@ -2483,6 +2659,7 @@ async function simpanPembayaran(){
   try{
     await dbAddPembayaran(obj);
     toast('Payment recorded successfully','ok');
+    logAudit('add','pembayaran', `${s.nama} — ${rupiah(obj.total)} (${bulanList.length} month${bulanList.length>1?'s':''})`);
     bayarSelectedMonths = new Set();
     document.getElementById('bayarKeterangan').value = '';
     onBayarSiswaChange();
@@ -2518,8 +2695,10 @@ function renderRiwayatTable(){
     <tbody>${rows}</tbody></table>`;
 }
 function deletePembayaranConfirm(id){
+  const p = state.pembayaran.find(x=>x.id===id);
+  const s = p ? findSiswa(p.studentId) : null;
   confirmAction('Delete this payment record? The related month(s) status will revert to unpaid.', async ()=>{
-    try{ await dbDeletePembayaran(id); toast('Payment deleted','ok'); if(!USE_FIRESTORE){ renderRiwayatTable(); } }
+    try{ await dbDeletePembayaran(id); toast('Payment deleted','ok'); logAudit('delete','pembayaran', s?.nama||'(student deleted)'); if(!USE_FIRESTORE){ renderRiwayatTable(); } }
     catch(e){ toast('Failed to delete: '+e.message,'err'); }
   });
 }
@@ -2587,6 +2766,9 @@ async function simpanEditPembayaran(){
   try{
     await dbUpdatePembayaran(id, obj);
     toast('Payment updated','ok');
+    const p = state.pembayaran.find(x=>x.id===id);
+    const s = p ? findSiswa(p.studentId) : null;
+    logAudit('edit','pembayaran', `${s?.nama||'(student deleted)'} — ${rupiah(obj.total)}`);
     closeModal('modalEditBayar');
     if(!USE_FIRESTORE) renderRiwayatTable();
   }catch(e){ toast('Failed to save changes: '+e.message,'err'); }
@@ -2896,12 +3078,84 @@ function cetakLaporanKasMasuk(){
   setTimeout(()=> window.print(), 80);
 }
 
+/* ---- CSV export (shared helper) ---- */
+function csvCell(v){
+  const s = String(v ?? '');
+  return /[",\n]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s;
+}
+function downloadCSV(filename, rows){
+  const csv = rows.map(row => row.map(csvCell).join(',')).join('\r\n');
+  const blob = new Blob(['\uFEFF' + csv], {type:'text/csv;charset=utf-8;'}); // BOM so Excel opens it correctly
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+function exportRekapCSV(){
+  const ta = currentTA();
+  const siswaSorted = currentSiswaList().slice().sort((a,b)=>(a.noAbsen||0)-(b.noAbsen||0));
+  if(siswaSorted.length===0){ toast('No student data to export yet','err'); return; }
+  const monthHeaders = PERIODE_URUT.map(bulanNum=>BULAN[bulanNum-1]);
+  const rows = [['No','Name', ...monthHeaders, 'Total']];
+  siswaSorted.forEach(s=>{
+    const nominal = nominalUntukSiswa(s);
+    let rowTotal = 0;
+    const cells = PERIODE_URUT.map(bulanNum=>{
+      const tahun = tahunUntukBulan(ta?.label, bulanNum);
+      const paid = isBulanLunas(s.id, bulanNum, tahun);
+      if(paid) rowTotal += nominal;
+      return paid ? nominal : 0;
+    });
+    rows.push([s.noAbsen||'', s.nama, ...cells, rowTotal]);
+  });
+  downloadCSV(`payment-report-${safeFileName(ta?.namaKelas||ta?.label||'class')}.csv`, rows);
+  toast('CSV downloaded','ok');
+}
+
 /* ---- Public "share with parents" link (sanitized read-only snapshot, no login required) ---- */
 function publicShareUrl(tahunAjaranId){
   return location.origin + location.pathname + '?public=' + encodeURIComponent(tahunAjaranId);
 }
 function currentPublicSummary(){
   return publicSummaryList.find(x=>x.id===currentTahunAjaranId) || null;
+}
+/* Builds the sanitized public snapshot payload (used both to publish, and to detect drift since the last publish) */
+function buildPublicSummaryPayload(){
+  const ta = currentTA();
+  const siswaSorted = currentSiswaList().slice().sort((a,b)=>(a.noAbsen||0)-(b.noAbsen||0));
+  const siswaRingkas = siswaSorted.map(s=>({
+    nama: s.nama,
+    noAbsen: s.noAbsen||null,
+    bulanLunas: PERIODE_URUT.filter(bulanNum=> isBulanLunas(s.id, bulanNum, tahunUntukBulan(ta?.label, bulanNum)))
+  }));
+  const totalSiswa = siswaSorted.length;
+  const totalSlotBulan = totalSiswa * 12;
+  let slotLunas = 0, grandTotal = 0;
+  siswaSorted.forEach(s=>{
+    const nominal = nominalUntukSiswa(s);
+    PERIODE_URUT.forEach(bulanNum=>{
+      if(isBulanLunas(s.id, bulanNum, tahunUntukBulan(ta?.label, bulanNum))){ slotLunas++; grandTotal += nominal; }
+    });
+  });
+  const persen = totalSlotBulan ? Math.round((slotLunas/totalSlotBulan)*100) : 0;
+  return {
+    namaSekolah: ta?.namaSekolah || '',
+    namaKelas: ta?.namaKelas || '',
+    label: ta?.label || '',
+    periode: periodeLabelTA(ta?.label),
+    siswaRingkas,
+    totalSiswa, grandTotal, persen, slotLunas, totalSlotBulan,
+    saldoBankSaatIni: saldoBankSaatIni()
+  };
+}
+/* Compares the current live data against what was last published, ignoring the updatedAt timestamp */
+function publicSummaryHasChangedSincePublish(){
+  const snap = currentPublicSummary();
+  if(!snap) return false; // nothing published yet — handled separately, not shown as "changed"
+  const { updatedAt, ...published } = snap;
+  const current = buildPublicSummaryPayload();
+  return JSON.stringify(published) !== JSON.stringify(current);
 }
 function renderPublicLinkStatus(){
   const statusEl = document.getElementById('publicLinkStatus');
@@ -2921,43 +3175,20 @@ function renderPublicLinkStatus(){
     return;
   }
   const when = snap.updatedAt ? new Date(snap.updatedAt).toLocaleString('en-US', {dateStyle:'medium', timeStyle:'short'}) : '-';
-  statusEl.innerHTML = `✅ Published. Last updated: <b>${esc(when)}</b>. Anyone with the link below can view it without logging in.`;
+  const changed = publicSummaryHasChangedSincePublish();
+  statusEl.innerHTML = `✅ Published. Last updated: <b>${esc(when)}</b>. Anyone with the link below can view it without logging in.`
+    + (changed ? ` <span class="badge" style="background:var(--maroon-soft); color:var(--maroon);">⚠ Data changed since last publish</span>` : '');
   boxEl.style.display = '';
   copyBtn.style.display = '';
   document.getElementById('publicLinkInput').value = publicShareUrl(currentTahunAjaranId);
 }
 async function publishPublicSummary(){
   if(!USE_FIRESTORE){ toast('Connect to Firebase first — the public link needs a shared online backend','err'); return; }
-  const ta = currentTA();
-  const siswaSorted = currentSiswaList().slice().sort((a,b)=>(a.noAbsen||0)-(b.noAbsen||0));
-  const siswaRingkas = siswaSorted.map(s=>({
-    nama: s.nama,
-    noAbsen: s.noAbsen||null,
-    bulanLunas: PERIODE_URUT.filter(bulanNum=> isBulanLunas(s.id, bulanNum, tahunUntukBulan(ta?.label, bulanNum)))
-  }));
-  const totalSiswa = siswaSorted.length;
-  const totalSlotBulan = totalSiswa * 12;
-  let slotLunas = 0, grandTotal = 0;
-  siswaSorted.forEach(s=>{
-    const nominal = nominalUntukSiswa(s);
-    PERIODE_URUT.forEach(bulanNum=>{
-      if(isBulanLunas(s.id, bulanNum, tahunUntukBulan(ta?.label, bulanNum))){ slotLunas++; grandTotal += nominal; }
-    });
-  });
-  const persen = totalSlotBulan ? Math.round((slotLunas/totalSlotBulan)*100) : 0;
-  const payload = {
-    namaSekolah: ta?.namaSekolah || '',
-    namaKelas: ta?.namaKelas || '',
-    label: ta?.label || '',
-    periode: periodeLabelTA(ta?.label),
-    siswaRingkas,
-    totalSiswa, grandTotal, persen, slotLunas, totalSlotBulan,
-    saldoBankSaatIni: saldoBankSaatIni(),
-    updatedAt: Date.now()
-  };
+  const payload = { ...buildPublicSummaryPayload(), updatedAt: Date.now() };
   try{
     await DB.collection('publicSummary').doc(currentTahunAjaranId).set(payload);
     toast('Public link published/updated','ok');
+    logAudit('publish', 'publicSummary', `Public link for ${payload.label||'this school year'}`);
   }catch(e){ toast('Failed to publish: '+e.message,'err'); }
 }
 function copyPublicLink(){
@@ -2989,6 +3220,7 @@ async function addNewUser(){
     });
     await secAuth.signOut();
     toast('User added successfully','ok');
+    logAudit('add','user', `${email} (${role})`);
     document.getElementById('newUserEmail').value = '';
     document.getElementById('newUserPassword').value = '';
     renderUsersTable();
@@ -3010,7 +3242,7 @@ async function renderUsersTable(){
       return `<tr>
         <td>${esc(u.email)}</td>
         <td><span class="pill ${u.role==='admin'?'lunas':'belum'}">${esc(u.role)}</span></td>
-        <td>${u.addedAt ? new Date(u.addedAt).toLocaleDateString('id-ID') : '-'}</td>
+        <td>${u.addedAt ? new Date(u.addedAt).toLocaleDateString('en-US') : '-'}</td>
         <td class="center">${isSelf ? '<span class="helper">your account</span>' : `<button class="btn btn-sm btn-danger" onclick='revokeUser("${d.id}","${esc(u.email)}")'>Revoke Access</button>`}</td>
       </tr>`;
     }).join('');
@@ -3023,7 +3255,7 @@ async function renderUsersTable(){
 }
 function revokeUser(uid, email){
   confirmAction(`Revoke access for ${email}? Their Firebase Auth account will remain, only access to the class cash data will be revoked.`, async ()=>{
-    try{ await DB.collection('users').doc(uid).delete(); toast('Access revoked','ok'); renderUsersTable(); }
+    try{ await DB.collection('users').doc(uid).delete(); toast('Access revoked','ok'); logAudit('delete','user', email); renderUsersTable(); }
     catch(e){ toast('Failed to revoke access: '+e.message,'err'); }
   });
 }
@@ -3078,8 +3310,8 @@ async function saveAkun(){
   if(dup){ toast(`Account code "${kode}" is already used by "${dup.nama}". Use a different code.`,'err'); return; }
   const obj = { kode, nama };
   try{
-    if(id){ await dbUpdateAkun(id, obj); toast('Account updated','ok'); }
-    else{ await dbAddAkun(obj); toast('Account added','ok'); }
+    if(id){ await dbUpdateAkun(id, obj); toast('Account updated','ok'); logAudit('edit','akun', `${kode} — ${nama}`); }
+    else{ await dbAddAkun(obj); toast('Account added','ok'); logAudit('add','akun', `${kode} — ${nama}`); }
     closeModal('modalAkun');
     if(!USE_FIRESTORE) renderAkunTable();
   }catch(e){ toast('Failed to save: '+e.message,'err'); }
@@ -3090,8 +3322,9 @@ function deleteAkunConfirm(id){
     toast(`This account can't be deleted because ${jmlKegiatan} activity/activities still use it. Reassign or delete those activities first.`, 'err');
     return;
   }
+  const a = findAkun(id);
   confirmAction('Delete this account?', async ()=>{
-    try{ await dbDeleteAkun(id); toast('Account deleted','ok'); if(!USE_FIRESTORE) renderAkunTable(); }
+    try{ await dbDeleteAkun(id); toast('Account deleted','ok'); logAudit('delete','akun', a ? `${a.kode} — ${a.nama}` : id); if(!USE_FIRESTORE) renderAkunTable(); }
     catch(e){ toast('Failed to delete: '+e.message,'err'); }
   });
 }
@@ -3163,12 +3396,13 @@ async function saveKegiatan(){
   if(!akunId){ toast('Please select a linked account','err'); return; }
   const obj = { nama, akunId };
   try{
-    if(id){ await dbUpdateKegiatan(id, obj); toast('Activity updated','ok'); }
+    if(id){ await dbUpdateKegiatan(id, obj); toast('Activity updated','ok'); logAudit('edit','kegiatan', nama); }
     else{
       // The very first activity in a school year becomes the default automatically
       if(currentKegiatanList().length===0) obj.isDefault = true;
       await dbAddKegiatan(obj);
       toast('Activity added','ok');
+      logAudit('add','kegiatan', nama);
     }
     closeModal('modalKegiatan');
     if(!USE_FIRESTORE) renderKegiatanTable();
@@ -3180,7 +3414,8 @@ function deleteKegiatanConfirm(id){
     toast(`This activity can't be deleted because it already has ${jmlPengeluaran} expense record(s). Delete those expenses first if you really want to remove this activity.`, 'err');
     return;
   }
-  const wasDefault = findKegiatan(id)?.isDefault;
+  const target = findKegiatan(id);
+  const wasDefault = target?.isDefault;
   confirmAction('Delete this activity?', async ()=>{
     try{
       await dbDeleteKegiatan(id);
@@ -3190,6 +3425,7 @@ function deleteKegiatanConfirm(id){
         if(remaining.length>0) await dbUpdateKegiatan(remaining[0].id, {isDefault:true});
       }
       toast('Activity deleted','ok');
+      logAudit('delete','kegiatan', target?.nama||id);
       if(!USE_FIRESTORE) renderKegiatanTable();
     }
     catch(e){ toast('Failed to delete: '+e.message,'err'); }
@@ -3238,6 +3474,7 @@ async function simpanPengeluaran(){
   try{
     await dbAddPengeluaran(obj);
     toast('Expense recorded successfully','ok');
+    logAudit('add','pengeluaran', `${noRef} — ${keterangan} (${rupiah(nominal)})`);
     document.getElementById('pengeluaranKeterangan').value = '';
     document.getElementById('pengeluaranNominal').value = '';
     document.getElementById('pengeluaranNoRefPreview').textContent = generateNoRefPengeluaran();
@@ -3302,13 +3539,16 @@ async function simpanEditPengeluaran(){
   try{
     await dbUpdatePengeluaran(id, { kegiatanId, tanggal, nominal, keterangan });
     toast('Expense updated','ok');
+    const p = state.pengeluaran.find(x=>x.id===id);
+    logAudit('edit','pengeluaran', `${p?.noRef||id} — ${keterangan} (${rupiah(nominal)})`);
     closeModal('modalEditPengeluaran');
     if(!USE_FIRESTORE) renderRiwayatPengeluaranTable();
   }catch(e){ toast('Failed to save changes: '+e.message,'err'); }
 }
 function deletePengeluaranConfirm(id){
+  const p = state.pengeluaran.find(x=>x.id===id);
   confirmAction('Delete this expense record?', async ()=>{
-    try{ await dbDeletePengeluaran(id); toast('Expense deleted','ok'); if(!USE_FIRESTORE) renderRiwayatPengeluaranTable(); }
+    try{ await dbDeletePengeluaran(id); toast('Expense deleted','ok'); logAudit('delete','pengeluaran', p ? `${p.noRef} — ${p.keterangan}` : id); if(!USE_FIRESTORE) renderRiwayatPengeluaranTable(); }
     catch(e){ toast('Failed to delete: '+e.message,'err'); }
   });
 }
@@ -3434,6 +3674,22 @@ async function unduhLaporanPengeluaranGambar(){
   link.click();
   toast('Expense ledger image downloaded','ok');
 }
+function exportLedgerCSV(){
+  const { groups, grandTotal } = buildLedgerGroups();
+  if(groups.length===0){ toast('No expenses to export yet','err'); return; }
+  const ta = currentTA();
+  const rows = [['Account Code','Account Name','Date','Ref. No.','Description','Debit','Balance']];
+  groups.forEach(g=>{
+    rows.push([g.akun.kode, g.akun.nama, '', '', 'Starting Balance', '', 0]);
+    g.rows.forEach(r=>{
+      rows.push([g.akun.kode, g.akun.nama, r.tanggal, r.noRef||'', r.keterangan, r.nominal, r.saldo]);
+    });
+    rows.push([g.akun.kode, g.akun.nama, '', '', 'Ending Balance / Total Movement', g.total, g.total]);
+  });
+  rows.push(['','','','','Grand Total, All Accounts','',grandTotal]);
+  downloadCSV(`expense-ledger-${safeFileName(ta?.namaKelas||ta?.label||'class')}.csv`, rows);
+  toast('CSV downloaded','ok');
+}
 
 /* ============================================================
    CASH BALANCE (single Bank Mandiri account, carries over across school years)
@@ -3464,6 +3720,7 @@ async function simpanSaldoAwalBank(){
   try{
     await saveSaldoBankAwal(saldoAwal, tanggalSaldoAwal, keterangan);
     toast('Opening balance saved','ok');
+    logAudit('edit','saldoBank', `Opening balance set to ${rupiah(saldoAwal)}`);
     if(!USE_FIRESTORE) renderSaldoKasTab();
   }catch(e){ toast('Failed to save: '+e.message,'err'); }
 }
@@ -3635,7 +3892,7 @@ function exportBackup(){
   const blob = new Blob([JSON.stringify({
     tahunAjaranList, siswa: state.siswa, pembayaran: state.pembayaran,
     akun: state.akun, kegiatan: state.kegiatan, pengeluaran: state.pengeluaran,
-    saldoBank
+    saldoBank, auditLogList
   }, null, 2)], {type:'application/json'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -3662,6 +3919,7 @@ function importBackup(evt){
         state.kegiatan = parsed.kegiatan || [];
         state.pengeluaran = parsed.pengeluaran || [];
         saldoBank = parsed.saldoBank || { saldoAwal:0, tanggalSaldoAwal:'', keterangan:'' };
+        auditLogList = parsed.auditLogList || [];
         saveLocal();
         toast('Data restored successfully','ok');
         afterTahunAjaranListLoaded();
@@ -3749,6 +4007,7 @@ function initPublicView(tahunAjaranId){
     // pure local mode (no Firebase at all): go straight in, no login
     currentUser = {uid:'local', email:'mode-lokal', role:'admin'};
     document.getElementById('navUsersBtn').style.display = 'none';
+    document.getElementById('navAuditLogBtn').style.display = 'flex';
     document.getElementById('whoEmail').textContent = 'Local mode';
     showScreen('app');
     await bootAppData();
