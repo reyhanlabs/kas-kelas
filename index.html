@@ -563,6 +563,11 @@
         <div class="grid-stats" id="statGrid"></div>
 
         <div class="card">
+          <h2>Recent Payments</h2>
+          <div id="dashRecentTable"></div>
+        </div>
+
+        <div class="card">
           <h2>Cash Flow Trend <span class="badge" id="trendPeriodeBadge"></span></h2>
           <div id="trendChart"></div>
           <div style="display:flex; gap:16px; margin-top:8px; font-size:12px; color:var(--ink-soft);">
@@ -592,11 +597,6 @@
             </div>
           </div>
           <div id="dashBulanIniTable"></div>
-        </div>
-
-        <div class="card">
-          <h2>Recent Payments</h2>
-          <div id="dashRecentTable"></div>
         </div>
       </section>
 
@@ -896,7 +896,7 @@
         </div>
 
         <div class="card">
-          <div style="display:flex; gap:10px; margin-bottom:12px; flex-wrap:wrap;">
+          <div style="display:flex; gap:10px; margin-bottom:12px; flex-wrap:wrap; align-items:flex-end;">
             <div class="field" style="margin-bottom:0; max-width:170px;">
               <label>Action</label>
               <select id="auditActionFilter" onchange="renderAuditLogTable()">
