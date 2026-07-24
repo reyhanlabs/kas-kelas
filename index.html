@@ -3337,11 +3337,12 @@ function renderKegiatanTable(){
   }
   const rows = list.map(k=>{
     const a = findAkun(k.akunId);
-    const jmlPengeluaran = state.pengeluaran.filter(p=>p.kegiatanId===k.id).length;
+    const pengeluaranK = state.pengeluaran.filter(p=>p.kegiatanId===k.id);
+    const totalSpent = pengeluaranK.reduce((sum,p)=>sum+Number(p.nominal||0),0);
     return `<tr>
       <td>${esc(k.nama)} ${k.isDefault ? '<span class="pill lunas">Default</span>' : ''}</td>
       <td class="mono">${a ? esc(a.kode)+' — '+esc(a.nama) : '<span class="helper">(account deleted)</span>'}</td>
-      <td class="center">${jmlPengeluaran}</td>
+      <td class="right">${pengeluaranK.length>0 ? `${rupiah(totalSpent)} <span class="helper">(${pengeluaranK.length} transaction${pengeluaranK.length>1?'s':''})</span>` : '<span class="helper">—</span>'}</td>
       <td class="center">
         ${k.isDefault ? '' : `<button class="icon-btn" title="Set as Default for Expense Entry" onclick='setKegiatanDefault("${k.id}")'>⭐</button>`}
         <button class="icon-btn" title="Edit" onclick='editKegiatan("${k.id}")'>✎</button>
@@ -3350,7 +3351,7 @@ function renderKegiatanTable(){
     </tr>`;
   }).join('');
   document.getElementById('kegiatanTable').innerHTML = `
-    <table><thead><tr><th>Activity</th><th>Linked Account</th><th class="center">Expenses</th><th class="center">Action</th></tr></thead>
+    <table><thead><tr><th>Activity</th><th>Linked Account</th><th class="right">Total Spent</th><th class="center">Action</th></tr></thead>
     <tbody>${rows}</tbody></table>`;
 }
 function findDefaultKegiatan(){ return currentKegiatanList().find(k=>k.isDefault) || null; }
