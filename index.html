@@ -264,6 +264,7 @@
   .table-scroll table{border-collapse:separate; border-spacing:0;}
   .table-scroll thead th{position:sticky; top:0; background:#fff; z-index:1; box-shadow:0 1px 0 var(--paper-line);}
   .table-scroll tr:last-child td{border-bottom:none;}
+  .table-scroll.dash-scroll{max-height:360px;}
 
   .btn{
     display:inline-flex; align-items:center; gap:6px; cursor:pointer;
@@ -578,6 +579,10 @@
 
         <div class="card">
           <h2>Recent Payments</h2>
+          <div class="search-box" style="margin-bottom:12px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+            <input type="text" id="dashRecentSearch" placeholder="Search student name..." oninput="renderDashRecentTable()">
+          </div>
           <div id="dashRecentTable"></div>
         </div>
 
@@ -2351,8 +2356,10 @@ function renderDashBulanIniTable(){
       <td class="center">${lunas ? '<span class="pill lunas">✓ Paid</span>' : '<span class="pill belum">Unpaid</span>'}</td>
     </tr>`).join('');
   document.getElementById('dashBulanIniTable').innerHTML = `
-    <table><thead><tr><th>No</th><th>Name</th><th class="right">Dues</th><th class="center">Status</th></tr></thead>
-    <tbody>${trs}</tbody></table>`;
+    <div class="table-scroll dash-scroll">
+      <table><thead><tr><th>No</th><th>Name</th><th class="right">Dues</th><th class="center">Status</th></tr></thead>
+      <tbody>${trs}</tbody></table>
+    </div>`;
 }
 function renderDashboard(){
   const now = new Date();
@@ -2390,11 +2397,20 @@ function renderDashboard(){
 
   renderDashBulanIniTable();
   renderTrendChart();
-
+  renderDashRecentTable();
+}
+/* Renders the "Recent Payments" list — searchable and capped to a scrollable window instead of growing the page */
+function renderDashRecentTable(){
+  const q = (document.getElementById('dashRecentSearch').value||'').toLowerCase();
   const recent = state.pembayaran.filter(p=>p.tahunAjaranId===currentTahunAjaranId)
-    .slice().sort((a,b)=> (b.createdAt||0)-(a.createdAt||0)).slice(0,8);
+    .slice().sort((a,b)=> (b.createdAt||0)-(a.createdAt||0))
+    .filter(p=>{
+      const s = findSiswa(p.studentId);
+      return (s?.nama||'').toLowerCase().includes(q);
+    })
+    .slice(0,50); // scrollable window, no need to render an unbounded list
   if(recent.length===0){
-    document.getElementById('dashRecentTable').innerHTML = emptyState('No payment transactions yet in this school year.');
+    document.getElementById('dashRecentTable').innerHTML = emptyState('No payment transactions match this filter yet.');
   }else{
     const rows = recent.map(p=>{
       const s = findSiswa(p.studentId);
@@ -2406,8 +2422,10 @@ function renderDashboard(){
       </tr>`;
     }).join('');
     document.getElementById('dashRecentTable').innerHTML = `
-      <table><thead><tr><th>Name</th><th>Month</th><th class="right">Amount</th><th>Date</th></tr></thead>
-      <tbody>${rows}</tbody></table>`;
+      <div class="table-scroll dash-scroll">
+        <table><thead><tr><th>Name</th><th>Month</th><th class="right">Amount</th><th>Date</th></tr></thead>
+        <tbody>${rows}</tbody></table>
+      </div>`;
   }
 }
 /* Simple hand-rolled SVG grouped bar chart — Cash In vs Cash Out per calendar month of the school year period.
