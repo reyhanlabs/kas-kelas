@@ -226,6 +226,12 @@
     font-family:'Public Sans'; font-size:10.5px; font-weight:700; text-transform:uppercase;
     letter-spacing:.04em; background:var(--gold-soft); color:#0A1120; padding:2px 8px; border-radius:20px;
   }
+  .card details > summary{cursor:pointer; list-style:none;}
+  .card details > summary::-webkit-details-marker{display:none;}
+  .card details > summary h2{margin:0;}
+  .card details > summary h2::before{content:'▸'; display:inline-block; color:var(--ink-soft); margin-right:6px; transition:transform .15s; font-size:13px;}
+  .card details[open] > summary h2::before{transform:rotate(90deg);}
+  .card details > summary + *{margin-top:14px;}
   /* Cycle a cheerful top-border color across the cards in each tab so boxes don't read as one flat block */
   .content-wrap .card:nth-of-type(4n+1){border-top-color:var(--navy);}
   .content-wrap .card:nth-of-type(4n+2){border-top-color:var(--pink);}
@@ -1011,14 +1017,15 @@
         </div>
 
         <div class="card">
-          <h2>Firebase Connection <span class="badge" id="badgeKoneksi">Optional</span></h2>
-          <div class="config-box">
-            This app already has the Firebase project <code class="inl">kas-kelas-9d42b</code> built in by default.
-            The field below is only needed if you want to <b>switch</b> to your own separate Firebase project.
-          </div>
-          <div class="field">
-            <label>Switch to a different firebaseConfig (optional, JSON format)</label>
-            <textarea id="fbConfigInput" rows="7" placeholder='{
+          <details>
+            <summary><h2 style="display:inline-flex;">Firebase Connection <span class="badge" id="badgeKoneksi">Optional</span></h2></summary>
+            <div class="config-box">
+              This app already has the Firebase project <code class="inl">kas-kelas-9d42b</code> built in by default.
+              The field below is only needed if you want to <b>switch</b> to your own separate Firebase project.
+            </div>
+            <div class="field">
+              <label>Switch to a different firebaseConfig (optional, JSON format)</label>
+              <textarea id="fbConfigInput" rows="7" placeholder='{
   "apiKey": "...",
   "authDomain": "...",
   "projectId": "...",
@@ -1026,19 +1033,21 @@
   "messagingSenderId": "...",
   "appId": "..."
 }'></textarea>
-          </div>
-          <div style="display:flex; gap:8px; flex-wrap:wrap;">
-            <button class="btn btn-primary" onclick="saveFirebaseConfig()">Connect to This Config</button>
-            <button class="btn btn-outline" onclick="clearFirebaseConfig()">Restore Default Config</button>
-            <button class="btn btn-danger" onclick="forceLocalMode()">Force Local Mode (testing, no login)</button>
-          </div>
-          <p class="helper" id="fbStatusText" style="margin-top:10px;"></p>
+            </div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <button class="btn btn-primary" onclick="saveFirebaseConfig()">Connect to This Config</button>
+              <button class="btn btn-outline" onclick="clearFirebaseConfig()">Restore Default Config</button>
+              <button class="btn btn-danger" onclick="forceLocalMode()">Force Local Mode (testing, no login)</button>
+            </div>
+            <p class="helper" id="fbStatusText" style="margin-top:10px;"></p>
+          </details>
         </div>
 
         <div class="card">
-          <h2>Example Firestore Security Rules (required for online mode)</h2>
-          <p class="helper">Copy this into Firestore &rarr; Rules. These rules require login before reading/writing any data, and restrict the Manage Users menu to admins only.</p>
-          <pre class="mono" style="background:#f7f3e8; padding:12px 14px; border-radius:8px; font-size:11.5px; overflow-x:auto;">rules_version = '2';
+          <details>
+            <summary><h2 style="display:inline-flex;">Example Firestore Security Rules (required for online mode)</h2></summary>
+            <p class="helper">Copy this into Firestore &rarr; Rules. These rules require login before reading/writing any data, and restrict the Manage Users menu to admins only.</p>
+            <pre class="mono" style="background:#f7f3e8; padding:12px 14px; border-radius:8px; font-size:11.5px; overflow-x:auto;">rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     function isSignedIn() { return request.auth != null; }
@@ -1065,6 +1074,7 @@ service cloud.firestore {
     match /auditLog/{doc} { allow read, write: if isSignedIn(); }
   }
 }</pre>
+          </details>
         </div>
 
         <div class="card">
