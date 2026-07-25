@@ -178,7 +178,8 @@
     .grid-stats{grid-template-columns:repeat(2,1fr); gap:10px;}
     .field-row{grid-template-columns:1fr;}
     .modal{padding:18px 16px;}
-    .receipt{width:100%; padding:5mm;}
+    .receipt2{width:100%;}
+    .r2-top, .r2-body{padding-left:6mm; padding-right:6mm;}
   }
   @media(max-width:480px){
     .grid-stats{grid-template-columns:1fr;}
@@ -382,39 +383,59 @@
     #app, .overlay, .toast-wrap, #loginScreen, #noAccessScreen, #publicViewScreen{display:none !important;}
     @page{ size:A4; margin:10mm; }
   }
-  .receipt{
-    width:148mm; margin:0 auto; padding:8mm; border:2px solid var(--navy);
-    border-radius:6px; font-family:'Public Sans'; position:relative; background:#fff;
+  /* ===== Receipt v2 — ticket stub style ===== */
+  .receipt2{
+    width:150mm; margin:0 auto; font-family:'Public Sans'; position:relative;
+    background:#fff; border-radius:14px; overflow:hidden;
+    box-shadow:0 6px 24px rgba(20,33,61,0.14);
   }
-  .receipt-head{text-align:center; border-bottom:2px dashed var(--paper-line); padding-bottom:8px; margin-bottom:10px;}
-  .receipt-head .sekolah{font-family:'Fraunces',serif; font-size:16px; font-weight:700; color:var(--navy);}
-  .receipt-head .kelas{font-size:11.5px; color:var(--ink-soft); margin-top:1px;}
-  .receipt-title{font-family:'Fraunces',serif; text-align:center; font-size:14px; letter-spacing:.08em; text-transform:uppercase; margin:6px 0 12px 0; color:var(--maroon);}
-  .receipt-row{display:flex; justify-content:space-between; font-size:12.5px; padding:4px 0; border-bottom:1px dotted #e6e0cd;}
-  .receipt-row .k{color:var(--ink-soft);}
-  .receipt-row .v{font-weight:600; text-align:right;}
-  .receipt-total{
-    display:flex; justify-content:space-between; margin-top:10px; padding-top:8px;
-    border-top:2px solid var(--navy); font-family:'JetBrains Mono'; font-weight:700; font-size:15px;
+  .r2-top{
+    background:linear-gradient(135deg, var(--navy) 0%, var(--navy-deep) 100%);
+    color:#fff; padding:9mm 9mm 7mm 9mm; position:relative;
   }
-  .receipt-foot{display:flex; justify-content:space-between; margin-top:26px; font-size:11.5px;}
-  .receipt-foot .sign{text-align:center; width:45%;}
-  .receipt-foot .line{margin-top:34px; border-top:1px solid var(--ink); padding-top:3px;}
-  .receipt-foot .role-label{font-size:10.5px; color:var(--ink-soft); margin-top:2px;}
-  .stamp{
-    position:absolute; top:50%; left:50%; transform:translate(-50%,-50%) rotate(-11deg);
-    width:110px; height:110px; border-radius:50%; z-index:0; pointer-events:none;
-    border:3px solid var(--maroon); color:var(--maroon); display:flex; align-items:center; justify-content:center;
-    font-family:'Fraunces',serif; font-weight:700; font-size:15px; text-align:center;
-    line-height:1.15; letter-spacing:.03em; opacity:.16;
+  .r2-brand{display:flex; align-items:center; gap:8px; margin-bottom:10mm;}
+  .r2-mark{
+    width:30px; height:30px; border-radius:8px; background:var(--gold); color:#0A1120;
+    display:flex; align-items:center; justify-content:center; font-family:'Fraunces',serif; font-weight:700; font-size:15px; flex-shrink:0;
   }
-  .stamp::before{
-    content:""; position:absolute; inset:5px; border:1.5px solid var(--maroon); border-radius:50%;
+  .r2-school{font-family:'Fraunces',serif; font-size:14.5px; font-weight:700; line-height:1.2;}
+  .r2-class{font-size:10.5px; color:#B9C4D6; margin-top:1px;}
+  .r2-title-row{display:flex; justify-content:space-between; align-items:flex-end;}
+  .r2-title{font-family:'Fraunces',serif; font-size:20px; font-weight:700; letter-spacing:.01em;}
+  .r2-title-sub{font-size:10px; color:#8CA0B8; text-transform:uppercase; letter-spacing:.08em; margin-top:2px;}
+  .r2-no{font-family:'JetBrains Mono'; font-size:10.5px; color:var(--gold); text-align:right;}
+  .r2-perf{
+    position:relative; height:0; border-top:2px dashed rgba(20,33,61,0.18);
   }
-  .receipt-head, .receipt-title, .receipt-row, .receipt-total, .receipt-foot{
-    position:relative; z-index:1;
+  .r2-perf::before, .r2-perf::after{
+    content:''; position:absolute; top:-9px; width:18px; height:18px; border-radius:50%;
+    background:var(--paper); box-shadow:inset 0 0 0 2px rgba(20,33,61,0.06);
   }
-  .receipt-no{font-family:'JetBrains Mono'; font-size:10.5px; color:var(--ink-soft); text-align:center; margin-top:10px; position:relative; z-index:1;}
+  .r2-perf::before{ left:-9px; }
+  .r2-perf::after{ right:-9px; }
+  @media print{ .r2-perf::before, .r2-perf::after{ background:#fff; } }
+  .r2-body{padding:8mm 9mm 9mm 9mm;}
+  .r2-amount-box{
+    background:var(--gold-soft); border-radius:10px; padding:5mm 6mm; text-align:center; margin-bottom:6mm; position:relative;
+  }
+  .r2-amount-label{font-size:10.5px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.06em; font-weight:700;}
+  .r2-amount-value{font-family:'JetBrains Mono'; font-size:26px; font-weight:700; color:var(--navy); margin-top:2px;}
+  .r2-grid{display:grid; grid-template-columns:1fr 1fr; gap:0 5mm;}
+  .r2-item{padding:2.6mm 0; border-bottom:1px dotted #e2e8f0;}
+  .r2-item.full{grid-column:1 / -1;}
+  .r2-item-label{display:block; font-size:9.5px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.04em;}
+  .r2-item-value{display:block; font-size:12.5px; font-weight:600; color:var(--ink); margin-top:1px;}
+  .r2-sign-row{display:flex; justify-content:space-between; margin-top:9mm; font-size:11px;}
+  .r2-sign{text-align:center; width:45%;}
+  .r2-sign-line{margin-top:11mm; border-top:1px solid var(--ink); padding-top:3px;}
+  .r2-sign-role{font-size:10px; color:var(--ink-soft); margin-top:2px;}
+  .r2-stamp{
+    position:absolute; top:6mm; right:9mm; transform:rotate(-9deg);
+    width:78px; height:78px; border-radius:50%; z-index:1; pointer-events:none;
+    border:3px solid var(--gold); color:var(--gold); display:flex; align-items:center; justify-content:center;
+    font-family:'Fraunces',serif; font-weight:700; font-size:11px; text-align:center;
+    line-height:1.15; letter-spacing:.03em; background:rgba(34,211,238,0.08);
+  }
 
   ::-webkit-scrollbar{height:8px; width:8px;}
   ::-webkit-scrollbar-thumb{background:#d9d2bf; border-radius:8px;}
@@ -2861,29 +2882,47 @@ function buildReceiptHTML(p, s, ta){
   const tgl = formatTanggalPanjang(p.tanggal);
   const lunasPenuh = isTahunAjaranLunasPenuh(s?.id, ta?.label);
   return `
-    <div class="receipt">
-      ${lunasPenuh ? `<div class="stamp">PAID<br>1 YEAR<br>CLASS</div>` : ''}
-      <div class="receipt-head">
-        <div class="sekolah">${esc(ta?.namaSekolah || 'School Name')}</div>
-        <div class="kelas">${esc(ta?.namaKelas || 'Class Name')} &middot; School Year ${esc(ta?.label || '-')}</div>
+    <div class="receipt2">
+      <div class="r2-top">
+        ${lunasPenuh ? `<div class="r2-stamp">PAID<br>1 YEAR<br>CLASS</div>` : ''}
+        <div class="r2-brand">
+          <div class="r2-mark">K</div>
+          <div>
+            <div class="r2-school">${esc(ta?.namaSekolah || 'School Name')}</div>
+            <div class="r2-class">${esc(ta?.namaKelas || 'Class Name')} &middot; School Year ${esc(ta?.label || '-')}</div>
+          </div>
+        </div>
+        <div class="r2-title-row">
+          <div>
+            <div class="r2-title">Payment Receipt</div>
+            <div class="r2-title-sub">Class Cash Book</div>
+          </div>
+          <div class="r2-no">${noKwitansi}</div>
+        </div>
       </div>
-      <div class="receipt-title">Class Cash Payment Receipt</div>
-      <div class="receipt-row"><span class="k">Student Name</span><span class="v">${esc(s?.nama || '-')}</span></div>
-      <div class="receipt-row"><span class="k">Roll No.</span><span class="v">${esc(s?.noAbsen ?? '-')}</span></div>
-      ${s?.namaOrtu ? `<div class="receipt-row"><span class="k">Parent/Guardian</span><span class="v">${esc(s.namaOrtu)}</span></div>` : ''}
-      <div class="receipt-row"><span class="k">Month(s) Paid</span><span class="v">${esc(bulanText)}</span></div>
-      <div class="receipt-row"><span class="k">Period</span><span class="v">${esc(periodeLabelTA(ta?.label))}</span></div>
-      <div class="receipt-row"><span class="k">Amount / Month</span><span class="v">${rupiah(p.nominalPerBulan)}</span></div>
-      <div class="receipt-row"><span class="k">Number of Months</span><span class="v">${(p.bulanList||[]).length}</span></div>
-      <div class="receipt-row"><span class="k">Payment Method</span><span class="v">${esc(p.metode)}</span></div>
-      <div class="receipt-row"><span class="k">Payment Date</span><span class="v">${tgl}</span></div>
-      ${p.keterangan ? `<div class="receipt-row"><span class="k">Notes</span><span class="v">${esc(p.keterangan)}</span></div>` : ''}
-      <div class="receipt-total"><span>Total Paid</span><span>${rupiah(p.total)}</span></div>
-      <div class="receipt-foot">
-        <div class="sign">Parent / Guardian<div class="line">&nbsp;</div></div>
-        <div class="sign">${esc(ta?.bendahara || 'Class Treasurer')}<div class="line">&nbsp;</div><div class="role-label">Class 4A Treasurer</div></div>
+      <div class="r2-perf"></div>
+      <div class="r2-body">
+        <div class="r2-amount-box">
+          <div class="r2-amount-label">Total Paid</div>
+          <div class="r2-amount-value">${rupiah(p.total)}</div>
+        </div>
+        <div class="r2-grid">
+          <div class="r2-item"><span class="r2-item-label">Student Name</span><span class="r2-item-value">${esc(s?.nama || '-')}</span></div>
+          <div class="r2-item"><span class="r2-item-label">Roll No.</span><span class="r2-item-value">${esc(s?.noAbsen ?? '-')}</span></div>
+          ${s?.namaOrtu ? `<div class="r2-item"><span class="r2-item-label">Parent/Guardian</span><span class="r2-item-value">${esc(s.namaOrtu)}</span></div>` : ''}
+          <div class="r2-item"><span class="r2-item-label">Payment Method</span><span class="r2-item-value">${esc(p.metode)}</span></div>
+          <div class="r2-item full"><span class="r2-item-label">Month(s) Paid</span><span class="r2-item-value">${esc(bulanText)}</span></div>
+          <div class="r2-item"><span class="r2-item-label">Period</span><span class="r2-item-value">${esc(periodeLabelTA(ta?.label))}</span></div>
+          <div class="r2-item"><span class="r2-item-label">Amount / Month</span><span class="r2-item-value">${rupiah(p.nominalPerBulan)}</span></div>
+          <div class="r2-item"><span class="r2-item-label">Number of Months</span><span class="r2-item-value">${(p.bulanList||[]).length}</span></div>
+          <div class="r2-item"><span class="r2-item-label">Payment Date</span><span class="r2-item-value">${tgl}</span></div>
+          ${p.keterangan ? `<div class="r2-item full"><span class="r2-item-label">Notes</span><span class="r2-item-value">${esc(p.keterangan)}</span></div>` : ''}
+        </div>
+        <div class="r2-sign-row">
+          <div class="r2-sign">Parent / Guardian<div class="r2-sign-line">&nbsp;</div></div>
+          <div class="r2-sign">${esc(ta?.bendahara || 'Class Treasurer')}<div class="r2-sign-line">&nbsp;</div><div class="r2-sign-role">Class 4A Treasurer</div></div>
+        </div>
       </div>
-      <div class="receipt-no">Receipt No.: ${noKwitansi}</div>
     </div>
   `;
 }
@@ -2914,7 +2953,7 @@ async function renderReceiptToCanvas(paymentId){
   holder.style.cssText = 'position:fixed; left:-9999px; top:0; background:#fff; padding:0; margin:0;';
   holder.innerHTML = buildReceiptHTML(p, s, ta);
   document.body.appendChild(holder);
-  const receiptEl = holder.querySelector('.receipt');
+  const receiptEl = holder.querySelector('.receipt2');
   await new Promise(r=>setTimeout(r, 60));
   let canvas;
   try{
