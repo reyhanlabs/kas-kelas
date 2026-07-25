@@ -13,20 +13,24 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
   :root{
-    --navy:#1E2A44;
-    --navy-deep:#141d31;
-    --paper:#FBF7EF;
-    --paper-line:#E4DAC4;
-    --ink:#2A2620;
-    --ink-soft:#6b6455;
-    --gold:#C99A3E;
-    --gold-soft:#e8d3a1;
-    --green:#3B7A57;
-    --green-soft:#e3efe7;
-    --maroon:#8B2E2E;
-    --maroon-soft:#f5e3e1;
+    --navy:#14213D;
+    --navy-deep:#0A1120;
+    --paper:#F7FAFC;
+    --paper-line:#E1E8F0;
+    --ink:#131A26;
+    --ink-soft:#5B6B80;
+    --gold:#22D3EE;
+    --gold-soft:#DFF7FF;
+    --green:#10B981;
+    --green-soft:#D1FAE5;
+    --maroon:#EF4444;
+    --maroon-soft:#FEE2E2;
     --radius:10px;
-    --shadow: 0 1px 2px rgba(30,42,68,0.06), 0 6px 20px rgba(30,42,68,0.08);
+    --shadow: 0 1px 2px rgba(20,33,61,0.08), 0 6px 20px rgba(20,33,61,0.10);
+    --teal:#22D3EE; --teal-soft:#CFFAFE;
+    --pink:#3B82F6; --pink-soft:#DBEAFE;
+    --purple:#818CF8; --purple-soft:#E0E7FF;
+    --blue:#22D3EE; --blue-soft:#CFFAFE;
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
@@ -46,7 +50,7 @@
   /* ===== Auth screens ===== */
   .auth-screen{
     min-height:100vh; display:flex; align-items:center; justify-content:center;
-    background:radial-gradient(ellipse at top, #22304f 0%, var(--navy-deep) 60%);
+    background:radial-gradient(ellipse at top, #22D3EE 0%, var(--navy-deep) 60%);
     padding:20px;
   }
   .auth-card{
@@ -54,7 +58,7 @@
     box-shadow:0 24px 60px rgba(0,0,0,0.4);
   }
   .auth-brand{display:flex; align-items:center; gap:10px; margin-bottom:18px;}
-  .auth-brand .mark{width:38px;height:38px;border-radius:9px;background:var(--gold); display:flex;align-items:center;justify-content:center; font-family:'Fraunces',serif; font-weight:700; color:var(--navy-deep); font-size:18px;}
+  .auth-brand .mark{width:38px;height:38px;border-radius:9px;background:var(--gold); display:flex;align-items:center;justify-content:center; font-family:'Fraunces',serif; font-weight:700; color:#fff; font-size:18px;}
   .auth-brand .txt{font-family:'Fraunces',serif; font-size:18px; font-weight:600; color:var(--navy);}
   .auth-sub{font-size:12.5px; color:var(--ink-soft); margin-bottom:20px; line-height:1.5;}
   .auth-foot-link{font-size:12px; color:var(--navy); text-decoration:underline; cursor:pointer; background:none; border:none; padding:0; margin-top:8px;}
@@ -67,7 +71,7 @@
     width:236px;
     flex-shrink:0;
     background:linear-gradient(180deg, var(--navy) 0%, var(--navy-deep) 100%);
-    color:#EDEAE0;
+    color:#D7DEE8;
     padding:22px 14px;
     display:flex;
     flex-direction:column;
@@ -86,27 +90,27 @@
     width:34px;height:34px;border-radius:8px;
     background:var(--gold);
     display:flex;align-items:center;justify-content:center;
-    font-family:'Fraunces',serif; font-weight:700; color:var(--navy-deep); font-size:17px;
+    font-family:'Fraunces',serif; font-weight:700; color:#0A1120; font-size:17px;
     flex-shrink:0;
   }
-  .brand-text .t1{font-family:'Fraunces',serif; font-size:15.5px; font-weight:600; line-height:1.2;}
-  .brand-text .t2{font-size:11px; color:#b9c0d1; margin-top:1px;}
+  .brand-text .t1{font-family:'Fraunces',serif; font-size:15.5px; font-weight:700; line-height:1.2; color:#fff;}
+  .brand-text .t2{font-size:11px; color:#8CA0B8; margin-top:1px; font-weight:500;}
 
   .ta-switcher{
-    padding:10px 8px; margin-bottom:12px; border-radius:9px; background:rgba(255,255,255,0.05);
-    border:1px solid rgba(255,255,255,0.1);
+    padding:10px 8px; margin-bottom:12px; border-radius:9px; background:rgba(255,255,255,0.06);
+    border:1px solid rgba(255,255,255,0.12);
   }
-  .ta-switcher label{font-size:10px; text-transform:uppercase; letter-spacing:.05em; color:#9aa3ba; margin-bottom:5px; display:block;}
+  .ta-switcher label{font-size:10px; text-transform:uppercase; letter-spacing:.05em; color:#8CA0B8; margin-bottom:5px; display:block; font-weight:700;}
   .ta-switcher select{
-    width:100%; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:#fff;
-    font-size:12.5px; padding:6px 8px; border-radius:6px; margin-bottom:6px;
+    width:100%; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.16); color:#fff;
+    font-size:12.5px; padding:6px 8px; border-radius:6px; margin-bottom:6px; font-weight:600;
   }
   .ta-switcher select option{color:#111;}
   .ta-add-btn{
-    width:100%; background:none; border:1px dashed rgba(255,255,255,0.3); color:#c9cfdd;
-    font-size:11.5px; padding:5px; border-radius:6px; cursor:pointer;
+    width:100%; background:none; border:1px dashed rgba(34,211,238,0.4); color:var(--gold);
+    font-size:11.5px; padding:5px; border-radius:6px; cursor:pointer; font-weight:600;
   }
-  .ta-add-btn:hover{background:rgba(255,255,255,0.06); color:#fff;}
+  .ta-add-btn:hover{background:rgba(34,211,238,0.08); color:#7EE8FA;}
 
   nav.tabs{display:flex; flex-direction:column; gap:3px; flex:1; min-height:0; overflow-y:auto; padding-right:2px;}
   nav.tabs::-webkit-scrollbar{width:6px;}
@@ -115,25 +119,25 @@
   .tab-btn{
     display:flex; align-items:center; gap:10px;
     padding:10px 12px; border-radius:8px; cursor:pointer;
-    color:#c9cfdd; font-size:13.5px; font-weight:500;
+    color:#A9B8CB; font-size:13.5px; font-weight:500;
     border:none; background:transparent; text-align:left; width:100%;
     transition:background .15s, color .15s;
   }
   .tab-btn svg{width:17px;height:17px; flex-shrink:0; opacity:.85;}
   .tab-btn:hover{background:rgba(255,255,255,0.06); color:#fff;}
-  .tab-btn.active{background:rgba(201,154,62,0.16); color:#fff;}
-  .tab-btn.active svg{opacity:1;}
+  .tab-btn.active{background:rgba(34,211,238,0.14); color:#7EE8FA; border-left:3px solid var(--gold); padding-left:9px;}
+  .tab-btn.active svg{opacity:1; color:var(--gold);}
   .sidebar-foot{
-    font-size:10.5px; color:#7d859c; padding:10px 8px 0 8px;
-    border-top:1px solid rgba(255,255,255,0.1); margin-top:10px;
+    font-size:10.5px; color:#8CA0B8; padding:10px 8px 0 8px;
+    border-top:1px solid rgba(255,255,255,0.12); margin-top:10px;
   }
   .conn-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;position:relative;top:-1px;}
-  .conn-dot.on{background:#59c98a;}
-  .conn-dot.off{background:#e0a23e;}
+  .conn-dot.on{background:#2DE8A8;}
+  .conn-dot.off{background:#FF8A8A;}
   .who-row{display:flex; align-items:center; justify-content:space-between; margin-top:8px;}
-  .who-row .email{font-size:11px; color:#c9cfdd; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:150px;}
-  .logout-btn{background:none;border:none;color:#e0a23e;font-size:11px;cursor:pointer; text-decoration:underline;}
-  .role-badge{font-size:9.5px; text-transform:uppercase; letter-spacing:.05em; background:rgba(201,154,62,0.2); color:var(--gold); padding:1px 6px; border-radius:10px; margin-left:5px;}
+  .who-row .email{font-size:11px; color:#A9B8CB; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:150px;}
+  .logout-btn{background:none;border:none;color:#7EE8FA;font-size:11px;cursor:pointer; text-decoration:underline;}
+  .role-badge{font-size:9.5px; text-transform:uppercase; letter-spacing:.05em; background:rgba(34,211,238,0.18); color:var(--gold); padding:1px 6px; border-radius:10px; margin-left:5px; font-weight:700;}
 
   /* ===== Mobile topbar + off-canvas sidebar ===== */
   .mobile-topbar{
@@ -146,7 +150,7 @@
     cursor:pointer; display:flex; align-items:center; justify-content:center;
   }
   .mobile-menu-btn svg{width:22px; height:22px;}
-  .mobile-topbar-title{font-family:'Fraunces',serif; font-size:15px; font-weight:600;}
+  .mobile-topbar-title{font-family:'Fraunces',serif; font-size:15px; font-weight:600; color:#fff;}
   .sidebar-backdrop{
     display:none; position:fixed; inset:0; background:rgba(20,29,49,0.5); z-index:130;
   }
@@ -213,23 +217,33 @@
   .topbar-right{font-size:12px; color:var(--ink-soft); text-align:right;}
 
   .card{
-    background:#fff; border:1px solid var(--paper-line);
+    background:#fff; border:1px solid var(--paper-line); border-top:4px solid var(--navy);
     border-radius:var(--radius); box-shadow:var(--shadow);
     padding:20px 22px; margin-bottom:18px;
   }
   .card h2{font-size:16px; margin:0 0 14px 0; color:var(--navy); display:flex; align-items:center; gap:8px;}
   .card h2 .badge{
     font-family:'Public Sans'; font-size:10.5px; font-weight:700; text-transform:uppercase;
-    letter-spacing:.04em; background:var(--gold-soft); color:#7a5b17; padding:2px 8px; border-radius:20px;
+    letter-spacing:.04em; background:var(--gold-soft); color:#0A1120; padding:2px 8px; border-radius:20px;
   }
+  /* Cycle a cheerful top-border color across the cards in each tab so boxes don't read as one flat block */
+  .content-wrap .card:nth-of-type(4n+1){border-top-color:var(--navy);}
+  .content-wrap .card:nth-of-type(4n+2){border-top-color:var(--pink);}
+  .content-wrap .card:nth-of-type(4n+3){border-top-color:var(--purple);}
+  .content-wrap .card:nth-of-type(4n+0){border-top-color:var(--blue);}
 
   .grid-stats{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:18px;}
   @media(max-width:900px){.grid-stats{grid-template-columns:repeat(2,1fr);}}
   .stat{
-    background:#fff; border:1px solid var(--paper-line); border-radius:var(--radius);
+    background:#fff; border:1px solid var(--paper-line); border-left:5px solid var(--navy); border-radius:var(--radius);
     padding:16px 18px; box-shadow:var(--shadow);
   }
-  .stat .label{font-size:11px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.05em;}
+  /* Give each stat card in a row its own bright accent + soft gradient tint for a cheerful, non-monotone dashboard */
+  .stat:nth-child(4n+1){border-left-color:var(--teal); background:linear-gradient(165deg, var(--teal-soft) 0%, #fff 55%);}
+  .stat:nth-child(4n+2){border-left-color:var(--pink); background:linear-gradient(165deg, var(--pink-soft) 0%, #fff 55%);}
+  .stat:nth-child(4n+3){border-left-color:var(--purple); background:linear-gradient(165deg, var(--purple-soft) 0%, #fff 55%);}
+  .stat:nth-child(4n+0){border-left-color:var(--blue); background:linear-gradient(165deg, var(--blue-soft) 0%, #fff 55%);}
+  .stat .label{font-size:11px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.05em; font-weight:700;}
   .stat .value{font-family:'JetBrains Mono'; font-size:21px; font-weight:600; margin-top:6px; color:var(--navy);}
   .stat .value.green{color:var(--green);}
   .stat .value.maroon{color:var(--maroon);}
@@ -257,9 +271,9 @@
     font-size:13px; font-weight:600; font-family:'Public Sans'; transition:all .15s;
   }
   .btn-primary{background:var(--navy); color:#fff;}
-  .btn-primary:hover{background:#141d31;}
-  .btn-gold{background:var(--gold); color:#2a2107;}
-  .btn-gold:hover{background:#b98a2e;}
+  .btn-primary:hover{background:#0A1120;}
+  .btn-gold{background:var(--gold); color:#0A1120;}
+  .btn-gold:hover{background:#0EA5C7;}
   .btn-outline{background:#fff; border-color:var(--paper-line); color:var(--navy);}
   .btn-outline:hover{background:#f5f1e6;}
   .btn-danger{background:#fff; border-color:var(--maroon-soft); color:var(--maroon);}
@@ -274,7 +288,7 @@
 
   input, select, textarea{
     font-family:'Public Sans'; font-size:13.5px; padding:8px 10px;
-    border:1px solid #d9d2bf; border-radius:7px; background:#fffdf8; color:var(--ink);
+    border:1.5px solid #EAC7DA; border-radius:7px; background:#FFFDFE; color:var(--ink);
     width:100%;
   }
   input:focus, select:focus, textarea:focus{outline:2px solid var(--gold-soft); border-color:var(--gold);}
@@ -332,7 +346,7 @@
   .rekap-table th, .rekap-table td{text-align:center; padding:7px 6px;}
   .rekap-table td.namecell, .rekap-table th.namecell{text-align:left; position:sticky; left:0; background:#fff; z-index:2;}
   .rekap-table .cell-paid{color:var(--green); font-weight:600;}
-  .rekap-table .cell-unpaid{color:#c9c2ae;}
+  .rekap-table .cell-unpaid{color:#C2A0B2;}
   .rekap-scroll{overflow-x:auto;}
 
   .search-box{position:relative; max-width:280px;}
@@ -391,13 +405,13 @@
   ::-webkit-scrollbar-thumb{background:#d9d2bf; border-radius:8px;}
 
   .helper{font-size:11.5px; color:var(--ink-soft); margin-top:4px;}
-  .config-box{background:#f7f3e8; border:1px dashed var(--gold); border-radius:8px; padding:14px 16px; margin-bottom:16px; font-size:12.5px; color:#6b5217;}
-  code.inl{background:#eee6cf; padding:1px 5px; border-radius:4px; font-family:'JetBrains Mono'; font-size:11.5px;}
+  .config-box{background:#EAFBFF; border:1.5px dashed var(--gold); border-radius:8px; padding:14px 16px; margin-bottom:16px; font-size:12.5px; color:#0A1120;}
+  code.inl{background:#DCF5F1; padding:1px 5px; border-radius:4px; font-family:'JetBrains Mono'; font-size:11.5px;}
 
   /* ===== Expense ledger report ===== */
   .ledger-account{margin-bottom:22px; border:1px solid var(--paper-line); border-radius:8px; overflow:hidden;}
   .ledger-account:last-child{margin-bottom:0;}
-  .ledger-account-head{background:var(--gold-soft); color:#6b5217; padding:8px 12px; font-weight:700; font-size:13px; display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap;}
+  .ledger-account-head{background:var(--gold-soft); color:#0A1120; padding:8px 12px; font-weight:700; font-size:13px; display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap;}
   .ledger-account table{font-size:12.5px;}
   .ledger-account table td:first-child, .ledger-account table th:first-child{white-space:nowrap;}
   .ledger-account th{background:#faf8f2;}
@@ -713,7 +727,7 @@
             <div class="sub">Summary of cash payment status for all students in this school year</div>
           </div>
           <div style="display:flex; gap:10px; align-items:center;">
-            <span class="pill" id="rekapPeriodeBadge" style="background:var(--gold-soft); color:#6b5217;">-</span>
+            <span class="pill" id="rekapPeriodeBadge" style="background:var(--gold-soft); color:#0A1120;">-</span>
             <button class="btn btn-outline" onclick="cetakLaporanKasMasuk()">🖨 Print Report</button>
             <button class="btn btn-outline" onclick="exportRekapCSV()">⬇ Export CSV</button>
           </div>
@@ -2000,7 +2014,7 @@ function renderTaManageTable(){
     const jmlPengeluaran = state.pengeluaran.filter(p=>p.tahunAjaranId===t.id).length;
     const isEmpty = jmlSiswa===0 && jmlBayar===0 && jmlAkun===0 && jmlKegiatan===0 && jmlPengeluaran===0;
     const isActive = t.id===currentTahunAjaranId;
-    return `<tr ${isActive?'style="background:#faf6ec;"':''}>
+    return `<tr ${isActive?'style="background:var(--blue-soft);"':''}>
       <td>${esc(t.label)} ${isActive?'<span class="pill lunas">currently viewing</span>':''}</td>
       <td class="center">${jmlSiswa}</td>
       <td class="center">${jmlBayar}</td>
@@ -2988,7 +3002,7 @@ function renderRekapTable(){
         ${headerCols}<th class="right">Total</th>
       </tr></thead>
       <tbody>${rows}</tbody>
-      <tfoot><tr style="background:#faf6ec; font-weight:700;">
+      <tfoot><tr style="background:var(--gold-soft); font-weight:700;">
         <td class="namecell" colspan="2">Total per Month</td>
         ${footCells}
         <td class="right num">${rupiah(grandTotal)}</td>
@@ -3061,7 +3075,7 @@ function cetakLaporanKasMasuk(){
         ${headerCols}<th class="right">Total</th>
       </tr></thead>
       <tbody>${rows}</tbody>
-      <tfoot><tr style="background:#faf6ec; font-weight:700;">
+      <tfoot><tr style="background:var(--gold-soft); font-weight:700;">
         <td class="namecell" colspan="2">Total per Month</td>
         ${footCells}
         <td class="right num">${rupiah(grandTotal)}</td>
@@ -3841,7 +3855,7 @@ function renderPengaturanTab(){
       : "✅ Connected to this app's built-in Firebase project — data is synced in realtime to everyone who opens this link.";
   }else if(forcedLocal){
     badge.textContent = 'Local Mode (forced)';
-    badge.style.background = 'var(--gold-soft)'; badge.style.color = '#7a5b17';
+    badge.style.background = 'var(--gold-soft)'; badge.style.color = '#0A1120';
     statusText.innerHTML = 'ℹ️ Firebase has been manually disabled on this device. Data is only stored in this browser.';
   }else{
     badge.textContent = 'Local Mode (fallback)';
