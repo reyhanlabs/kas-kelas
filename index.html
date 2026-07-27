@@ -252,16 +252,21 @@
   .stat{
     background:#fff; border:1px solid var(--paper-line); border-left:5px solid var(--navy); border-radius:var(--radius);
     padding:16px 18px; box-shadow:var(--shadow);
+    min-width:0; overflow:hidden;
   }
   /* Give each stat card in a row its own bright accent + soft gradient tint for a cheerful, non-monotone dashboard */
   .stat:nth-child(4n+1){border-left-color:var(--teal); background:linear-gradient(165deg, var(--teal-soft) 0%, #fff 55%);}
   .stat:nth-child(4n+2){border-left-color:var(--pink); background:linear-gradient(165deg, var(--pink-soft) 0%, #fff 55%);}
   .stat:nth-child(4n+3){border-left-color:var(--purple); background:linear-gradient(165deg, var(--purple-soft) 0%, #fff 55%);}
   .stat:nth-child(4n+0){border-left-color:var(--blue); background:linear-gradient(165deg, var(--blue-soft) 0%, #fff 55%);}
-  .stat .label{font-size:11px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.05em; font-weight:700;}
-  .stat .value{font-family:'JetBrains Mono'; font-size:21px; font-weight:600; margin-top:6px; color:var(--navy);}
+  .stat .label{font-size:11px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.05em; font-weight:700; overflow-wrap:break-word;}
+  .stat .value{font-family:'JetBrains Mono'; font-size:21px; font-weight:600; margin-top:6px; color:var(--navy); overflow-wrap:break-word; word-break:break-word;}
   .stat .value.green{color:var(--green);}
   .stat .value.maroon{color:var(--maroon);}
+  @media(max-width:480px){
+    .stat .value{font-size:17px;}
+    .stat{padding:13px 14px;}
+  }
 
   table{width:100%; border-collapse:collapse; font-size:13px;}
   th{
