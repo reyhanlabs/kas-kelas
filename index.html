@@ -4085,7 +4085,6 @@ async function sendFonnteWA(message){
     const data = new FormData();
     data.append('target', cfg.targets);
     data.append('message', message);
-    data.append('countryCode', '62');
     const res = await fetch('https://api.fonnte.com/send', {
       method: 'POST',
       mode: 'cors',
@@ -4113,7 +4112,6 @@ async function testFonnteNotification(){
     const data = new FormData();
     data.append('target', targets);
     data.append('message', '🔔 *CLASS CASH BOOK*\nThis is a test notification. If you received this message, your Fonnte connection is working correctly.');
-    data.append('countryCode', '62');
     const res = await fetch('https://api.fonnte.com/send', {
       method: 'POST',
       mode: 'cors',
