@@ -260,7 +260,7 @@
   .stat:nth-child(4n+3){border-left-color:var(--purple); background:linear-gradient(165deg, var(--purple-soft) 0%, #fff 55%);}
   .stat:nth-child(4n+0){border-left-color:var(--blue); background:linear-gradient(165deg, var(--blue-soft) 0%, #fff 55%);}
   .stat .label{font-size:11px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.05em; font-weight:700; overflow-wrap:break-word;}
-  .stat .value{font-family:'JetBrains Mono'; font-size:21px; font-weight:600; margin-top:6px; color:var(--navy); overflow-wrap:break-word; word-break:break-word;}
+  .stat .value{font-family:'JetBrains Mono'; font-size:21px; font-weight:600; margin-top:6px; color:var(--navy); white-space:nowrap; overflow:hidden; display:block;}
   .stat .value.green{color:var(--green);}
   .stat .value.maroon{color:var(--maroon);}
   @media(max-width:480px){
@@ -2438,6 +2438,7 @@ function renderDashboard(){
     <div class="stat"><div class="label">Total Expenses This School Year</div><div class="value mono maroon">${rupiah(totalPengeluaranTA)}</div></div>
     <div class="stat"><div class="label">Bank Balance (Bank Mandiri)</div><div class="value mono">${rupiah(saldoBankSaatIni())}</div></div>
   `;
+  autoFitStatValues(document.getElementById('statGrid'));
 
   renderDashBulanIniTable();
   renderTrendChart();
@@ -2520,6 +2521,25 @@ function emptyState(msg){
     <div>${esc(msg)}</div>
   </div>`;
 }
+/* Shrinks each .stat .value's font-size just enough to keep the number on one line instead of
+   letting it overflow/wrap — used after any stat grid is (re)rendered, since values vary a lot in length. */
+const STAT_VALUE_MIN_FONT = 11;
+function autoFitStatValues(container){
+  const root = container || document;
+  const values = root.querySelectorAll('.stat .value');
+  requestAnimationFrame(()=>{
+    values.forEach(el=>{
+      let size = parseFloat(getComputedStyle(el).fontSize);
+      let guard = 0;
+      while(el.scrollWidth > el.clientWidth && size > STAT_VALUE_MIN_FONT && guard < 40){
+        size -= 0.5;
+        el.style.fontSize = size + 'px';
+        guard++;
+      }
+    });
+  });
+}
+window.addEventListener('resize', ()=> autoFitStatValues());
 /* Check whether the student has paid in full for all 12 months of the current School Year period (July-June) */
 function isTahunAjaranLunasPenuh(studentId, taLabel){
   return PERIODE_URUT.every(bulan => isBulanLunas(studentId, bulan, tahunUntukBulan(taLabel, bulan)));
@@ -3102,6 +3122,7 @@ function renderRekapTable(){
     <div class="stat"><div class="label">Payment Completeness</div><div class="value">${persen}%</div></div>
     <div class="stat"><div class="label">Paid Slots</div><div class="value">${slotLunas} / ${totalSlotBulan}</div></div>
   `;
+  autoFitStatValues(document.getElementById('rekapStatGrid'));
 }
 /* The on-screen table lives in #rekapTable, but the print stylesheet only shows #printArea while printing —
    so the Print button needs to build its own copy of the report into #printArea before calling window.print(). */
@@ -3683,6 +3704,7 @@ function renderLaporanPengeluaranTab(){
     <div class="stat"><div class="label">Total Expense Entries</div><div class="value">${currentPengeluaranList().length}</div></div>
     <div class="stat"><div class="label">Total Cash Used</div><div class="value mono maroon">${rupiah(grandTotal)}</div></div>
   `;
+  autoFitStatValues(document.getElementById('pengeluaranStatGrid'));
 
   const body = document.getElementById('ledgerReportBody');
   if(groups.length===0){
@@ -3804,6 +3826,7 @@ function renderSaldoKasTab(){
     <div class="stat"><div class="label">Total Cash Out (All Time)</div><div class="value mono maroon">${rupiah(totalKeluar)}</div></div>
     <div class="stat"><div class="label">Current Balance</div><div class="value mono" style="font-size:24px;">${rupiah(saldoSekarang)}</div></div>
   `;
+  autoFitStatValues(document.getElementById('saldoKasStatGrid'));
 
   renderMutasiBankTable();
 }
