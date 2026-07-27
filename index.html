@@ -4082,17 +4082,26 @@ async function sendFonnteWA(message){
   const cfg = getFonnteConfig();
   if(!cfg.enabled || !cfg.token || !cfg.targets) return;
   try{
+    const data = new FormData();
+    data.append('target', cfg.targets);
+    data.append('message', message);
+    data.append('countryCode', '62');
     const res = await fetch('https://api.fonnte.com/send', {
       method: 'POST',
-      headers: { 'Authorization': cfg.token, 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({ target: cfg.targets, message })
+      mode: 'cors',
+      headers: new Headers({ 'Authorization': cfg.token }),
+      body: data
     });
-    const data = await res.json().catch(()=>({}));
-    if(data && data.status === false){
-      toast('WhatsApp notification failed to send: '+(data.reason||'unknown error'), 'err');
+    const raw = await res.text();
+    console.log('[Fonnte] response:', raw);
+    let json = {};
+    try{ json = JSON.parse(raw); }catch(e){ /* non-JSON response, already logged above */ }
+    if(json && json.status === false){
+      toast('WhatsApp notification failed to send: '+(json.reason||json.message||'unknown error (check browser console)'), 'err');
     }
   }catch(e){
-    toast('WhatsApp notification failed to send (check internet connection): '+e.message, 'err');
+    console.error('[Fonnte] fetch error:', e);
+    toast('WhatsApp notification failed to send (check internet connection or browser console): '+e.message, 'err');
   }
 }
 async function testFonnteNotification(){
@@ -4101,15 +4110,31 @@ async function testFonnteNotification(){
   if(!token || !targets){ toast('Fill in the Token and Recipient Number(s) first','err'); return; }
   toast('Sending test notification...','ok');
   try{
+    const data = new FormData();
+    data.append('target', targets);
+    data.append('message', '🔔 *CLASS CASH BOOK*\nThis is a test notification. If you received this message, your Fonnte connection is working correctly.');
+    data.append('countryCode', '62');
     const res = await fetch('https://api.fonnte.com/send', {
       method: 'POST',
-      headers: { 'Authorization': token, 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({ target: targets, message: '🔔 *CLASS CASH BOOK*\nThis is a test notification. If you received this message, your Fonnte connection is working correctly.' })
+      mode: 'cors',
+      headers: new Headers({ 'Authorization': token }),
+      body: data
     });
-    const data = await res.json().catch(()=>({}));
-    if(data && data.status === false){ toast('Test failed: '+(data.reason||'unknown error'), 'err'); }
-    else{ toast('Test notification sent — check the WhatsApp number(s)','ok'); }
-  }catch(e){ toast('Test failed (check internet connection): '+e.message, 'err'); }
+    const raw = await res.text();
+    console.log('[Fonnte] test response:', raw);
+    let json = {};
+    try{ json = JSON.parse(raw); }catch(e){ /* non-JSON, logged above */ }
+    if(json && json.status === false){
+      toast('Test failed: '+(json.reason||json.message||'unknown error (check browser console)'), 'err');
+    }else if(json && json.status === true){
+      toast('Test notification sent — check the WhatsApp number(s)','ok');
+    }else{
+      toast('Sent, but response format was unexpected — check browser console (F12) for the raw reply', 'err');
+    }
+  }catch(e){
+    console.error('[Fonnte] test fetch error:', e);
+    toast('Test failed (check internet connection or browser console): '+e.message, 'err');
+  }
 }
 
 /* ---- Notification message formats ---- */
