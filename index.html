@@ -1078,6 +1078,34 @@
         </div>
 
         <div class="card">
+          <details open>
+            <summary><h2 style="display:inline-flex;">WhatsApp Notifications (Fonnte) <span class="badge" id="badgeFonnte">Off</span></h2></summary>
+            <div class="config-box">
+              Sends an automatic WhatsApp notification to the number(s) below every time a <b>Payment Entry</b> or <b>Expense Entry</b> is added, edited, or deleted. Get your Token from your Fonnte dashboard &rarr; Device.
+              <br><br>
+              ⚠️ <b>Note:</b> this app is client-side only (no backend server), so this Token will be visible in this browser's page source to anyone who has access to this app link &mdash; the same way the Firebase Config above works. Do not reuse a Token that also has access to other sensitive systems.
+            </div>
+            <div class="field">
+              <label>Fonnte Token</label>
+              <input type="text" id="fonnteToken" placeholder="Paste your Fonnte device token here" autocomplete="off">
+            </div>
+            <div class="field">
+              <label>Recipient WhatsApp Number(s)</label>
+              <input type="text" id="fonnteTargets" placeholder="628123456789,628987654321">
+              <p class="helper" style="margin-top:4px;">Separate multiple numbers with a comma. Use international format without "+" (e.g. <code class="inl">628xxx</code>, not <code class="inl">08xxx</code>).</p>
+            </div>
+            <label style="display:flex; align-items:center; gap:8px; font-size:13px; color:var(--ink-soft); margin-bottom:12px; cursor:pointer;">
+              <input type="checkbox" id="fonnteEnabled" style="width:auto;"> Enable WhatsApp notifications
+            </label>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <button class="btn btn-primary" onclick="saveFonnteConfig()">Save Settings</button>
+              <button class="btn btn-outline" onclick="testFonnteNotification()">Send Test Notification</button>
+            </div>
+            <p class="helper" id="fonnteStatusText" style="margin-top:10px;"></p>
+          </details>
+        </div>
+
+        <div class="card">
           <details>
             <summary><h2 style="display:inline-flex;">Example Firestore Security Rules (required for online mode)</h2></summary>
             <p class="helper">Copy this into Firestore &rarr; Rules. These rules require login before reading/writing any data, and restrict the Manage Users menu to admins only.</p>
@@ -1626,6 +1654,7 @@ function periodeLabelTA(taLabel){
 }
 const LS_KEY = "kaskelas_data_v2";
 const LS_FBCONFIG = "kaskelas_fbconfig_v1";
+const LS_FONNTE = "kaskelas_fonnte_v1";
 const LS_FORCE_LOCAL = "kaskelas_force_local_v1";
 const LS_CURRENT_TA = "kaskelas_current_ta_v1";
 
@@ -2756,6 +2785,7 @@ async function simpanPembayaran(){
     await dbAddPembayaran(obj);
     toast('Payment recorded successfully','ok');
     logAudit('add','pembayaran', `${s.nama} — ${rupiah(obj.total)} (${bulanList.length} month${bulanList.length>1?'s':''})`);
+    sendFonnteWA(pesanNotifPembayaran('Added', obj, s, ta));
     bayarSelectedMonths = new Set();
     document.getElementById('bayarKeterangan').value = '';
     onBayarSiswaChange();
@@ -2794,7 +2824,7 @@ function deletePembayaranConfirm(id){
   const p = state.pembayaran.find(x=>x.id===id);
   const s = p ? findSiswa(p.studentId) : null;
   confirmAction('Delete this payment record? The related month(s) status will revert to unpaid.', async ()=>{
-    try{ await dbDeletePembayaran(id); toast('Payment deleted','ok'); logAudit('delete','pembayaran', s?.nama||'(student deleted)'); if(!USE_FIRESTORE){ renderRiwayatTable(); } }
+    try{ await dbDeletePembayaran(id); toast('Payment deleted','ok'); logAudit('delete','pembayaran', s?.nama||'(student deleted)'); sendFonnteWA(pesanNotifPembayaran('Deleted', p, s, currentTA())); if(!USE_FIRESTORE){ renderRiwayatTable(); } }
     catch(e){ toast('Failed to delete: '+e.message,'err'); }
   });
 }
@@ -2865,6 +2895,7 @@ async function simpanEditPembayaran(){
     const p = state.pembayaran.find(x=>x.id===id);
     const s = p ? findSiswa(p.studentId) : null;
     logAudit('edit','pembayaran', `${s?.nama||'(student deleted)'} — ${rupiah(obj.total)}`);
+    sendFonnteWA(pesanNotifPembayaran('Edited', obj, s, currentTA()));
     closeModal('modalEditBayar');
     if(!USE_FIRESTORE) renderRiwayatTable();
   }catch(e){ toast('Failed to save changes: '+e.message,'err'); }
@@ -3591,6 +3622,11 @@ async function simpanPengeluaran(){
     await dbAddPengeluaran(obj);
     toast('Expense recorded successfully','ok');
     logAudit('add','pengeluaran', `${noRef} — ${keterangan} (${rupiah(nominal)})`);
+    {
+      const k = findKegiatan(kegiatanId);
+      const a = k ? findAkun(k.akunId) : null;
+      sendFonnteWA(pesanNotifPengeluaran('Added', obj, k?.nama, a?.kode));
+    }
     document.getElementById('pengeluaranKeterangan').value = '';
     document.getElementById('pengeluaranNominal').value = '';
     document.getElementById('pengeluaranNoRefPreview').textContent = generateNoRefPengeluaran();
@@ -3657,6 +3693,11 @@ async function simpanEditPengeluaran(){
     toast('Expense updated','ok');
     const p = state.pengeluaran.find(x=>x.id===id);
     logAudit('edit','pengeluaran', `${p?.noRef||id} — ${keterangan} (${rupiah(nominal)})`);
+    {
+      const k = findKegiatan(kegiatanId);
+      const a = k ? findAkun(k.akunId) : null;
+      sendFonnteWA(pesanNotifPengeluaran('Edited', { noRef: p?.noRef, tanggal, nominal, keterangan }, k?.nama, a?.kode));
+    }
     closeModal('modalEditPengeluaran');
     if(!USE_FIRESTORE) renderRiwayatPengeluaranTable();
   }catch(e){ toast('Failed to save changes: '+e.message,'err'); }
@@ -3664,7 +3705,17 @@ async function simpanEditPengeluaran(){
 function deletePengeluaranConfirm(id){
   const p = state.pengeluaran.find(x=>x.id===id);
   confirmAction('Delete this expense record?', async ()=>{
-    try{ await dbDeletePengeluaran(id); toast('Expense deleted','ok'); logAudit('delete','pengeluaran', p ? `${p.noRef} — ${p.keterangan}` : id); if(!USE_FIRESTORE) renderRiwayatPengeluaranTable(); }
+    try{
+      await dbDeletePengeluaran(id);
+      toast('Expense deleted','ok');
+      logAudit('delete','pengeluaran', p ? `${p.noRef} — ${p.keterangan}` : id);
+      if(p){
+        const k = findKegiatan(p.kegiatanId);
+        const a = k ? findAkun(k.akunId) : null;
+        sendFonnteWA(pesanNotifPengeluaran('Deleted', p, k?.nama, a?.kode));
+      }
+      if(!USE_FIRESTORE) renderRiwayatPengeluaranTable();
+    }
     catch(e){ toast('Failed to delete: '+e.message,'err'); }
   });
 }
@@ -3945,6 +3996,7 @@ function renderPengaturanTab(){
   renderTaManageTable();
   renderAkunTable();
   renderKegiatanTable();
+  renderFonnteSettingsUI();
 
   const badge = document.getElementById('badgeKoneksi');
   const statusText = document.getElementById('fbStatusText');
@@ -3979,6 +4031,125 @@ async function saveIdentitas(){
     toast('This school year\'s identity has been saved','ok');
   }catch(e){ toast('Failed to save: '+e.message,'err'); }
 }
+/* ============================================================
+   WHATSAPP NOTIFICATIONS (FONNTE)
+   Sends an automatic WA notification to the configured admin/treasurer
+   number(s) whenever a Payment Entry or Expense Entry is Added/Edited/Deleted.
+   This is a SIDE EFFECT of the main transaction, never a blocker:
+   if it fails (no internet, wrong token, Fonnte quota, etc.) the
+   Payment/Expense record itself is still saved — only a warning toast is shown.
+   ============================================================ */
+function getFonnteConfig(){
+  try{
+    const raw = localStorage.getItem(LS_FONNTE);
+    if(!raw) return { enabled:false, token:'', targets:'' };
+    const cfg = JSON.parse(raw);
+    return { enabled: !!cfg.enabled, token: cfg.token||'', targets: cfg.targets||'' };
+  }catch(e){ return { enabled:false, token:'', targets:'' }; }
+}
+function renderFonnteSettingsUI(){
+  const cfg = getFonnteConfig();
+  document.getElementById('fonnteToken').value = cfg.token;
+  document.getElementById('fonnteTargets').value = cfg.targets;
+  document.getElementById('fonnteEnabled').checked = cfg.enabled;
+  const badge = document.getElementById('badgeFonnte');
+  const statusText = document.getElementById('fonnteStatusText');
+  if(cfg.enabled && cfg.token && cfg.targets){
+    badge.textContent = 'On';
+    badge.style.background = 'var(--green-soft)'; badge.style.color = 'var(--green)';
+    statusText.textContent = '';
+  }else if(cfg.enabled){
+    badge.textContent = 'Incomplete';
+    badge.style.background = 'var(--maroon-soft)'; badge.style.color = 'var(--maroon)';
+    statusText.textContent = '⚠️ Enabled, but Token and/or Recipient Number(s) are still empty — notifications will not be sent yet.';
+  }else{
+    badge.textContent = 'Off';
+    badge.style.background = 'var(--gold-soft)'; badge.style.color = '#0A1120';
+    statusText.textContent = '';
+  }
+}
+function saveFonnteConfig(){
+  const token = document.getElementById('fonnteToken').value.trim();
+  const targets = document.getElementById('fonnteTargets').value.trim();
+  const enabled = document.getElementById('fonnteEnabled').checked;
+  if(enabled && !token){ toast('Fonnte Token is required to enable notifications','err'); return; }
+  if(enabled && !targets){ toast('At least 1 recipient number is required to enable notifications','err'); return; }
+  localStorage.setItem(LS_FONNTE, JSON.stringify({ enabled, token, targets }));
+  toast('WhatsApp notification settings saved','ok');
+  renderFonnteSettingsUI();
+}
+async function sendFonnteWA(message){
+  const cfg = getFonnteConfig();
+  if(!cfg.enabled || !cfg.token || !cfg.targets) return;
+  try{
+    const res = await fetch('https://api.fonnte.com/send', {
+      method: 'POST',
+      headers: { 'Authorization': cfg.token, 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ target: cfg.targets, message })
+    });
+    const data = await res.json().catch(()=>({}));
+    if(data && data.status === false){
+      toast('WhatsApp notification failed to send: '+(data.reason||'unknown error'), 'err');
+    }
+  }catch(e){
+    toast('WhatsApp notification failed to send (check internet connection): '+e.message, 'err');
+  }
+}
+async function testFonnteNotification(){
+  const token = document.getElementById('fonnteToken').value.trim();
+  const targets = document.getElementById('fonnteTargets').value.trim();
+  if(!token || !targets){ toast('Fill in the Token and Recipient Number(s) first','err'); return; }
+  toast('Sending test notification...','ok');
+  try{
+    const res = await fetch('https://api.fonnte.com/send', {
+      method: 'POST',
+      headers: { 'Authorization': token, 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ target: targets, message: '🔔 *CLASS CASH BOOK*\nThis is a test notification. If you received this message, your Fonnte connection is working correctly.' })
+    });
+    const data = await res.json().catch(()=>({}));
+    if(data && data.status === false){ toast('Test failed: '+(data.reason||'unknown error'), 'err'); }
+    else{ toast('Test notification sent — check the WhatsApp number(s)','ok'); }
+  }catch(e){ toast('Test failed (check internet connection): '+e.message, 'err'); }
+}
+
+/* ---- Notification message formats ---- */
+function pesanNotifPembayaran(aksi, obj, s, ta){
+  const bulanText = (obj.bulanList||[]).map(b=>`${BULAN[b.bulan-1]} '${String(b.tahun).slice(-2)}`).join(', ');
+  const aksiLabel = { Added:'New Payment Added', Edited:'Payment Edited', Deleted:'Payment Deleted' }[aksi] || aksi;
+  return [
+    `🔔 *CLASS CASH BOOK*`,
+    `Action: *${aksiLabel}*`,
+    `------------------------`,
+    `Student: ${s?.nama || '(deleted)'}${s?.noAbsen ? ' (#'+s.noAbsen+')' : ''}`,
+    `Class: ${ta?.namaKelas || '-'}`,
+    `Month(s): ${bulanText || '-'}`,
+    `Amount: ${rupiah(obj.total)}`,
+    `Date: ${formatTanggalPanjang(obj.tanggal)}`,
+    `Method: ${obj.metode || '-'}`,
+    obj.keterangan ? `Note: ${obj.keterangan}` : null,
+    `------------------------`,
+    `By: ${currentUser?.email || '-'}`,
+    `Time: ${new Date().toLocaleString('en-US', {dateStyle:'medium', timeStyle:'short'})}`
+  ].filter(Boolean).join('\n');
+}
+function pesanNotifPengeluaran(aksi, obj, kegiatanNama, akunKode){
+  const aksiLabel = { Added:'New Expense Added', Edited:'Expense Edited', Deleted:'Expense Deleted' }[aksi] || aksi;
+  return [
+    `🔔 *CLASS CASH BOOK*`,
+    `Action: *${aksiLabel}*`,
+    `------------------------`,
+    `Ref. No.: ${obj.noRef || '-'}`,
+    `Activity: ${kegiatanNama || '-'}`,
+    `Account: ${akunKode || '-'}`,
+    `Amount: ${rupiah(obj.nominal)}`,
+    `Date: ${formatTanggalPanjang(obj.tanggal)}`,
+    `Description: ${obj.keterangan || '-'}`,
+    `------------------------`,
+    `By: ${currentUser?.email || '-'}`,
+    `Time: ${new Date().toLocaleString('en-US', {dateStyle:'medium', timeStyle:'short'})}`
+  ].join('\n');
+}
+
 async function saveFirebaseConfig(){
   const raw = document.getElementById('fbConfigInput').value.trim();
   if(!raw){ toast('Paste the Firebase configuration first','err'); return; }
