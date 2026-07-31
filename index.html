@@ -3778,7 +3778,7 @@ function buildLedgerReportHTML(groups, grandTotal, ta, forPrint){
       <tr>
         <td>${formatTanggalPanjang(r.tanggal)}</td>
         <td class="mono">${esc(r.noRef||'-')}</td>
-        <td>${esc(r.keterangan)}${r.kegiatanNama && r.kegiatanNama!=='-' ? ` <span class="helper">(${esc(r.kegiatanNama)})</span>` : ''}</td>
+        <td>${esc(r.keterangan)}</td>
         <td class="right num">${rupiah(r.nominal)}</td>
         <td class="right num">${rupiah(r.saldo)}</td>
       </tr>`).join('');
