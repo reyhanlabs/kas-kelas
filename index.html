@@ -452,6 +452,8 @@
   /* ===== Expense ledger report ===== */
   .ledger-account{margin-bottom:22px; border:1px solid var(--paper-line); border-radius:8px; overflow:hidden;}
   .ledger-account:last-child{margin-bottom:0;}
+  .ledger-table-scroll{overflow-x:auto; -webkit-overflow-scrolling:touch;}
+  .ledger-table-scroll table{min-width:520px;}
   .ledger-account-head{background:var(--gold-soft); color:#0A1120; padding:8px 12px; font-weight:700; font-size:13px; display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap;}
   .ledger-account table{font-size:12.5px;}
   .ledger-account table td:first-child, .ledger-account table th:first-child{white-space:nowrap;}
@@ -3788,6 +3790,7 @@ function buildLedgerReportHTML(groups, grandTotal, ta, forPrint){
           <span>${esc(g.akun.kode)} &middot; ${esc(g.akun.nama)}</span>
           <span>${rupiah(g.total)}</span>
         </div>
+        <div class="ledger-table-scroll">
         <table>
           <thead><tr><th>Date</th><th>Ref. No.</th><th>Description</th><th class="right">Debit</th><th class="right">Balance</th></tr></thead>
           <tbody>
@@ -3796,6 +3799,7 @@ function buildLedgerReportHTML(groups, grandTotal, ta, forPrint){
           </tbody>
           <tfoot><tr><td colspan="3">Ending Balance / Total Movement</td><td class="right num">${rupiah(g.total)}</td><td class="right num">${rupiah(g.total)}</td></tr></tfoot>
         </table>
+        </div>
       </div>`;
   }).join('');
 
@@ -3937,6 +3941,7 @@ function buildBankLedgerHTML(forPrint){
         <span>Bank Mandiri</span>
         <span>${rupiah(saldoAkhir)}</span>
       </div>
+      <div class="ledger-table-scroll">
       <table>
         <thead><tr><th>Date</th><th>Description</th><th class="right">Cash In</th><th class="right">Cash Out</th><th class="right">Balance</th></tr></thead>
         <tbody>
@@ -3945,6 +3950,7 @@ function buildBankLedgerHTML(forPrint){
         </tbody>
         <tfoot><tr><td colspan="4">Current Balance</td><td class="right num">${rupiah(saldoAkhir)}</td></tr></tfoot>
       </table>
+      </div>
     </div>`;
   return head + body;
 }
