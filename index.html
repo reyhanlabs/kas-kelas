@@ -400,9 +400,11 @@
   }
   .r2-brand{display:flex; align-items:center; gap:8px; margin-bottom:10mm;}
   .r2-mark{
-    width:30px; height:30px; border-radius:8px; background:#C93E8A; color:#fff;
+    width:30px; height:30px; border-radius:8px; background:#fff; color:#fff;
     display:flex; align-items:center; justify-content:center; font-family:'Fraunces',serif; font-weight:700; font-size:15px; flex-shrink:0;
+    overflow:hidden; padding:2px; box-sizing:border-box;
   }
+  .r2-mark img{ width:100%; height:100%; object-fit:contain; display:block; }
   .r2-school{font-family:'Fraunces',serif; font-size:14.5px; font-weight:700; line-height:1.2;}
   .r2-class{font-size:10.5px; color:#FCE4F3; margin-top:1px;}
   .r2-title-row{display:flex; justify-content:space-between; align-items:flex-end;}
@@ -2944,7 +2946,7 @@ function buildReceiptHTML(p, s, ta){
       <div class="r2-top">
         ${lunasPenuh ? `<div class="r2-stamp">PAID<br>1 YEAR<br>CLASS</div>` : ''}
         <div class="r2-brand">
-          <div class="r2-mark">K</div>
+          <div class="r2-mark"><img src="https://raw.githubusercontent.com/reyhanlabs/kas-kelas/main/logo4A.png" alt="Logo" crossorigin="anonymous"></div>
           <div>
             <div class="r2-school">${esc(ta?.namaSekolah || 'School Name')}</div>
             <div class="r2-class">${esc(ta?.namaKelas || 'Class Name')} &middot; School Year ${esc(ta?.label || '-')}</div>
