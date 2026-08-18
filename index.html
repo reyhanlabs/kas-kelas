@@ -2986,13 +2986,30 @@ function buildReceiptHTML(p, s, ta){
     </div>
   `;
 }
-function cetakBukti(paymentId){
+/* Waits for every <img> inside the given container to finish loading (success or error),
+   with a hard timeout so a slow/broken image never blocks print or export forever. */
+function waitForImagesToLoad(container, timeoutMs){
+  const imgs = Array.from(container.querySelectorAll('img'));
+  if(imgs.length===0) return Promise.resolve();
+  const perImage = imgs.map(img=>{
+    if(img.complete) return Promise.resolve();
+    return new Promise(resolve=>{
+      img.addEventListener('load', resolve, {once:true});
+      img.addEventListener('error', resolve, {once:true});
+    });
+  });
+  const timeout = new Promise(resolve=> setTimeout(resolve, timeoutMs));
+  return Promise.race([Promise.all(perImage), timeout]);
+}
+async function cetakBukti(paymentId){
   const p = state.pembayaran.find(x=>x.id===paymentId);
   if(!p){ toast('Payment data not found','err'); return; }
   const s = findSiswa(p.studentId);
   const ta = currentTA();
-  document.getElementById('printArea').innerHTML = buildReceiptHTML(p, s, ta);
-  setTimeout(()=> window.print(), 80);
+  const printArea = document.getElementById('printArea');
+  printArea.innerHTML = buildReceiptHTML(p, s, ta);
+  await waitForImagesToLoad(printArea, 4000);
+  window.print();
 }
 window.addEventListener('afterprint', ()=>{
   document.getElementById('printArea').innerHTML = '';
@@ -3014,7 +3031,7 @@ async function renderReceiptToCanvas(paymentId){
   holder.innerHTML = buildReceiptHTML(p, s, ta);
   document.body.appendChild(holder);
   const receiptEl = holder.querySelector('.receipt2');
-  await new Promise(r=>setTimeout(r, 60));
+  await waitForImagesToLoad(holder, 4000);
   let canvas;
   try{
     canvas = await html2canvas(receiptEl, {scale:3, backgroundColor:'#ffffff', useCORS:true});
