@@ -567,6 +567,10 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19V5"/><path d="M4 19h16"/><rect x="7" y="12" width="3" height="7"/><rect x="12.5" y="8" width="3" height="11"/><rect x="18" y="4" width="3" height="15"/></svg>
         Report Summary
       </button>
+      <button class="tab-btn" data-tab="penerimaanLain">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20"/><path d="M17 5.5c0-1.9-2.2-3-5-3s-5 1.1-5 3 2.2 3 5 3 5 1.1 5 3-2.2 3-5 3-5-1.1-5-3"/><path d="M4 20l3-3M20 4l-3 3"/></svg>
+        Other Income
+      </button>
       <button class="tab-btn" data-tab="pengeluaran">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20"/><path d="M17 5.5c0-1.9-2.2-3-5-3s-5 1.1-5 3 2.2 3 5 3 5 1.1 5 3-2.2 3-5 3-5-1.1-5-3"/></svg>
         Expense Entry
@@ -803,6 +807,77 @@
         </div>
       </section>
 
+      <!-- ================= OTHER INCOME (Penerimaan Lain) ================= -->
+      <section id="tab-penerimaanLain" class="tab-panel" style="display:none;">
+        <div class="topbar">
+          <div>
+            <h1>Other Income</h1>
+            <div class="sub">Record income other than monthly class dues (donations, voluntary contributions, etc.)</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="field-row">
+            <div class="field">
+              <label>Income Type</label>
+              <select id="penerimaanJenis">
+                <option value="Donation">Donation</option>
+                <option value="Voluntary Contribution">Voluntary Contribution</option>
+                <option value="Reimbursement">Reimbursement</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Source (who gave it)</label>
+              <input type="text" id="penerimaanSumber" placeholder="e.g. Andi's parent, Alumni class of 2020, Anonymous">
+            </div>
+          </div>
+          <div class="field">
+            <label>Linked Student (optional — only if this income comes from a specific student's parent)</label>
+            <select id="penerimaanStudentId">
+              <option value="">— No specific student —</option>
+            </select>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Date</label>
+              <input type="date" id="penerimaanTanggal">
+            </div>
+            <div class="field">
+              <label>Amount</label>
+              <input type="number" id="penerimaanNominal" placeholder="e.g. 250000">
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Method</label>
+              <select id="penerimaanMetode">
+                <option value="Tunai">Cash</option>
+                <option value="Transfer">Transfer</option>
+                <option value="QRIS">QRIS</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Notes (optional)</label>
+              <input type="text" id="penerimaanKeterangan" placeholder="e.g. for buying decorations for the year-end event">
+            </div>
+          </div>
+          <p class="helper">Reference No. is generated automatically (e.g. <span class="mono" id="penerimaanNoRefPreview">PL000001</span>) once saved.</p>
+          <button class="btn btn-primary" id="penerimaanSaveBtn" onclick="simpanPenerimaanLain()">Save Income</button>
+        </div>
+
+        <div class="card">
+          <h2>Other Income History</h2>
+          <div style="display:flex; gap:10px; margin-bottom:12px; flex-wrap:wrap;">
+            <div class="search-box">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+              <input type="text" id="searchPenerimaanLain" placeholder="Search source, type, or description..." oninput="renderRiwayatPenerimaanLainTable()">
+            </div>
+          </div>
+          <div id="riwayatPenerimaanLainTable"></div>
+        </div>
+      </section>
+
       <!-- ================= EXPENSE ENTRY ================= -->
       <section id="tab-pengeluaran" class="tab-panel" style="display:none;">
         <div class="topbar">
@@ -906,7 +981,7 @@
 
         <div class="card">
           <h2>Cash Flow Mutation</h2>
-          <p class="helper">Every payment (cash in) and expense (cash out) across all school years, in chronological order, with a running balance.</p>
+          <p class="helper">Every payment and other income (cash in) and expense (cash out) across all school years, in chronological order, with a running balance.</p>
           <div id="mutasiBankTable"></div>
         </div>
       </section>
@@ -979,6 +1054,7 @@
                 <option value="akun">Account</option>
                 <option value="kegiatan">Activity</option>
                 <option value="pengeluaran">Expense</option>
+                <option value="penerimaanLain">Other Income</option>
                 <option value="user">User</option>
                 <option value="tahunAjaran">School Year</option>
                 <option value="saldoBank">Bank Balance</option>
@@ -1135,6 +1211,7 @@ service cloud.firestore {
     match /akun/{doc} { allow read, write: if isSignedIn(); }
     match /kegiatan/{doc} { allow read, write: if isSignedIn(); }
     match /pengeluaran/{doc} { allow read, write: if isSignedIn(); }
+    match /penerimaanLain/{doc} { allow read, write: if isSignedIn(); }
     match /globalSettings/{doc} { allow read, write: if isSignedIn(); }
     match /publicSummary/{doc} { allow read: if true; allow write: if isSignedIn(); }
     match /auditLog/{doc} { allow read, write: if isSignedIn(); }
@@ -1604,6 +1681,66 @@ service cloud.firestore {
   </div>
 </div>
 
+<!-- Edit Other Income Modal -->
+<div class="overlay" id="modalEditPenerimaan">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Edit Other Income</h3>
+      <button class="icon-btn" onclick="closeModal('modalEditPenerimaan')">✕</button>
+    </div>
+    <input type="hidden" id="editPenerimaanId">
+    <div class="field-row">
+      <div class="field">
+        <label>Income Type</label>
+        <select id="editPenerimaanJenis">
+          <option value="Donation">Donation</option>
+          <option value="Voluntary Contribution">Voluntary Contribution</option>
+          <option value="Reimbursement">Reimbursement</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Source</label>
+        <input type="text" id="editPenerimaanSumber">
+      </div>
+    </div>
+    <div class="field">
+      <label>Linked Student (optional)</label>
+      <select id="editPenerimaanStudentId">
+        <option value="">— No specific student —</option>
+      </select>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Date</label>
+        <input type="date" id="editPenerimaanTanggal">
+      </div>
+      <div class="field">
+        <label>Amount</label>
+        <input type="number" id="editPenerimaanNominal">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Method</label>
+        <select id="editPenerimaanMetode">
+          <option value="Tunai">Cash</option>
+          <option value="Transfer">Transfer</option>
+          <option value="QRIS">QRIS</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Notes (optional)</label>
+        <input type="text" id="editPenerimaanKeterangan">
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeModal('modalEditPenerimaan')">Cancel</button>
+      <button class="btn btn-primary" onclick="simpanEditPenerimaanLain()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
 <!-- Confirmation Modal -->
 <div class="overlay" id="modalConfirm">
   <div class="modal" style="max-width:380px;">
@@ -1694,7 +1831,8 @@ let state = {
   pembayaran: [],  // {id, tahunAjaranId, studentId, tahun, bulanList:[..], nominalPerBulan, total, tanggal, metode, keterangan, createdAt}
   akun: [],        // {id, tahunAjaranId, kode, nama}
   kegiatan: [],    // {id, tahunAjaranId, nama, akunId}
-  pengeluaran: []  // {id, tahunAjaranId, kegiatanId, noRef, tanggal, keterangan, nominal, createdAt}
+  pengeluaran: [], // {id, tahunAjaranId, kegiatanId, noRef, tanggal, keterangan, nominal, createdAt}
+  penerimaanLain: []  // {id, tahunAjaranId, jenis, sumber, studentId, noRef, tanggal, nominal, metode, keterangan, createdAt}
 };
 
 /* ---------------- Utilities ---------------- */
@@ -1782,6 +1920,7 @@ function switchTab(tab){
   if(tab==='pembayaran') renderPembayaranTab();
   if(tab==='cetak') renderCetakTable();
   if(tab==='laporan') renderLaporanTab();
+  if(tab==='penerimaanLain') renderPenerimaanLainTab();
   if(tab==='pengeluaran') renderPengeluaranTab();
   if(tab==='laporanPengeluaran') renderLaporanPengeluaranTab();
   if(tab==='saldoKas') renderSaldoKasTab();
@@ -1866,6 +2005,7 @@ function loadLocal(){
       state.akun = parsed.akun || [];
       state.kegiatan = parsed.kegiatan || [];
       state.pengeluaran = parsed.pengeluaran || [];
+      state.penerimaanLain = parsed.penerimaanLain || [];
       saldoBank = parsed.saldoBank || { saldoAwal:0, tanggalSaldoAwal:'', keterangan:'' };
       auditLogList = parsed.auditLogList || [];
     }
@@ -1875,6 +2015,7 @@ function saveLocal(){
   localStorage.setItem(LS_KEY, JSON.stringify({
     tahunAjaranList, siswa: state.siswa, pembayaran: state.pembayaran,
     akun: state.akun, kegiatan: state.kegiatan, pengeluaran: state.pengeluaran,
+    penerimaanLain: state.penerimaanLain,
     saldoBank, auditLogList
   }));
 }
@@ -1954,6 +2095,11 @@ async function bootAppData(){
       state.pengeluaran = snap.docs.map(d=>({id:d.id, ...d.data()}));
       refreshCurrentTab();
     }, err=>toast('Failed to load expense data: '+err.message,'err')));
+
+    unsubscribers.push(DB.collection('penerimaanLain').onSnapshot(snap=>{
+      state.penerimaanLain = snap.docs.map(d=>({id:d.id, ...d.data()}));
+      refreshCurrentTab();
+    }, err=>toast('Failed to load other income data: '+err.message,'err')));
 
     unsubscribers.push(DB.collection('globalSettings').doc('saldoBank').onSnapshot(doc=>{
       saldoBank = doc.exists ? doc.data() : { saldoAwal:0, tanggalSaldoAwal:'', keterangan:'' };
@@ -2287,6 +2433,37 @@ async function dbDeletePengeluaran(id){
   }
 }
 
+/* ---- Other Income (Penerimaan Lain) CRUD ---- */
+async function dbAddPenerimaanLain(obj){
+  const payload = {tahunAjaranId: currentTahunAjaranId, ...obj};
+  if(USE_FIRESTORE){
+    const ref = await DB.collection('penerimaanLain').add(payload);
+    return ref.id;
+  }else{
+    const id = uid();
+    state.penerimaanLain.push({id, ...payload});
+    saveLocal();
+    return id;
+  }
+}
+async function dbUpdatePenerimaanLain(id, obj){
+  if(USE_FIRESTORE){
+    await DB.collection('penerimaanLain').doc(id).update(obj);
+  }else{
+    const idx = state.penerimaanLain.findIndex(p=>p.id===id);
+    if(idx>-1) state.penerimaanLain[idx] = {...state.penerimaanLain[idx], ...obj};
+    saveLocal();
+  }
+}
+async function dbDeletePenerimaanLain(id){
+  if(USE_FIRESTORE){
+    await DB.collection('penerimaanLain').doc(id).delete();
+  }else{
+    state.penerimaanLain = state.penerimaanLain.filter(p=>p.id!==id);
+    saveLocal();
+  }
+}
+
 /* ---- Bank Balance (single running account, carries over across school years) ---- */
 async function saveSaldoBankAwal(saldoAwal, tanggalSaldoAwal, keterangan){
   const obj = { saldoAwal, tanggalSaldoAwal, keterangan, updatedAt: Date.now() };
@@ -2298,10 +2475,12 @@ async function saveSaldoBankAwal(saldoAwal, tanggalSaldoAwal, keterangan){
   }
 }
 /* These total across ALL school years on purpose — the bank balance carries over and is not scoped per tahunAjaranId */
-function totalKasMasukSemuaTahun(){ return state.pembayaran.reduce((sum,p)=> sum + Number(p.total||0), 0); }
+function totalKasMasukPembayaranSemuaTahun(){ return state.pembayaran.reduce((sum,p)=> sum + Number(p.total||0), 0); }
+function totalPenerimaanLainSemuaTahun(){ return (state.penerimaanLain||[]).reduce((sum,p)=> sum + Number(p.nominal||0), 0); }
+function totalKasMasukSemuaTahun(){ return totalKasMasukPembayaranSemuaTahun() + totalPenerimaanLainSemuaTahun(); }
 function totalKasKeluarSemuaTahun(){ return state.pengeluaran.reduce((sum,p)=> sum + Number(p.nominal||0), 0); }
 function saldoBankSaatIni(){ return Number(saldoBank.saldoAwal||0) + totalKasMasukSemuaTahun() - totalKasKeluarSemuaTahun(); }
-/* Chronological list of every cash-in (payment) and cash-out (expense) transaction across all school years, with a running balance starting from saldoAwal */
+/* Chronological list of every cash-in (payment + other income) and cash-out (expense) transaction across all school years, with a running balance starting from saldoAwal */
 function buildMutasiBank(){
   const masuk = state.pembayaran.map(p=>{
     const s = findSiswa(p.studentId);
@@ -2311,11 +2490,20 @@ function buildMutasiBank(){
       ref: p.id, createdAt: p.createdAt||0
     };
   });
+  const masukLain = (state.penerimaanLain||[]).map(p=>{
+    const s = p.studentId ? findSiswa(p.studentId) : null;
+    const bits = [p.jenis||'Other Income', p.sumber||null, s ? `via ${s.nama}` : null, p.keterangan||null].filter(Boolean);
+    return {
+      tanggal: p.tanggal, arah:'in', jumlah: Number(p.nominal||0),
+      keterangan: bits.join(' — '),
+      ref: p.noRef||p.id, createdAt: p.createdAt||0
+    };
+  });
   const keluar = state.pengeluaran.map(p=>({
     tanggal: p.tanggal, arah:'out', jumlah: Number(p.nominal||0),
     keterangan: p.keterangan||'Expense', ref: p.noRef||p.id, createdAt: p.createdAt||0
   }));
-  const all = masuk.concat(keluar).sort((a,b)=>{
+  const all = masuk.concat(masukLain).concat(keluar).sort((a,b)=>{
     const d = new Date(a.tanggal) - new Date(b.tanggal);
     return d !== 0 ? d : (a.createdAt||0)-(b.createdAt||0);
   });
@@ -2330,6 +2518,7 @@ function buildMutasiBank(){
 function currentAkunList(){ return state.akun.filter(a=>a.tahunAjaranId===currentTahunAjaranId).sort((a,b)=> (a.kode||'').localeCompare(b.kode||'')); }
 function currentKegiatanList(){ return state.kegiatan.filter(k=>k.tahunAjaranId===currentTahunAjaranId); }
 function currentPengeluaranList(){ return state.pengeluaran.filter(p=>p.tahunAjaranId===currentTahunAjaranId); }
+function currentPenerimaanLainList(){ return (state.penerimaanLain||[]).filter(p=>p.tahunAjaranId===currentTahunAjaranId); }
 function findAkun(id){ return state.akun.find(a=>a.id===id); }
 function findKegiatan(id){ return state.kegiatan.find(k=>k.id===id); }
 /* Generate the next sequential CD-style reference number for this school year, e.g. CD000007 */
@@ -2340,6 +2529,15 @@ function generateNoRefPengeluaran(){
     if(m) max = Math.max(max, Number(m[1]));
   });
   return 'CD' + String(max+1).padStart(6,'0');
+}
+/* Generate the next sequential PL-style reference number for other income in this school year, e.g. PL000003 */
+function generateNoRefPenerimaanLain(){
+  let max = 0;
+  currentPenerimaanLainList().forEach(p=>{
+    const m = String(p.noRef||'').match(/(\d+)$/);
+    if(m) max = Math.max(max, Number(m[1]));
+  });
+  return 'PL' + String(max+1).padStart(6,'0');
 }
 
 /* ---- Audit Log: records who did what and when, across every entity in the app ---- */
@@ -2362,7 +2560,8 @@ function logAudit(action, entity, label){
 }
 const AUDIT_ENTITY_LABELS = {
   siswa:'Student', pembayaran:'Payment', akun:'Account', kegiatan:'Activity',
-  pengeluaran:'Expense', user:'User', tahunAjaran:'School Year', saldoBank:'Bank Balance', publicSummary:'Public Link'
+  pengeluaran:'Expense', penerimaanLain:'Other Income',
+  user:'User', tahunAjaran:'School Year', saldoBank:'Bank Balance', publicSummary:'Public Link'
 };
 const AUDIT_ACTION_LABELS = { add:'Added', edit:'Edited', delete:'Deleted', publish:'Published' };
 function renderAuditLogTable(){
@@ -2461,6 +2660,7 @@ function renderDashboard(){
   const paidThisMonth = siswaTA.filter(s => isBulanLunas(s.id, bulanIdx, tahun));
   const totalTerkumpulBulanIni = paidThisMonth.reduce((sum,s)=> sum + nominalUntukSiswa(s), 0);
   const totalSemuaWaktu = state.pembayaran.filter(p=>p.tahunAjaranId===currentTahunAjaranId).reduce((sum,p)=> sum + Number(p.total||0), 0);
+  const totalPenerimaanLainTA = currentPenerimaanLainList().reduce((sum,p)=> sum + Number(p.nominal||0), 0);
   const totalPengeluaranTA = currentPengeluaranList().reduce((sum,p)=> sum + Number(p.nominal||0), 0);
 
   document.getElementById('statGrid').innerHTML = `
@@ -2468,6 +2668,7 @@ function renderDashboard(){
     <div class="stat"><div class="label">Paid This Month</div><div class="value green">${paidThisMonth.length} / ${totalSiswa}</div></div>
     <div class="stat"><div class="label">Collected This Month</div><div class="value mono">${rupiah(totalTerkumpulBulanIni)}</div></div>
     <div class="stat"><div class="label">Total Cash This School Year</div><div class="value mono green">${rupiah(totalSemuaWaktu)}</div></div>
+    <div class="stat"><div class="label">Other Income This School Year</div><div class="value mono green">${rupiah(totalPenerimaanLainTA)}</div></div>
     <div class="stat"><div class="label">Total Expenses This School Year</div><div class="value mono maroon">${rupiah(totalPengeluaranTA)}</div></div>
     <div class="stat"><div class="label">Bank Balance (Bank Mandiri)</div><div class="value mono">${rupiah(saldoBankSaatIni())}</div></div>
   `;
@@ -2513,13 +2714,18 @@ function renderTrendChart(){
   document.getElementById('trendPeriodeBadge').textContent = periodeLabelTA(ta?.label);
 
   const pembayaranTA = state.pembayaran.filter(p=>p.tahunAjaranId===currentTahunAjaranId);
+  const penerimaanLainTA = currentPenerimaanLainList();
   const pengeluaranTA = currentPengeluaranList();
 
   const perMonth = PERIODE_URUT.map(bulanNum=>{
     const tahun = tahunUntukBulan(ta?.label, bulanNum);
-    const cashIn = pembayaranTA
+    const cashInPembayaran = pembayaranTA
       .filter(p=>{ const d = new Date(p.tanggal); return !isNaN(d) && d.getMonth()+1===bulanNum && d.getFullYear()===tahun; })
       .reduce((s,p)=>s+Number(p.total||0),0);
+    const cashInLain = penerimaanLainTA
+      .filter(p=>{ const d = new Date(p.tanggal); return !isNaN(d) && d.getMonth()+1===bulanNum && d.getFullYear()===tahun; })
+      .reduce((s,p)=>s+Number(p.nominal||0),0);
+    const cashIn = cashInPembayaran + cashInLain;
     const cashOut = pengeluaranTA
       .filter(p=>{ const d = new Date(p.tanggal); return !isNaN(d) && d.getMonth()+1===bulanNum && d.getFullYear()===tahun; })
       .reduce((s,p)=>s+Number(p.nominal||0),0);
@@ -3742,6 +3948,144 @@ function deletePengeluaranConfirm(id){
 }
 
 /* ============================================================
+   OTHER INCOME (Penerimaan Lain)
+   ============================================================ */
+function populatePenerimaanStudentSelect(selectEl, selectedId){
+  const list = currentSiswaList().slice().sort((a,b)=>(a.noAbsen||0)-(b.noAbsen||0));
+  const opts = ['<option value="">— No specific student —</option>']
+    .concat(list.map(s=>`<option value="${s.id}" ${s.id===selectedId?'selected':''}>${esc(s.noAbsen?('#'+s.noAbsen+' — '):'')}${esc(s.nama)}</option>`));
+  selectEl.innerHTML = opts.join('');
+}
+function renderPenerimaanLainTab(){
+  populatePenerimaanStudentSelect(document.getElementById('penerimaanStudentId'), '');
+  document.getElementById('penerimaanTanggal').value = new Date().toISOString().slice(0,10);
+  document.getElementById('penerimaanKeterangan').value = '';
+  document.getElementById('penerimaanSumber').value = '';
+  document.getElementById('penerimaanNominal').value = '';
+  document.getElementById('penerimaanJenis').value = 'Donation';
+  document.getElementById('penerimaanMetode').value = 'Tunai';
+  document.getElementById('penerimaanNoRefPreview').textContent = generateNoRefPenerimaanLain();
+  renderRiwayatPenerimaanLainTable();
+}
+async function simpanPenerimaanLain(){
+  const jenis = document.getElementById('penerimaanJenis').value;
+  const sumber = document.getElementById('penerimaanSumber').value.trim();
+  const studentId = document.getElementById('penerimaanStudentId').value || null;
+  const tanggal = document.getElementById('penerimaanTanggal').value;
+  const nominal = Number(document.getElementById('penerimaanNominal').value)||0;
+  const metode = document.getElementById('penerimaanMetode').value;
+  const keterangan = document.getElementById('penerimaanKeterangan').value.trim();
+  if(!sumber){ toast('Source is required (e.g. who gave this income)','err'); return; }
+  if(!tanggal){ toast('Date is required','err'); return; }
+  if(nominal<=0){ toast('Amount must be greater than 0','err'); return; }
+  const noRef = generateNoRefPenerimaanLain();
+  const obj = { jenis, sumber, studentId, noRef, tanggal, nominal, metode, keterangan, createdAt: Date.now() };
+  try{
+    await dbAddPenerimaanLain(obj);
+    toast('Other income recorded successfully','ok');
+    const s = studentId ? findSiswa(studentId) : null;
+    logAudit('add','penerimaanLain', `${noRef} — ${jenis} from ${sumber} (${rupiah(nominal)})`);
+    sendFonnteWA(pesanNotifPenerimaanLain('Added', obj, s));
+    // Reset form for the next entry
+    document.getElementById('penerimaanSumber').value = '';
+    document.getElementById('penerimaanNominal').value = '';
+    document.getElementById('penerimaanKeterangan').value = '';
+    document.getElementById('penerimaanStudentId').value = '';
+    document.getElementById('penerimaanNoRefPreview').textContent = generateNoRefPenerimaanLain();
+    renderRiwayatPenerimaanLainTable();
+  }catch(e){ toast('Failed to save: '+e.message,'err'); }
+}
+function renderRiwayatPenerimaanLainTable(){
+  const q = (document.getElementById('searchPenerimaanLain').value||'').toLowerCase();
+  const list = currentPenerimaanLainList()
+    .filter(p=>{
+      const s = p.studentId ? findSiswa(p.studentId) : null;
+      const hay = (p.jenis||'') + ' ' + (p.sumber||'') + ' ' + (p.keterangan||'') + ' ' + (s?.nama||'') + ' ' + (p.noRef||'');
+      return hay.toLowerCase().includes(q);
+    })
+    .sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+  if(list.length===0){
+    document.getElementById('riwayatPenerimaanLainTable').innerHTML = emptyState('No other income recorded yet in this school year.');
+    return;
+  }
+  const rows = list.map(p=>{
+    const s = p.studentId ? findSiswa(p.studentId) : null;
+    return `<tr>
+      <td class="mono">${esc(p.noRef||'-')}</td>
+      <td>${formatTanggalPanjang(p.tanggal)}</td>
+      <td>${esc(p.jenis||'-')}</td>
+      <td>${esc(p.sumber||'-')}</td>
+      <td>${esc(s?.nama || '-')}</td>
+      <td>${esc(p.keterangan||'-')}</td>
+      <td>${esc(p.metode||'-')}</td>
+      <td class="right num" style="color:var(--green); font-weight:600;">${rupiah(p.nominal)}</td>
+      <td class="center">
+        <button class="icon-btn" title="Edit" onclick='editPenerimaanLain("${p.id}")'>✎</button>
+        <button class="icon-btn" title="Delete" onclick='deletePenerimaanLainConfirm("${p.id}")'>🗑</button>
+      </td>
+    </tr>`;
+  }).join('');
+  document.getElementById('riwayatPenerimaanLainTable').innerHTML = `
+    <div class="table-scroll">
+      <table><thead><tr><th>Ref. No.</th><th>Date</th><th>Type</th><th>Source</th><th>Student</th><th>Notes</th><th>Method</th><th class="right">Amount</th><th class="center">Action</th></tr></thead>
+      <tbody>${rows}</tbody></table>
+    </div>`;
+}
+function editPenerimaanLain(id){
+  const p = (state.penerimaanLain||[]).find(x=>x.id===id);
+  if(!p){ toast('Other income record not found','err'); return; }
+  document.getElementById('editPenerimaanId').value = p.id;
+  document.getElementById('editPenerimaanJenis').value = p.jenis || 'Donation';
+  document.getElementById('editPenerimaanSumber').value = p.sumber || '';
+  populatePenerimaanStudentSelect(document.getElementById('editPenerimaanStudentId'), p.studentId || '');
+  document.getElementById('editPenerimaanTanggal').value = p.tanggal || '';
+  document.getElementById('editPenerimaanNominal').value = p.nominal || 0;
+  document.getElementById('editPenerimaanMetode').value = p.metode || 'Tunai';
+  document.getElementById('editPenerimaanKeterangan').value = p.keterangan || '';
+  openModal('modalEditPenerimaan');
+}
+async function simpanEditPenerimaanLain(){
+  const id = document.getElementById('editPenerimaanId').value;
+  const jenis = document.getElementById('editPenerimaanJenis').value;
+  const sumber = document.getElementById('editPenerimaanSumber').value.trim();
+  const studentId = document.getElementById('editPenerimaanStudentId').value || null;
+  const tanggal = document.getElementById('editPenerimaanTanggal').value;
+  const nominal = Number(document.getElementById('editPenerimaanNominal').value)||0;
+  const metode = document.getElementById('editPenerimaanMetode').value;
+  const keterangan = document.getElementById('editPenerimaanKeterangan').value.trim();
+  if(!sumber){ toast('Source is required','err'); return; }
+  if(!tanggal){ toast('Date is required','err'); return; }
+  if(nominal<=0){ toast('Amount must be greater than 0','err'); return; }
+  const obj = { jenis, sumber, studentId, tanggal, nominal, metode, keterangan };
+  try{
+    await dbUpdatePenerimaanLain(id, obj);
+    toast('Other income updated','ok');
+    const orig = (state.penerimaanLain||[]).find(x=>x.id===id);
+    const s = studentId ? findSiswa(studentId) : null;
+    logAudit('edit','penerimaanLain', `${orig?.noRef||id} — ${jenis} from ${sumber} (${rupiah(nominal)})`);
+    sendFonnteWA(pesanNotifPenerimaanLain('Edited', {...obj, noRef: orig?.noRef}, s));
+    closeModal('modalEditPenerimaan');
+    if(!USE_FIRESTORE) renderRiwayatPenerimaanLainTable();
+  }catch(e){ toast('Failed to save changes: '+e.message,'err'); }
+}
+function deletePenerimaanLainConfirm(id){
+  const p = (state.penerimaanLain||[]).find(x=>x.id===id);
+  confirmAction('Delete this other income record?', async ()=>{
+    try{
+      await dbDeletePenerimaanLain(id);
+      toast('Other income deleted','ok');
+      logAudit('delete','penerimaanLain', p ? `${p.noRef} — ${p.jenis} from ${p.sumber}` : id);
+      if(p){
+        const s = p.studentId ? findSiswa(p.studentId) : null;
+        sendFonnteWA(pesanNotifPenerimaanLain('Deleted', p, s));
+      }
+      if(!USE_FIRESTORE) renderRiwayatPenerimaanLainTable();
+    }
+    catch(e){ toast('Failed to delete: '+e.message,'err'); }
+  });
+}
+
+/* ============================================================
    EXPENSE LEDGER REPORT (Buku Besar Pengeluaran)
    ============================================================ */
 /* Group all of this school year's expenses by account, computing a running balance per account,
@@ -3891,12 +4235,15 @@ function renderSaldoKasTab(){
   document.getElementById('saldoAwalKeterangan').value = saldoBank.keterangan || '';
 
   const totalMasuk = totalKasMasukSemuaTahun();
+  const totalMasukPembayaran = totalKasMasukPembayaranSemuaTahun();
+  const totalMasukLain = totalPenerimaanLainSemuaTahun();
   const totalKeluar = totalKasKeluarSemuaTahun();
   const saldoSekarang = saldoBankSaatIni();
 
   document.getElementById('saldoKasStatGrid').innerHTML = `
     <div class="stat"><div class="label">Opening Balance</div><div class="value mono">${rupiah(saldoBank.saldoAwal||0)}</div></div>
-    <div class="stat"><div class="label">Total Cash In (All Time)</div><div class="value mono green">${rupiah(totalMasuk)}</div></div>
+    <div class="stat"><div class="label">Cash In — Payments (All Time)</div><div class="value mono green">${rupiah(totalMasukPembayaran)}</div></div>
+    <div class="stat"><div class="label">Cash In — Other Income (All Time)</div><div class="value mono green">${rupiah(totalMasukLain)}</div></div>
     <div class="stat"><div class="label">Total Cash Out (All Time)</div><div class="value mono maroon">${rupiah(totalKeluar)}</div></div>
     <div class="stat"><div class="label">Current Balance</div><div class="value mono" style="font-size:24px;">${rupiah(saldoSekarang)}</div></div>
   `;
@@ -4197,6 +4544,25 @@ function pesanNotifPengeluaran(aksi, obj, kegiatanNama, akunKode){
     `Time: ${new Date().toLocaleString('en-US', {dateStyle:'medium', timeStyle:'short'})}`
   ].join('\n');
 }
+function pesanNotifPenerimaanLain(aksi, obj, s){
+  const aksiLabel = { Added:'New Other Income Added', Edited:'Other Income Edited', Deleted:'Other Income Deleted' }[aksi] || aksi;
+  return [
+    `🔔 *CLASS CASH BOOK*`,
+    `Action: *${aksiLabel}*`,
+    `------------------------`,
+    `Ref. No.: ${obj.noRef || '-'}`,
+    `Type: ${obj.jenis || '-'}`,
+    `Source: ${obj.sumber || '-'}`,
+    s ? `Linked Student: ${s.nama}${s.noAbsen ? ' (#'+s.noAbsen+')' : ''}` : null,
+    `Amount: ${rupiah(obj.nominal)}`,
+    `Date: ${formatTanggalPanjang(obj.tanggal)}`,
+    `Method: ${obj.metode || '-'}`,
+    obj.keterangan ? `Note: ${obj.keterangan}` : null,
+    `------------------------`,
+    `By: ${currentUser?.email || '-'}`,
+    `Time: ${new Date().toLocaleString('en-US', {dateStyle:'medium', timeStyle:'short'})}`
+  ].filter(Boolean).join('\n');
+}
 
 async function saveFirebaseConfig(){
   const raw = document.getElementById('fbConfigInput').value.trim();
@@ -4229,6 +4595,7 @@ function exportBackup(){
   const blob = new Blob([JSON.stringify({
     tahunAjaranList, siswa: state.siswa, pembayaran: state.pembayaran,
     akun: state.akun, kegiatan: state.kegiatan, pengeluaran: state.pengeluaran,
+    penerimaanLain: state.penerimaanLain,
     saldoBank, auditLogList
   }, null, 2)], {type:'application/json'});
   const url = URL.createObjectURL(blob);
@@ -4255,6 +4622,7 @@ function importBackup(evt){
         state.akun = parsed.akun || [];
         state.kegiatan = parsed.kegiatan || [];
         state.pengeluaran = parsed.pengeluaran || [];
+        state.penerimaanLain = parsed.penerimaanLain || [];
         saldoBank = parsed.saldoBank || { saldoAwal:0, tanggalSaldoAwal:'', keterangan:'' };
         auditLogList = parsed.auditLogList || [];
         saveLocal();
