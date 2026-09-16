@@ -2240,7 +2240,8 @@ function renderTaManageTable(){
     const jmlAkun = state.akun.filter(a=>a.tahunAjaranId===t.id).length;
     const jmlKegiatan = state.kegiatan.filter(k=>k.tahunAjaranId===t.id).length;
     const jmlPengeluaran = state.pengeluaran.filter(p=>p.tahunAjaranId===t.id).length;
-    const isEmpty = jmlSiswa===0 && jmlBayar===0 && jmlAkun===0 && jmlKegiatan===0 && jmlPengeluaran===0;
+    const jmlPenerimaanLain = (state.penerimaanLain||[]).filter(p=>p.tahunAjaranId===t.id).length;
+    const isEmpty = jmlSiswa===0 && jmlBayar===0 && jmlAkun===0 && jmlKegiatan===0 && jmlPengeluaran===0 && jmlPenerimaanLain===0;
     const isActive = t.id===currentTahunAjaranId;
     return `<tr ${isActive?'style="background:var(--blue-soft);"':''}>
       <td>${esc(t.label)} ${isActive?'<span class="pill lunas">currently viewing</span>':''}</td>
@@ -3185,7 +3186,7 @@ function buildReceiptHTML(p, s, ta){
         </div>
         <div class="r2-sign-row">
           <div class="r2-sign">Parent / Guardian<div class="r2-sign-line">&nbsp;</div></div>
-          <div class="r2-sign">${esc(ta?.bendahara || 'Class Treasurer')}<div class="r2-sign-line">&nbsp;</div><div class="r2-sign-role">Class 4A Treasurer</div></div>
+          <div class="r2-sign">${esc(ta?.bendahara || 'Class Treasurer')}<div class="r2-sign-line">&nbsp;</div><div class="r2-sign-role">${esc(ta?.namaKelas ? ta.namaKelas + ' Treasurer' : 'Class Treasurer')}</div></div>
         </div>
       </div>
     </div>
@@ -4233,7 +4234,6 @@ function renderSaldoKasTab(){
   document.getElementById('saldoAwalTanggal').value = saldoBank.tanggalSaldoAwal || '';
   document.getElementById('saldoAwalKeterangan').value = saldoBank.keterangan || '';
 
-  const totalMasuk = totalKasMasukSemuaTahun();
   const totalMasukPembayaran = totalKasMasukPembayaranSemuaTahun();
   const totalKeluar = totalKasKeluarSemuaTahun();
   const saldoSekarang = saldoBankSaatIni();
