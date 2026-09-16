@@ -571,9 +571,13 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20"/><path d="M17 5.5c0-1.9-2.2-3-5-3s-5 1.1-5 3 2.2 3 5 3 5 1.1 5 3-2.2 3-5 3-5-1.1-5-3"/></svg>
         Expense Entry
       </button>
+      <button class="tab-btn" data-tab="penerimaan">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20"/><path d="M7 8.5c0-1.9 2.2-3 5-3s5 1.1 5 3-2.2 3-5 3-5 1.1-5 3 2.2 3 5 3 5-1.1 5-3"/></svg>
+        Activity Income
+      </button>
       <button class="tab-btn" data-tab="laporanPengeluaran">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3h9l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M15 3v5h5"/><path d="M8 13h8"/><path d="M8 17h5"/></svg>
-        Expense Ledger
+        General Ledger
       </button>
       <button class="tab-btn" data-tab="saldoKas">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2.5" y="6" width="19" height="13" rx="2"/><path d="M2.5 10h19"/><circle cx="17" cy="14.5" r="1.6"/></svg>
@@ -850,12 +854,63 @@
         </div>
       </section>
 
+      <!-- ================= ACTIVITY INCOME ================= -->
+      <section id="tab-penerimaan" class="tab-panel" style="display:none;">
+        <div class="topbar">
+          <div>
+            <h1>Activity Income</h1>
+            <div class="sub">Record non-monthly income tied to an activity (e.g. parent donations for Market Day) — kept separate from monthly dues</div>
+          </div>
+        </div>
+
+        <div class="card" id="penerimaanFormCard">
+          <div class="helper" id="penerimaanNoKegiatanWarning" style="display:none; background:var(--maroon-soft); color:var(--maroon); padding:10px 12px; border-radius:8px; margin-bottom:14px; font-weight:600;">
+            No activities set up yet for this school year. Go to Settings → Activities (Kegiatan) to add one first, linked to an account.
+          </div>
+          <div class="field">
+            <label>Activity</label>
+            <select id="penerimaanKegiatanId"></select>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Date</label>
+              <input type="date" id="penerimaanTanggal">
+            </div>
+            <div class="field">
+              <label>Amount</label>
+              <input type="number" id="penerimaanNominal" placeholder="e.g. 50000">
+            </div>
+          </div>
+          <div class="field">
+            <label>Source / Donor (optional)</label>
+            <input type="text" id="penerimaanSumber" placeholder="e.g. Parent of Ananda Fulan">
+          </div>
+          <div class="field">
+            <label>Description</label>
+            <input type="text" id="penerimaanKeterangan" placeholder="e.g. Donation for Market Day snack budget">
+          </div>
+          <p class="helper">Reference No. is generated automatically (e.g. <span class="mono" id="penerimaanNoRefPreview">CI000001</span>) once saved.</p>
+          <button class="btn btn-primary" id="penerimaanSaveBtn" onclick="simpanPenerimaan()">Save Income</button>
+        </div>
+
+        <div class="card">
+          <h2>Activity Income History</h2>
+          <div style="display:flex; gap:10px; margin-bottom:12px; flex-wrap:wrap;">
+            <div class="search-box">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+              <input type="text" id="searchPenerimaan" placeholder="Search description, source, or activity..." oninput="renderRiwayatPenerimaanTable()">
+            </div>
+          </div>
+          <div id="riwayatPenerimaanTable"></div>
+        </div>
+      </section>
+
       <!-- ================= EXPENSE LEDGER REPORT ================= -->
       <section id="tab-laporanPengeluaran" class="tab-panel" style="display:none;">
         <div class="topbar">
           <div>
-            <h1>Expense Ledger (Buku Besar)</h1>
-            <div class="sub">Detailed cash usage per account, formatted for printing/handover</div>
+            <h1>General Ledger (Buku Besar)</h1>
+            <div class="sub">Detailed cash movement (income &amp; expense) per account, formatted for printing/handover</div>
           </div>
           <div style="display:flex; gap:8px; flex-wrap:wrap;">
             <button class="btn btn-outline" onclick="cetakLaporanPengeluaran()">🖨 Print Report</button>
@@ -1604,6 +1659,43 @@ service cloud.firestore {
   </div>
 </div>
 
+<!-- Edit Activity Income Modal -->
+<div class="overlay" id="modalEditPenerimaan">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Edit Activity Income</h3>
+      <button class="icon-btn" onclick="closeModal('modalEditPenerimaan')">✕</button>
+    </div>
+    <input type="hidden" id="editPenerimaanId">
+    <div class="field">
+      <label>Activity</label>
+      <select id="editPenerimaanKegiatanId"></select>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Date</label>
+        <input type="date" id="editPenerimaanTanggal">
+      </div>
+      <div class="field">
+        <label>Amount</label>
+        <input type="number" id="editPenerimaanNominal">
+      </div>
+    </div>
+    <div class="field">
+      <label>Source / Donor (optional)</label>
+      <input type="text" id="editPenerimaanSumber" placeholder="e.g. Parent of Ananda Fulan">
+    </div>
+    <div class="field">
+      <label>Description</label>
+      <input type="text" id="editPenerimaanKeterangan" placeholder="e.g. Donation for Market Day snack budget">
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeModal('modalEditPenerimaan')">Cancel</button>
+      <button class="btn btn-primary" onclick="simpanEditPenerimaan()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
 <!-- Confirmation Modal -->
 <div class="overlay" id="modalConfirm">
   <div class="modal" style="max-width:380px;">
@@ -1694,7 +1786,8 @@ let state = {
   pembayaran: [],  // {id, tahunAjaranId, studentId, tahun, bulanList:[..], nominalPerBulan, total, tanggal, metode, keterangan, createdAt}
   akun: [],        // {id, tahunAjaranId, kode, nama}
   kegiatan: [],    // {id, tahunAjaranId, nama, akunId}
-  pengeluaran: []  // {id, tahunAjaranId, kegiatanId, noRef, tanggal, keterangan, nominal, createdAt}
+  pengeluaran: [], // {id, tahunAjaranId, kegiatanId, noRef, tanggal, keterangan, nominal, createdAt}
+  penerimaan: []   // {id, tahunAjaranId, kegiatanId, noRef, tanggal, sumber, keterangan, nominal, createdAt} — non-monthly income tied to an activity (e.g. parent donations for Market Day)
 };
 
 /* ---------------- Utilities ---------------- */
@@ -1783,6 +1876,7 @@ function switchTab(tab){
   if(tab==='cetak') renderCetakTable();
   if(tab==='laporan') renderLaporanTab();
   if(tab==='pengeluaran') renderPengeluaranTab();
+  if(tab==='penerimaan') renderPenerimaanTab();
   if(tab==='laporanPengeluaran') renderLaporanPengeluaranTab();
   if(tab==='saldoKas') renderSaldoKasTab();
   if(tab==='users') renderUsersTable();
@@ -1866,6 +1960,7 @@ function loadLocal(){
       state.akun = parsed.akun || [];
       state.kegiatan = parsed.kegiatan || [];
       state.pengeluaran = parsed.pengeluaran || [];
+      state.penerimaan = parsed.penerimaan || [];
       saldoBank = parsed.saldoBank || { saldoAwal:0, tanggalSaldoAwal:'', keterangan:'' };
       auditLogList = parsed.auditLogList || [];
     }
@@ -1874,7 +1969,7 @@ function loadLocal(){
 function saveLocal(){
   localStorage.setItem(LS_KEY, JSON.stringify({
     tahunAjaranList, siswa: state.siswa, pembayaran: state.pembayaran,
-    akun: state.akun, kegiatan: state.kegiatan, pengeluaran: state.pengeluaran,
+    akun: state.akun, kegiatan: state.kegiatan, pengeluaran: state.pengeluaran, penerimaan: state.penerimaan,
     saldoBank, auditLogList
   }));
 }
@@ -1954,6 +2049,11 @@ async function bootAppData(){
       state.pengeluaran = snap.docs.map(d=>({id:d.id, ...d.data()}));
       refreshCurrentTab();
     }, err=>toast('Failed to load expense data: '+err.message,'err')));
+
+    unsubscribers.push(DB.collection('penerimaan').onSnapshot(snap=>{
+      state.penerimaan = snap.docs.map(d=>({id:d.id, ...d.data()}));
+      refreshCurrentTab();
+    }, err=>toast('Failed to load activity income data: '+err.message,'err')));
 
     unsubscribers.push(DB.collection('globalSettings').doc('saldoBank').onSnapshot(doc=>{
       saldoBank = doc.exists ? doc.data() : { saldoAwal:0, tanggalSaldoAwal:'', keterangan:'' };
@@ -2287,6 +2387,37 @@ async function dbDeletePengeluaran(id){
   }
 }
 
+/* ---- Activity Income (Penerimaan Kegiatan) — non-monthly income, e.g. parent donations for an activity ---- */
+async function dbAddPenerimaan(obj){
+  const payload = {tahunAjaranId: currentTahunAjaranId, ...obj};
+  if(USE_FIRESTORE){
+    const ref = await DB.collection('penerimaan').add(payload);
+    return ref.id;
+  }else{
+    const id = uid();
+    state.penerimaan.push({id, ...payload});
+    saveLocal();
+    return id;
+  }
+}
+async function dbUpdatePenerimaan(id, obj){
+  if(USE_FIRESTORE){
+    await DB.collection('penerimaan').doc(id).update(obj);
+  }else{
+    const idx = state.penerimaan.findIndex(p=>p.id===id);
+    if(idx>-1) state.penerimaan[idx] = {...state.penerimaan[idx], ...obj};
+    saveLocal();
+  }
+}
+async function dbDeletePenerimaan(id){
+  if(USE_FIRESTORE){
+    await DB.collection('penerimaan').doc(id).delete();
+  }else{
+    state.penerimaan = state.penerimaan.filter(p=>p.id!==id);
+    saveLocal();
+  }
+}
+
 /* ---- Bank Balance (single running account, carries over across school years) ---- */
 async function saveSaldoBankAwal(saldoAwal, tanggalSaldoAwal, keterangan){
   const obj = { saldoAwal, tanggalSaldoAwal, keterangan, updatedAt: Date.now() };
@@ -2299,9 +2430,10 @@ async function saveSaldoBankAwal(saldoAwal, tanggalSaldoAwal, keterangan){
 }
 /* These total across ALL school years on purpose — the bank balance carries over and is not scoped per tahunAjaranId */
 function totalKasMasukSemuaTahun(){ return state.pembayaran.reduce((sum,p)=> sum + Number(p.total||0), 0); }
+function totalPenerimaanKegiatanSemuaTahun(){ return state.penerimaan.reduce((sum,p)=> sum + Number(p.nominal||0), 0); }
 function totalKasKeluarSemuaTahun(){ return state.pengeluaran.reduce((sum,p)=> sum + Number(p.nominal||0), 0); }
-function saldoBankSaatIni(){ return Number(saldoBank.saldoAwal||0) + totalKasMasukSemuaTahun() - totalKasKeluarSemuaTahun(); }
-/* Chronological list of every cash-in (payment) and cash-out (expense) transaction across all school years, with a running balance starting from saldoAwal */
+function saldoBankSaatIni(){ return Number(saldoBank.saldoAwal||0) + totalKasMasukSemuaTahun() + totalPenerimaanKegiatanSemuaTahun() - totalKasKeluarSemuaTahun(); }
+/* Chronological list of every cash-in (monthly payment + activity income) and cash-out (expense) transaction across all school years, with a running balance starting from saldoAwal */
 function buildMutasiBank(){
   const masuk = state.pembayaran.map(p=>{
     const s = findSiswa(p.studentId);
@@ -2311,11 +2443,19 @@ function buildMutasiBank(){
       ref: p.id, createdAt: p.createdAt||0
     };
   });
+  const masukKegiatan = state.penerimaan.map(p=>{
+    const k = findKegiatan(p.kegiatanId);
+    return {
+      tanggal: p.tanggal, arah:'in', jumlah: Number(p.nominal||0),
+      keterangan: `Activity Income — ${k?.nama || '(activity deleted)'}${p.sumber ? ' ('+p.sumber+')' : ''}`,
+      ref: p.noRef||p.id, createdAt: p.createdAt||0
+    };
+  });
   const keluar = state.pengeluaran.map(p=>({
     tanggal: p.tanggal, arah:'out', jumlah: Number(p.nominal||0),
     keterangan: p.keterangan||'Expense', ref: p.noRef||p.id, createdAt: p.createdAt||0
   }));
-  const all = masuk.concat(keluar).sort((a,b)=>{
+  const all = masuk.concat(masukKegiatan, keluar).sort((a,b)=>{
     const d = new Date(a.tanggal) - new Date(b.tanggal);
     return d !== 0 ? d : (a.createdAt||0)-(b.createdAt||0);
   });
@@ -2330,6 +2470,7 @@ function buildMutasiBank(){
 function currentAkunList(){ return state.akun.filter(a=>a.tahunAjaranId===currentTahunAjaranId).sort((a,b)=> (a.kode||'').localeCompare(b.kode||'')); }
 function currentKegiatanList(){ return state.kegiatan.filter(k=>k.tahunAjaranId===currentTahunAjaranId); }
 function currentPengeluaranList(){ return state.pengeluaran.filter(p=>p.tahunAjaranId===currentTahunAjaranId); }
+function currentPenerimaanList(){ return state.penerimaan.filter(p=>p.tahunAjaranId===currentTahunAjaranId); }
 function findAkun(id){ return state.akun.find(a=>a.id===id); }
 function findKegiatan(id){ return state.kegiatan.find(k=>k.id===id); }
 /* Generate the next sequential CD-style reference number for this school year, e.g. CD000007 */
@@ -2340,6 +2481,14 @@ function generateNoRefPengeluaran(){
     if(m) max = Math.max(max, Number(m[1]));
   });
   return 'CD' + String(max+1).padStart(6,'0');
+}
+function generateNoRefPenerimaan(){
+  let max = 0;
+  currentPenerimaanList().forEach(p=>{
+    const m = String(p.noRef||'').match(/(\d+)$/);
+    if(m) max = Math.max(max, Number(m[1]));
+  });
+  return 'CI' + String(max+1).padStart(6,'0');
 }
 
 /* ---- Audit Log: records who did what and when, across every entity in the app ---- */
@@ -3742,45 +3891,210 @@ function deletePengeluaranConfirm(id){
 }
 
 /* ============================================================
+   ACTIVITY INCOME (Penerimaan Kegiatan)
+   Non-monthly income tied to an activity — e.g. parent donations for
+   Market Day. Kept in its own collection, separate from monthly dues
+   (state.pembayaran), but the cash still lands in the same Bank Mandiri
+   balance (see totalPenerimaanKegiatanSemuaTahun / saldoBankSaatIni).
+   ============================================================ */
+function renderPenerimaanTab(){
+  const sel = document.getElementById('penerimaanKegiatanId');
+  const hasKegiatan = currentKegiatanList().length>0;
+  const defaultKegiatan = findDefaultKegiatan();
+  populateKegiatanSelect(sel, defaultKegiatan?.id || null);
+  document.getElementById('penerimaanNoKegiatanWarning').style.display = hasKegiatan ? 'none' : 'block';
+  document.getElementById('penerimaanSaveBtn').disabled = !hasKegiatan;
+  document.getElementById('penerimaanTanggal').value = new Date().toISOString().slice(0,10);
+  document.getElementById('penerimaanSumber').value = '';
+  document.getElementById('penerimaanKeterangan').value = '';
+  document.getElementById('penerimaanNominal').value = '';
+  document.getElementById('penerimaanNoRefPreview').textContent = generateNoRefPenerimaan();
+  renderRiwayatPenerimaanTable();
+}
+async function simpanPenerimaan(){
+  const kegiatanId = document.getElementById('penerimaanKegiatanId').value;
+  const tanggal = document.getElementById('penerimaanTanggal').value;
+  const sumber = document.getElementById('penerimaanSumber').value.trim();
+  const keterangan = document.getElementById('penerimaanKeterangan').value.trim();
+  const nominal = Number(document.getElementById('penerimaanNominal').value)||0;
+  if(!kegiatanId){ toast('Please select an activity first','err'); return; }
+  if(!tanggal){ toast('Income date is required','err'); return; }
+  if(!keterangan){ toast('Description is required','err'); return; }
+  if(nominal<=0){ toast('Amount must be greater than 0','err'); return; }
+  const noRef = generateNoRefPenerimaan();
+  const obj = { kegiatanId, noRef, tanggal, sumber, keterangan, nominal, createdAt: Date.now() };
+  try{
+    await dbAddPenerimaan(obj);
+    toast('Income recorded successfully','ok');
+    logAudit('add','penerimaan', `${noRef} — ${keterangan} (${rupiah(nominal)})`);
+    {
+      const k = findKegiatan(kegiatanId);
+      const a = k ? findAkun(k.akunId) : null;
+      sendFonnteWA(pesanNotifPenerimaan('Added', obj, k?.nama, a?.kode));
+    }
+    document.getElementById('penerimaanSumber').value = '';
+    document.getElementById('penerimaanKeterangan').value = '';
+    document.getElementById('penerimaanNominal').value = '';
+    document.getElementById('penerimaanNoRefPreview').textContent = generateNoRefPenerimaan();
+    renderRiwayatPenerimaanTable();
+  }catch(e){ toast('Failed to save income: '+e.message,'err'); }
+}
+function renderRiwayatPenerimaanTable(){
+  const q = (document.getElementById('searchPenerimaan').value||'').toLowerCase();
+  const list = currentPenerimaanList()
+    .filter(p=>{
+      const k = findKegiatan(p.kegiatanId);
+      const hay = (p.keterangan||'') + ' ' + (p.sumber||'') + ' ' + (k?.nama||'');
+      return hay.toLowerCase().includes(q);
+    })
+    .sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+  if(list.length===0){
+    document.getElementById('riwayatPenerimaanTable').innerHTML = emptyState('No activity income recorded yet in this school year.');
+    return;
+  }
+  const rows = list.map(p=>{
+    const k = findKegiatan(p.kegiatanId);
+    const a = k ? findAkun(k.akunId) : null;
+    return `<tr>
+      <td class="mono">${esc(p.noRef||'-')}</td>
+      <td>${formatTanggalPanjang(p.tanggal)}</td>
+      <td>${esc(k?.nama || '(activity deleted)')}</td>
+      <td class="mono">${a ? esc(a.kode) : '-'}</td>
+      <td>${esc(p.sumber||'-')}</td>
+      <td>${esc(p.keterangan)}</td>
+      <td class="right num">${rupiah(p.nominal)}</td>
+      <td class="center">
+        <button class="icon-btn" title="Edit" onclick='editPenerimaan("${p.id}")'>✎</button>
+        <button class="icon-btn" title="Delete" onclick='deletePenerimaanConfirm("${p.id}")'>🗑</button>
+      </td>
+    </tr>`;
+  }).join('');
+  document.getElementById('riwayatPenerimaanTable').innerHTML = `
+    <div class="table-scroll">
+      <table><thead><tr><th>Ref. No.</th><th>Date</th><th>Activity</th><th>Account</th><th>Source</th><th>Description</th><th class="right">Amount</th><th class="center">Action</th></tr></thead>
+      <tbody>${rows}</tbody></table>
+    </div>`;
+}
+function editPenerimaan(id){
+  const p = state.penerimaan.find(x=>x.id===id);
+  if(!p){ toast('Income record not found','err'); return; }
+  document.getElementById('editPenerimaanId').value = p.id;
+  populateKegiatanSelect(document.getElementById('editPenerimaanKegiatanId'), p.kegiatanId);
+  document.getElementById('editPenerimaanTanggal').value = p.tanggal||'';
+  document.getElementById('editPenerimaanNominal').value = p.nominal||0;
+  document.getElementById('editPenerimaanSumber').value = p.sumber||'';
+  document.getElementById('editPenerimaanKeterangan').value = p.keterangan||'';
+  openModal('modalEditPenerimaan');
+}
+async function simpanEditPenerimaan(){
+  const id = document.getElementById('editPenerimaanId').value;
+  const kegiatanId = document.getElementById('editPenerimaanKegiatanId').value;
+  const tanggal = document.getElementById('editPenerimaanTanggal').value;
+  const nominal = Number(document.getElementById('editPenerimaanNominal').value)||0;
+  const sumber = document.getElementById('editPenerimaanSumber').value.trim();
+  const keterangan = document.getElementById('editPenerimaanKeterangan').value.trim();
+  if(!kegiatanId){ toast('Please select an activity','err'); return; }
+  if(!tanggal){ toast('Income date is required','err'); return; }
+  if(nominal<=0){ toast('Amount must be greater than 0','err'); return; }
+  if(!keterangan){ toast('Description is required','err'); return; }
+  try{
+    await dbUpdatePenerimaan(id, { kegiatanId, tanggal, nominal, sumber, keterangan });
+    toast('Income updated','ok');
+    const p = state.penerimaan.find(x=>x.id===id);
+    logAudit('edit','penerimaan', `${p?.noRef||id} — ${keterangan} (${rupiah(nominal)})`);
+    {
+      const k = findKegiatan(kegiatanId);
+      const a = k ? findAkun(k.akunId) : null;
+      sendFonnteWA(pesanNotifPenerimaan('Edited', { noRef: p?.noRef, tanggal, nominal, sumber, keterangan }, k?.nama, a?.kode));
+    }
+    closeModal('modalEditPenerimaan');
+    if(!USE_FIRESTORE) renderRiwayatPenerimaanTable();
+  }catch(e){ toast('Failed to save changes: '+e.message,'err'); }
+}
+function deletePenerimaanConfirm(id){
+  const p = state.penerimaan.find(x=>x.id===id);
+  confirmAction('Delete this income record?', async ()=>{
+    try{
+      await dbDeletePenerimaan(id);
+      toast('Income deleted','ok');
+      logAudit('delete','penerimaan', p ? `${p.noRef} — ${p.keterangan}` : id);
+      if(p){
+        const k = findKegiatan(p.kegiatanId);
+        const a = k ? findAkun(k.akunId) : null;
+        sendFonnteWA(pesanNotifPenerimaan('Deleted', p, k?.nama, a?.kode));
+      }
+      if(!USE_FIRESTORE) renderRiwayatPenerimaanTable();
+    }
+    catch(e){ toast('Failed to delete: '+e.message,'err'); }
+  });
+}
+function pesanNotifPenerimaan(aksi, obj, kegiatanNama, akunKode){
+  const aksiLabel = { Added:'New Activity Income Added', Edited:'Activity Income Edited', Deleted:'Activity Income Deleted' }[aksi] || aksi;
+  return [
+    `🔔 *CLASS CASH BOOK*`,
+    `Action: *${aksiLabel}*`,
+    `------------------------`,
+    `Ref. No.: ${obj.noRef || '-'}`,
+    `Activity: ${kegiatanNama || '-'}`,
+    `Account: ${akunKode || '-'}`,
+    `Source: ${obj.sumber || '-'}`,
+    `Amount: ${rupiah(obj.nominal)}`,
+    `Date: ${formatTanggalPanjang(obj.tanggal)}`,
+    `Description: ${obj.keterangan || '-'}`,
+    `------------------------`,
+    `By: ${currentUser?.email || '-'}`,
+    `Time: ${new Date().toLocaleString('en-US', {dateStyle:'medium', timeStyle:'short'})}`
+  ].join('\n');
+}
+
+/* ============================================================
    EXPENSE LEDGER REPORT (Buku Besar Pengeluaran)
    ============================================================ */
 /* Group all of this school year's expenses by account, computing a running balance per account,
    the same shape as a printed "Buku Besar Kas" ledger. */
+/* Group all of this school year's expenses (Debit) AND activity income (Credit) by account,
+   computing a real running balance per account — a proper general ledger (Buku Besar), not a debit-only list. */
 function buildLedgerGroups(){
   const akunList = currentAkunList();
   const kegiatanList = currentKegiatanList();
-  const pengeluaranList = currentPengeluaranList().slice().sort((a,b)=>{
+  const debitList = currentPengeluaranList().map(p=>({ ...p, tipe:'debit' }));
+  const creditList = currentPenerimaanList().map(p=>({ ...p, tipe:'credit' }));
+  const txList = debitList.concat(creditList).sort((a,b)=>{
     const d = new Date(a.tanggal) - new Date(b.tanggal);
     return d !== 0 ? d : (a.createdAt||0)-(b.createdAt||0);
   });
   const groups = akunList.map(a=>{
     const kegiatanIds = new Set(kegiatanList.filter(k=>k.akunId===a.id).map(k=>k.id));
-    let saldo = 0;
-    const rows = pengeluaranList.filter(p=>kegiatanIds.has(p.kegiatanId)).map(p=>{
-      saldo += Number(p.nominal||0);
+    let saldo = 0, totalDebit = 0, totalCredit = 0;
+    const rows = txList.filter(p=>kegiatanIds.has(p.kegiatanId)).map(p=>{
+      if(p.tipe==='debit'){ totalDebit += Number(p.nominal||0); saldo -= Number(p.nominal||0); }
+      else{ totalCredit += Number(p.nominal||0); saldo += Number(p.nominal||0); }
       const k = findKegiatan(p.kegiatanId);
       return { ...p, saldo, kegiatanNama: k?.nama || '-' };
     });
-    return { akun:a, rows, total: saldo };
+    return { akun:a, rows, totalDebit, totalCredit, saldoAkhir: saldo };
   }).filter(g=> g.rows.length>0);
-  const grandTotal = groups.reduce((sum,g)=>sum+g.total,0);
-  return { groups, grandTotal };
+  const grandDebit = groups.reduce((sum,g)=>sum+g.totalDebit,0);
+  const grandCredit = groups.reduce((sum,g)=>sum+g.totalCredit,0);
+  const grandTotal = grandCredit - grandDebit;
+  return { groups, grandTotal, grandDebit, grandCredit };
 }
 function renderLaporanPengeluaranTab(){
-  const { groups, grandTotal } = buildLedgerGroups();
+  const { groups, grandTotal, grandDebit, grandCredit } = buildLedgerGroups();
   const ta = currentTA();
 
   document.getElementById('pengeluaranStatGrid').innerHTML = `
     <div class="stat"><div class="label">School Year</div><div class="value" style="font-size:16px;">${esc(ta?.label||'-')}</div></div>
-    <div class="stat"><div class="label">Accounts With Expenses</div><div class="value">${groups.length}</div></div>
-    <div class="stat"><div class="label">Total Expense Entries</div><div class="value">${currentPengeluaranList().length}</div></div>
-    <div class="stat"><div class="label">Total Cash Used</div><div class="value mono maroon">${rupiah(grandTotal)}</div></div>
+    <div class="stat"><div class="label">Accounts With Activity</div><div class="value">${groups.length}</div></div>
+    <div class="stat"><div class="label">Total Income (Credit)</div><div class="value mono green">${rupiah(grandCredit)}</div></div>
+    <div class="stat"><div class="label">Total Expense (Debit)</div><div class="value mono maroon">${rupiah(grandDebit)}</div></div>
+    <div class="stat"><div class="label">Net Balance</div><div class="value mono">${rupiah(grandTotal)}</div></div>
   `;
   autoFitStatValues(document.getElementById('pengeluaranStatGrid'));
 
   const body = document.getElementById('ledgerReportBody');
   if(groups.length===0){
-    body.innerHTML = emptyState('No expenses recorded yet in this school year, so there is nothing to show in the ledger.');
+    body.innerHTML = emptyState('No expenses or activity income recorded yet in this school year, so there is nothing to show in the ledger.');
     return;
   }
   body.innerHTML = buildLedgerReportHTML(groups, grandTotal, ta, false);
@@ -3789,7 +4103,7 @@ function renderLaporanPengeluaranTab(){
 function buildLedgerReportHTML(groups, grandTotal, ta, forPrint){
   const head = forPrint ? `
     <div class="ledger-report-head">
-      <h2>Buku Besar Kas — ${esc(ta?.namaKelas || ta?.label || 'Class Cash')}</h2>
+      <h2>General Ledger (Buku Besar) — ${esc(ta?.namaKelas || ta?.label || 'Class Cash')}</h2>
       <div class="sub1">${esc(ta?.namaSekolah || 'School Name')}</div>
       <div class="sub2">School Year ${esc(ta?.label||'-')} &middot; Printed ${new Date().toLocaleString('en-US', {dateStyle:'long', timeStyle:'short'})}</div>
     </div>` : '';
@@ -3800,23 +4114,24 @@ function buildLedgerReportHTML(groups, grandTotal, ta, forPrint){
         <td>${formatTanggalPanjang(r.tanggal)}</td>
         <td class="mono">${esc(r.noRef||'-')}</td>
         <td>${esc(r.keterangan)}</td>
-        <td class="right num">${rupiah(r.nominal)}</td>
+        <td class="right num">${r.tipe==='debit' ? rupiah(r.nominal) : '-'}</td>
+        <td class="right num">${r.tipe==='credit' ? rupiah(r.nominal) : '-'}</td>
         <td class="right num">${rupiah(r.saldo)}</td>
       </tr>`).join('');
     return `
       <div class="ledger-account">
         <div class="ledger-account-head">
           <span>${esc(g.akun.kode)} &middot; ${esc(g.akun.nama)}</span>
-          <span>${rupiah(g.total)}</span>
+          <span>${rupiah(g.saldoAkhir)}</span>
         </div>
         <div class="ledger-table-scroll">
         <table>
-          <thead><tr><th>Date</th><th>Ref. No.</th><th>Description</th><th class="right">Debit</th><th class="right">Balance</th></tr></thead>
+          <thead><tr><th>Date</th><th>Ref. No.</th><th>Description</th><th class="right">Debit</th><th class="right">Credit</th><th class="right">Balance</th></tr></thead>
           <tbody>
-            <tr><td colspan="4" class="helper">Starting Balance:</td><td class="right num">${rupiah(0)}</td></tr>
+            <tr><td colspan="5" class="helper">Starting Balance:</td><td class="right num">${rupiah(0)}</td></tr>
             ${rows}
           </tbody>
-          <tfoot><tr><td colspan="3">Ending Balance / Total Movement</td><td class="right num">${rupiah(g.total)}</td><td class="right num">${rupiah(g.total)}</td></tr></tfoot>
+          <tfoot><tr><td colspan="3">Ending Balance</td><td class="right num">${rupiah(g.totalDebit)}</td><td class="right num">${rupiah(g.totalCredit)}</td><td class="right num">${rupiah(g.saldoAkhir)}</td></tr></tfoot>
         </table>
         </div>
       </div>`;
@@ -3824,7 +4139,7 @@ function buildLedgerReportHTML(groups, grandTotal, ta, forPrint){
 
   const total = `
     <div class="ledger-grandtotal">
-      <span>Grand Total, All Accounts:</span>
+      <span>Grand Total, All Accounts (Net Balance):</span>
       <span class="amt">${rupiah(grandTotal)}</span>
     </div>`;
 
@@ -3832,14 +4147,14 @@ function buildLedgerReportHTML(groups, grandTotal, ta, forPrint){
 }
 function cetakLaporanPengeluaran(){
   const { groups, grandTotal } = buildLedgerGroups();
-  if(groups.length===0){ toast('No expenses to print yet','err'); return; }
+  if(groups.length===0){ toast('No entries to print yet','err'); return; }
   const ta = currentTA();
   document.getElementById('printArea').innerHTML = `<div style="padding:0;">${buildLedgerReportHTML(groups, grandTotal, ta, true)}</div>`;
   setTimeout(()=> window.print(), 80);
 }
 async function unduhLaporanPengeluaranGambar(){
   const { groups, grandTotal } = buildLedgerGroups();
-  if(groups.length===0){ toast('No expenses to save as image yet','err'); return; }
+  if(groups.length===0){ toast('No entries to save as image yet','err'); return; }
   if(typeof html2canvas === 'undefined'){
     toast('Image export library not loaded yet. Check your internet connection then reload the page.','err');
     return;
@@ -3860,25 +4175,25 @@ async function unduhLaporanPengeluaranGambar(){
   }
   document.body.removeChild(holder);
   const link = document.createElement('a');
-  link.download = `expense-ledger-${safeFileName(ta?.namaKelas||ta?.label||'class')}.png`;
+  link.download = `general-ledger-${safeFileName(ta?.namaKelas||ta?.label||'class')}.png`;
   link.href = canvas.toDataURL('image/png');
   link.click();
-  toast('Expense ledger image downloaded','ok');
+  toast('General ledger image downloaded','ok');
 }
 function exportLedgerCSV(){
   const { groups, grandTotal } = buildLedgerGroups();
-  if(groups.length===0){ toast('No expenses to export yet','err'); return; }
+  if(groups.length===0){ toast('No entries to export yet','err'); return; }
   const ta = currentTA();
-  const rows = [['Account Code','Account Name','Date','Ref. No.','Description','Debit','Balance']];
+  const rows = [['Account Code','Account Name','Date','Ref. No.','Description','Debit','Credit','Balance']];
   groups.forEach(g=>{
-    rows.push([g.akun.kode, g.akun.nama, '', '', 'Starting Balance', '', 0]);
+    rows.push([g.akun.kode, g.akun.nama, '', '', 'Starting Balance', '', '', 0]);
     g.rows.forEach(r=>{
-      rows.push([g.akun.kode, g.akun.nama, r.tanggal, r.noRef||'', r.keterangan, r.nominal, r.saldo]);
+      rows.push([g.akun.kode, g.akun.nama, r.tanggal, r.noRef||'', r.keterangan, r.tipe==='debit'?r.nominal:'', r.tipe==='credit'?r.nominal:'', r.saldo]);
     });
-    rows.push([g.akun.kode, g.akun.nama, '', '', 'Ending Balance / Total Movement', g.total, g.total]);
+    rows.push([g.akun.kode, g.akun.nama, '', '', 'Ending Balance', g.totalDebit, g.totalCredit, g.saldoAkhir]);
   });
-  rows.push(['','','','','Grand Total, All Accounts','',grandTotal]);
-  downloadCSV(`expense-ledger-${safeFileName(ta?.namaKelas||ta?.label||'class')}.csv`, rows);
+  rows.push(['','','','','Grand Total, All Accounts (Net Balance)','','',grandTotal]);
+  downloadCSV(`general-ledger-${safeFileName(ta?.namaKelas||ta?.label||'class')}.csv`, rows);
   toast('CSV downloaded','ok');
 }
 
@@ -3890,13 +4205,16 @@ function renderSaldoKasTab(){
   document.getElementById('saldoAwalTanggal').value = saldoBank.tanggalSaldoAwal || '';
   document.getElementById('saldoAwalKeterangan').value = saldoBank.keterangan || '';
 
-  const totalMasuk = totalKasMasukSemuaTahun();
+  const totalMasukBulanan = totalKasMasukSemuaTahun();
+  const totalMasukKegiatan = totalPenerimaanKegiatanSemuaTahun();
+  const totalMasuk = totalMasukBulanan + totalMasukKegiatan;
   const totalKeluar = totalKasKeluarSemuaTahun();
   const saldoSekarang = saldoBankSaatIni();
 
   document.getElementById('saldoKasStatGrid').innerHTML = `
     <div class="stat"><div class="label">Opening Balance</div><div class="value mono">${rupiah(saldoBank.saldoAwal||0)}</div></div>
-    <div class="stat"><div class="label">Total Cash In (All Time)</div><div class="value mono green">${rupiah(totalMasuk)}</div></div>
+    <div class="stat"><div class="label">Total Cash In (Monthly Dues)</div><div class="value mono green">${rupiah(totalMasukBulanan)}</div></div>
+    <div class="stat"><div class="label">Total Cash In (Activity Income)</div><div class="value mono green">${rupiah(totalMasukKegiatan)}</div></div>
     <div class="stat"><div class="label">Total Cash Out (All Time)</div><div class="value mono maroon">${rupiah(totalKeluar)}</div></div>
     <div class="stat"><div class="label">Current Balance</div><div class="value mono" style="font-size:24px;">${rupiah(saldoSekarang)}</div></div>
   `;
