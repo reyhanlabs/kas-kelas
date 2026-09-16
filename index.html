@@ -4235,14 +4235,12 @@ function renderSaldoKasTab(){
 
   const totalMasuk = totalKasMasukSemuaTahun();
   const totalMasukPembayaran = totalKasMasukPembayaranSemuaTahun();
-  const totalMasukLain = totalPenerimaanLainSemuaTahun();
   const totalKeluar = totalKasKeluarSemuaTahun();
   const saldoSekarang = saldoBankSaatIni();
 
   document.getElementById('saldoKasStatGrid').innerHTML = `
     <div class="stat"><div class="label">Opening Balance</div><div class="value mono">${rupiah(saldoBank.saldoAwal||0)}</div></div>
     <div class="stat"><div class="label">Cash In — Payments (All Time)</div><div class="value mono green">${rupiah(totalMasukPembayaran)}</div></div>
-    <div class="stat"><div class="label">Cash In — Other Income (All Time)</div><div class="value mono green">${rupiah(totalMasukLain)}</div></div>
     <div class="stat"><div class="label">Total Cash Out (All Time)</div><div class="value mono maroon">${rupiah(totalKeluar)}</div></div>
     <div class="stat"><div class="label">Current Balance</div><div class="value mono" style="font-size:24px;">${rupiah(saldoSekarang)}</div></div>
   `;
