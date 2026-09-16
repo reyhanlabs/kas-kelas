@@ -2480,12 +2480,13 @@ function totalPenerimaanLainSemuaTahun(){ return (state.penerimaanLain||[]).redu
 function totalKasMasukSemuaTahun(){ return totalKasMasukPembayaranSemuaTahun() + totalPenerimaanLainSemuaTahun(); }
 function totalKasKeluarSemuaTahun(){ return state.pengeluaran.reduce((sum,p)=> sum + Number(p.nominal||0), 0); }
 function saldoBankSaatIni(){ return Number(saldoBank.saldoAwal||0) + totalKasMasukSemuaTahun() - totalKasKeluarSemuaTahun(); }
-/* Chronological list of every cash-in (payment + other income) and cash-out (expense) transaction across all school years, with a running balance starting from saldoAwal */
+/* Chronological list of every cash-in (payment + other income) and cash-out (expense) transaction across all school years, with a running balance starting from saldoAwal.
+   Each row also carries a `jenis` so the UI can distinguish class dues from other income visually. */
 function buildMutasiBank(){
   const masuk = state.pembayaran.map(p=>{
     const s = findSiswa(p.studentId);
     return {
-      tanggal: p.tanggal, arah:'in', jumlah: Number(p.total||0),
+      tanggal: p.tanggal, arah:'in', jenis:'dues', jumlah: Number(p.total||0),
       keterangan: `Payment — ${s?.nama || '(student deleted)'} (${formatBulanTahunText(p, false)})`,
       ref: p.id, createdAt: p.createdAt||0
     };
@@ -2494,13 +2495,13 @@ function buildMutasiBank(){
     const s = p.studentId ? findSiswa(p.studentId) : null;
     const bits = [p.jenis||'Other Income', p.sumber||null, s ? `via ${s.nama}` : null, p.keterangan||null].filter(Boolean);
     return {
-      tanggal: p.tanggal, arah:'in', jumlah: Number(p.nominal||0),
+      tanggal: p.tanggal, arah:'in', jenis:'other', jumlah: Number(p.nominal||0),
       keterangan: bits.join(' — '),
       ref: p.noRef||p.id, createdAt: p.createdAt||0
     };
   });
   const keluar = state.pengeluaran.map(p=>({
-    tanggal: p.tanggal, arah:'out', jumlah: Number(p.nominal||0),
+    tanggal: p.tanggal, arah:'out', jenis:'expense', jumlah: Number(p.nominal||0),
     keterangan: p.keterangan||'Expense', ref: p.noRef||p.id, createdAt: p.createdAt||0
   }));
   const all = masuk.concat(masukLain).concat(keluar).sort((a,b)=>{
@@ -4269,10 +4270,15 @@ function renderMutasiBankTable(){
     document.getElementById('mutasiBankTable').innerHTML = emptyState('No cash-in or cash-out transactions recorded yet.');
     return;
   }
+  const pillFor = r => {
+    if(r.arah==='out') return '<span class="pill belum" style="background:var(--maroon-soft); color:var(--maroon);">Cash Out</span>';
+    if(r.jenis==='other') return '<span class="pill" style="background:var(--pink-soft); color:var(--pink); font-weight:600;">Cash In · Other</span>';
+    return '<span class="pill lunas">Cash In · Dues</span>';
+  };
   const trs = rows.map(r=>`
     <tr>
       <td>${formatTanggalPanjang(r.tanggal)}</td>
-      <td class="center">${r.arah==='in' ? '<span class="pill lunas">Cash In</span>' : '<span class="pill belum" style="background:var(--maroon-soft); color:var(--maroon);">Cash Out</span>'}</td>
+      <td class="center">${pillFor(r)}</td>
       <td>${esc(r.keterangan)}</td>
       <td class="right num" style="color:${r.arah==='in' ? 'var(--green)' : 'var(--maroon)'};">${r.arah==='in' ? '+' : '−'}${rupiah(r.jumlah)}</td>
       <td class="right num" style="font-weight:600;">${rupiah(r.saldo)}</td>
