@@ -960,13 +960,17 @@
         <div class="grid-stats" id="saldoKasStatGrid"></div>
 
         <div class="card">
-          <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap; cursor:pointer;" onclick="toggleSaldoAwalDetails()">
             <div>
-              <h2 style="margin-bottom:4px;">Opening Balance</h2>
+              <h2 style="margin-bottom:4px; display:flex; align-items:center; gap:8px;">
+                <svg id="saldoAwalChevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px; height:18px; transition:transform .15s; flex-shrink:0;"><path d="M9 18l6-6-6-6"/></svg>
+                Opening Balance
+              </h2>
               <p class="helper" style="margin:0;">The balance that was already in the account before this app was used. Every payment and expense (in any school year) is added to or subtracted from this starting point automatically.</p>
             </div>
-            <button class="btn btn-outline" onclick="openEditSaldoAwal()">✎ Edit Opening Balance</button>
+            <button class="btn btn-outline" onclick="event.stopPropagation(); openEditSaldoAwal();">✎ Edit Opening Balance</button>
           </div>
+          <div id="saldoAwalDetails" style="display:none;">
           <div class="field-row" style="margin-top:14px;">
             <div class="field">
               <label>Amount</label>
@@ -980,6 +984,7 @@
           <div class="field" id="saldoAwalDisplayKeteranganWrap" style="display:none;">
             <label>Notes</label>
             <div class="helper" id="saldoAwalDisplayKeterangan" style="margin:0;">-</div>
+          </div>
           </div>
         </div>
 
@@ -4288,6 +4293,13 @@ function renderSaldoKasTab(){
   autoFitStatValues(document.getElementById('saldoKasStatGrid'));
 
   renderMutasiBankTable();
+}
+function toggleSaldoAwalDetails(){
+  const details = document.getElementById('saldoAwalDetails');
+  const chevron = document.getElementById('saldoAwalChevron');
+  const expanded = details.style.display !== 'none';
+  details.style.display = expanded ? 'none' : 'block';
+  chevron.style.transform = expanded ? '' : 'rotate(90deg)';
 }
 function openEditSaldoAwal(){
   document.getElementById('saldoAwalNominal').value = saldoBank.saldoAwal || '';
