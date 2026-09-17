@@ -960,23 +960,27 @@
         <div class="grid-stats" id="saldoKasStatGrid"></div>
 
         <div class="card">
-          <h2>Opening Balance</h2>
-          <p class="helper">Set this once to the balance that was already in the account before you started using this app. Every payment and expense recorded (in any school year) will be added to or subtracted from this starting point automatically &mdash; you don't need to update it again later.</p>
-          <div class="field-row">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;">
+            <div>
+              <h2 style="margin-bottom:4px;">Opening Balance</h2>
+              <p class="helper" style="margin:0;">The balance that was already in the account before this app was used. Every payment and expense (in any school year) is added to or subtracted from this starting point automatically.</p>
+            </div>
+            <button class="btn btn-outline" onclick="openEditSaldoAwal()">✎ Edit Opening Balance</button>
+          </div>
+          <div class="field-row" style="margin-top:14px;">
             <div class="field">
-              <label>Opening Balance Amount</label>
-              <input type="number" id="saldoAwalNominal" placeholder="e.g. 500000">
+              <label>Amount</label>
+              <div class="mono" style="font-size:18px; font-weight:700; padding:9px 0;" id="saldoAwalDisplayNominal">-</div>
             </div>
             <div class="field">
               <label>As of Date</label>
-              <input type="date" id="saldoAwalTanggal">
+              <div style="padding:9px 0;" id="saldoAwalDisplayTanggal">-</div>
             </div>
           </div>
-          <div class="field">
-            <label>Notes (optional)</label>
-            <input type="text" id="saldoAwalKeterangan" placeholder="e.g. Bank Mandiri balance carried over from the previous treasurer">
+          <div class="field" id="saldoAwalDisplayKeteranganWrap" style="display:none;">
+            <label>Notes</label>
+            <div class="helper" id="saldoAwalDisplayKeterangan" style="margin:0;">-</div>
           </div>
-          <button class="btn btn-primary" onclick="simpanSaldoAwalBank()">Save Opening Balance</button>
         </div>
 
         <div class="card">
@@ -1737,6 +1741,37 @@ service cloud.firestore {
     <div class="modal-foot">
       <button class="btn btn-outline" onclick="closeModal('modalEditPenerimaan')">Cancel</button>
       <button class="btn btn-primary" onclick="simpanEditPenerimaanLain()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Opening Balance Modal -->
+<div class="overlay" id="modalEditSaldoAwal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Edit Opening Balance</h3>
+      <button class="icon-btn" onclick="closeModal('modalEditSaldoAwal')">✕</button>
+    </div>
+    <p class="helper" style="background:var(--maroon-soft); color:var(--maroon); padding:10px 12px; border-radius:8px; font-weight:600;">
+      ⚠️ Changing this shifts the running balance across every school year. Double-check the amount before saving.
+    </p>
+    <div class="field-row">
+      <div class="field">
+        <label>Opening Balance Amount</label>
+        <input type="number" id="saldoAwalNominal" placeholder="e.g. 500000">
+      </div>
+      <div class="field">
+        <label>As of Date</label>
+        <input type="date" id="saldoAwalTanggal">
+      </div>
+    </div>
+    <div class="field">
+      <label>Notes (optional)</label>
+      <input type="text" id="saldoAwalKeterangan" placeholder="e.g. Bank Mandiri balance carried over from the previous treasurer">
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeModal('modalEditSaldoAwal')">Cancel</button>
+      <button class="btn btn-primary" onclick="simpanSaldoAwalBank()">Save Opening Balance</button>
     </div>
   </div>
 </div>
@@ -4230,9 +4265,15 @@ function exportLedgerCSV(){
    CASH BALANCE (single Bank Mandiri account, carries over across school years)
    ============================================================ */
 function renderSaldoKasTab(){
-  document.getElementById('saldoAwalNominal').value = saldoBank.saldoAwal || '';
-  document.getElementById('saldoAwalTanggal').value = saldoBank.tanggalSaldoAwal || '';
-  document.getElementById('saldoAwalKeterangan').value = saldoBank.keterangan || '';
+  document.getElementById('saldoAwalDisplayNominal').textContent = rupiah(saldoBank.saldoAwal||0);
+  document.getElementById('saldoAwalDisplayTanggal').textContent = saldoBank.tanggalSaldoAwal ? formatTanggalPanjang(saldoBank.tanggalSaldoAwal) : '-';
+  const keteranganWrap = document.getElementById('saldoAwalDisplayKeteranganWrap');
+  if(saldoBank.keterangan){
+    keteranganWrap.style.display = 'block';
+    document.getElementById('saldoAwalDisplayKeterangan').textContent = saldoBank.keterangan;
+  }else{
+    keteranganWrap.style.display = 'none';
+  }
 
   const totalMasukPembayaran = totalKasMasukPembayaranSemuaTahun();
   const totalKeluar = totalKasKeluarSemuaTahun();
@@ -4248,17 +4289,31 @@ function renderSaldoKasTab(){
 
   renderMutasiBankTable();
 }
+function openEditSaldoAwal(){
+  document.getElementById('saldoAwalNominal').value = saldoBank.saldoAwal || '';
+  document.getElementById('saldoAwalTanggal').value = saldoBank.tanggalSaldoAwal || '';
+  document.getElementById('saldoAwalKeterangan').value = saldoBank.keterangan || '';
+  openModal('modalEditSaldoAwal');
+}
 async function simpanSaldoAwalBank(){
   const saldoAwal = Number(document.getElementById('saldoAwalNominal').value)||0;
   const tanggalSaldoAwal = document.getElementById('saldoAwalTanggal').value;
   const keterangan = document.getElementById('saldoAwalKeterangan').value.trim();
   if(saldoAwal<0){ toast('Opening balance cannot be negative','err'); return; }
-  try{
-    await saveSaldoBankAwal(saldoAwal, tanggalSaldoAwal, keterangan);
-    toast('Opening balance saved','ok');
-    logAudit('edit','saldoBank', `Opening balance set to ${rupiah(saldoAwal)}`);
-    if(!USE_FIRESTORE) renderSaldoKasTab();
-  }catch(e){ toast('Failed to save: '+e.message,'err'); }
+  const before = Number(saldoBank.saldoAwal||0);
+  if(saldoAwal===before && tanggalSaldoAwal===(saldoBank.tanggalSaldoAwal||'') && keterangan===(saldoBank.keterangan||'')){
+    closeModal('modalEditSaldoAwal');
+    return;
+  }
+  closeModal('modalEditSaldoAwal');
+  confirmAction(`Change Opening Balance from ${rupiah(before)} to ${rupiah(saldoAwal)}? This shifts the running balance across every school year.`, async ()=>{
+    try{
+      await saveSaldoBankAwal(saldoAwal, tanggalSaldoAwal, keterangan);
+      toast('Opening balance saved','ok');
+      logAudit('edit','saldoBank', `Opening balance changed from ${rupiah(before)} to ${rupiah(saldoAwal)}`);
+      if(!USE_FIRESTORE) renderSaldoKasTab();
+    }catch(e){ toast('Failed to save: '+e.message,'err'); }
+  });
 }
 function renderMutasiBankTable(){
   const rows = buildMutasiBank();
