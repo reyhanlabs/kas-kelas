@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Class Cash Book</title>
 <link rel="manifest" href="./manifest.json">
-<meta name="theme-color" content="#003F80">
+<meta name="theme-color" content="#F77F8B">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -21,24 +21,24 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
   :root{
-    --navy:#003F80;
-    --navy-deep:#001A40;
-    --paper:#F0F5FF;
-    --paper-line:#DDEEFF;
+    --navy:#F77F8B;
+    --navy-deep:#5c1a26;
+    --paper:#FFF5F7;
+    --paper-line:#FFD6DC;
     --ink:#131A26;
     --ink-soft:#5B6B80;
-    --gold:#0094DA;
-    --gold-soft:#EAF3FF;
+    --gold:#FFE66D;
+    --gold-soft:#FFF9D6;
     --green:#27AE60;
     --green-soft:#E8FAF0;
     --maroon:#E53E3E;
     --maroon-soft:#FEE8E8;
     --radius:10px;
-    --shadow: 0 1px 2px rgba(0,63,128,0.08), 0 6px 20px rgba(0,63,128,0.10);
-    --teal:#0094DA; --teal-soft:#EAF3FF;
-    --pink:#27AE60; --pink-soft:#E8FAF0;
-    --purple:#0070CC; --purple-soft:#D6EEFF;
-    --blue:#0094DA; --blue-soft:#EAF3FF;
+    --shadow: 0 1px 2px rgba(247,127,139,0.10), 0 6px 20px rgba(247,127,139,0.13);
+    --teal:#F9C642;    --teal-soft:#FEF3CC;
+    --pink:#4DC98A;    --pink-soft:#E0F7EC;
+    --purple:#F77FAE; --purple-soft:#FDEDF5;
+    --blue:#9B6EF3;   --blue-soft:#F0EAFF;
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
@@ -66,7 +66,7 @@
     box-shadow:0 24px 60px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.15);
   }
   .auth-brand{display:flex; align-items:center; gap:10px; margin-bottom:18px;}
-  .auth-brand .mark{width:38px;height:38px;border-radius:9px;background:var(--gold); display:flex;align-items:center;justify-content:center; font-family:'Fraunces',serif; font-weight:700; color:#fff; font-size:18px;}
+  .auth-brand .mark{width:38px;height:38px;border-radius:9px;background:var(--gold); display:flex;align-items:center;justify-content:center; font-family:'Fraunces',serif; font-weight:700; color:#7a5c00; font-size:15px;}
   .auth-brand .txt{font-family:'Fraunces',serif; font-size:18px; font-weight:600; color:var(--navy);}
   .auth-sub{font-size:12.5px; color:var(--ink-soft); margin-bottom:20px; line-height:1.5;}
   .auth-foot-link{font-size:12px; color:var(--navy); text-decoration:underline; cursor:pointer; background:none; border:none; padding:0; margin-top:8px;}
@@ -80,7 +80,7 @@
     flex-shrink:0;
     background:#ffffff;
     color:#131A26;
-    border-right:1.5px solid #DDEEFF;
+    border-right:1.5px solid #FFD6DC;
     padding:22px 14px;
     display:flex;
     flex-direction:column;
@@ -99,7 +99,7 @@
     width:34px;height:34px;border-radius:8px;
     background:var(--gold);
     display:flex;align-items:center;justify-content:center;
-    font-family:'Fraunces',serif; font-weight:700; color:#ffffff; font-size:17px;
+    font-family:'Fraunces',serif; font-weight:700; color:#7a5c00; font-size:13px;
     flex-shrink:0;
   }
   .brand-text .t1{font-family:'Fraunces',serif; font-size:15.5px; font-weight:700; line-height:1.2; color:#003F80;}
@@ -134,8 +134,8 @@
   }
   .tab-btn svg{width:17px;height:17px; flex-shrink:0; opacity:.85;}
   .tab-btn:hover{background:rgba(0,148,218,0.07); color:#003F80;}
-  .tab-btn.active{background:rgba(0,148,218,0.12); color:#003F80; border-left:3px solid #0094DA; padding-left:9px;}
-  .tab-btn.active svg{opacity:1; color:#0094DA;}
+  .tab-btn.active{background:rgba(247,127,139,0.12); color:#c0445a; border-left:3px solid #F77F8B; padding-left:9px;}
+  .tab-btn.active svg{opacity:1; color:#F77F8B;}
   /* === Aksen warna per menu item — dengan background === */
 
   /* Background default (selalu tampil, soft) */
@@ -218,7 +218,7 @@
   .mobile-topbar{
     display:none; align-items:center; gap:10px; padding:0 14px; height:52px;
     background:var(--navy); color:#fff; position:sticky; top:0; z-index:120;
-    box-shadow:0 2px 10px rgba(0,0,0,.15);
+    box-shadow:0 2px 10px rgba(247,127,139,.25);
   }
   .mobile-menu-btn{
     background:none; border:none; color:#fff; padding:6px; margin:0 -6px 0 -8px;
@@ -288,7 +288,7 @@
     display:flex; align-items:baseline; justify-content:space-between;
     margin-bottom:22px; flex-wrap:wrap; gap:10px;
   }
-  .topbar h1{font-size:26px; margin:0; color:var(--navy);}
+  .topbar h1{font-size:26px; margin:0; color:#1a1a2e;}
   .topbar .sub{font-size:12.5px; color:var(--ink-soft); margin-top:2px;}
   .topbar-right{font-size:12px; color:var(--ink-soft); text-align:right;}
 
@@ -309,10 +309,12 @@
   .card details[open] > summary h2::before{transform:rotate(90deg);}
   .card details > summary + *{margin-top:14px;}
   /* Cycle a cheerful top-border color across the cards in each tab so boxes don't read as one flat block */
-  .content-wrap .card:nth-of-type(4n+1){border-top-color:var(--navy);}
-  .content-wrap .card:nth-of-type(4n+2){border-top-color:var(--pink);}
-  .content-wrap .card:nth-of-type(4n+3){border-top-color:var(--purple);}
-  .content-wrap .card:nth-of-type(4n+0){border-top-color:var(--blue);}
+  .content-wrap .card:nth-of-type(6n+1){border-top-color:#F9C642;}
+  .content-wrap .card:nth-of-type(6n+2){border-top-color:#4DC98A;}
+  .content-wrap .card:nth-of-type(6n+3){border-top-color:#F77FAE;}
+  .content-wrap .card:nth-of-type(6n+4){border-top-color:#9B6EF3;}
+  .content-wrap .card:nth-of-type(6n+5){border-top-color:#F46060;}
+  .content-wrap .card:nth-of-type(6n+0){border-top-color:#FD8C3A;}
 
   .grid-stats{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:18px;}
   @media(max-width:900px){.grid-stats{grid-template-columns:repeat(2,1fr);}}
@@ -322,12 +324,14 @@
     min-width:0; overflow:hidden;
   }
   /* Give each stat card in a row its own bright accent + soft gradient tint for a cheerful, non-monotone dashboard */
-  .stat:nth-child(4n+1){border-left-color:var(--teal); background:linear-gradient(165deg, var(--teal-soft) 0%, #fff 55%);}
-  .stat:nth-child(4n+2){border-left-color:var(--pink); background:linear-gradient(165deg, var(--pink-soft) 0%, #fff 55%);}
-  .stat:nth-child(4n+3){border-left-color:var(--purple); background:linear-gradient(165deg, var(--purple-soft) 0%, #fff 55%);}
-  .stat:nth-child(4n+0){border-left-color:var(--blue); background:linear-gradient(165deg, var(--blue-soft) 0%, #fff 55%);}
+  .stat:nth-child(6n+1){border-left-color:#F9C642; background:linear-gradient(165deg, #FEF9E7 0%, #fff 55%);}
+  .stat:nth-child(6n+2){border-left-color:#4DC98A; background:linear-gradient(165deg, #E8FAF0 0%, #fff 55%);}
+  .stat:nth-child(6n+3){border-left-color:#F77FAE; background:linear-gradient(165deg, #FDEDF5 0%, #fff 55%);}
+  .stat:nth-child(6n+4){border-left-color:#9B6EF3; background:linear-gradient(165deg, #F0EAFF 0%, #fff 55%);}
+  .stat:nth-child(6n+5){border-left-color:#F46060; background:linear-gradient(165deg, #FEE8E8 0%, #fff 55%);}
+  .stat:nth-child(6n+0){border-left-color:#FD8C3A; background:linear-gradient(165deg, #FFF0E0 0%, #fff 55%);}
   .stat .label{font-size:11px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.05em; font-weight:700; overflow-wrap:break-word;}
-  .stat .value{font-family:'JetBrains Mono'; font-size:21px; font-weight:600; margin-top:6px; color:var(--navy); white-space:nowrap; overflow:hidden; display:block;}
+  .stat .value{font-family:'JetBrains Mono'; font-size:21px; font-weight:600; margin-top:6px; color:#1a1a2e; white-space:nowrap; overflow:hidden; display:block;}
   .stat .value.green{color:var(--green);}
   .stat .value.maroon{color:var(--maroon);}
   @media(max-width:480px){
@@ -577,7 +581,7 @@
 <!-- ================= LOGIN SCREEN ================= -->
 <div class="auth-screen" id="loginScreen">
   <div class="auth-card">
-    <div class="auth-brand"><div class="mark">K</div><div class="txt">Class Cash Book</div></div>
+    <div class="auth-brand"><div class="mark">4A</div><div class="txt">Class Cash Book</div></div>
     <div class="auth-sub">Log in with an account already registered by the class admin. Don't have an account yet? Contact your class admin/treasurer.</div>
     <div class="field">
       <label>Email</label>
@@ -596,7 +600,7 @@
 <!-- ================= NO ACCESS SCREEN ================= -->
 <div class="auth-screen" id="noAccessScreen" style="display:none;">
   <div class="auth-card">
-    <div class="auth-brand"><div class="mark">K</div><div class="txt">Class Cash Book</div></div>
+    <div class="auth-brand"><div class="mark">4A</div><div class="txt">Class Cash Book</div></div>
     <p style="font-size:13.5px; color:var(--ink-soft); line-height:1.6;">
       The account <b id="noAccessEmail"></b> has logged in successfully, but has not been given access to the class cash data.
       Ask the admin to add this email in the <b>Manage Users</b> menu.
@@ -615,7 +619,7 @@
   <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="toggleMobileSidebar(false)"></div>
   <aside class="sidebar" id="sidebarEl">
     <div class="brand">
-      <div class="brand-mark">K</div>
+      <div class="brand-mark">4A</div>
       <div class="brand-text">
         <div class="t1">Class Cash Book</div>
         <div class="t2" id="sbNamaKelas">Class Cash</div>
@@ -5169,7 +5173,7 @@ function renderPublicSummaryHTML(data){
   const headerCols = PERIODE_URUT.map(bulanNum=>`<th class="center">${BULAN[bulanNum-1].slice(0,3)}</th>`).join('');
   const when = data.updatedAt ? new Date(data.updatedAt).toLocaleString('en-US', {dateStyle:'long', timeStyle:'short'}) : '-';
   return `
-    <div class="auth-brand"><div class="mark">K</div><div class="txt">Class Cash Book</div></div>
+    <div class="auth-brand"><div class="mark">4A</div><div class="txt">Class Cash Book</div></div>
     <h2 style="margin:0 0 2px 0; color:var(--navy);">${esc(data.namaKelas || data.label || 'Class Cash')}</h2>
     <div class="helper" style="margin-bottom:16px;">${esc(data.namaSekolah||'')} &middot; School Year ${esc(data.label||'-')} &middot; ${esc(data.periode||'')}</div>
     <div class="grid-stats" style="margin-bottom:18px;">
@@ -5207,12 +5211,12 @@ function initPublicView(tahunAjaranId){
     const db = firebase.firestore();
     db.collection('publicSummary').doc(tahunAjaranId).onSnapshot(doc=>{
       if(!doc.exists){
-        card.innerHTML = '<div class="auth-brand"><div class="mark">K</div><div class="txt">Class Cash Book</div></div><p class="helper">This link isn\'t published yet, or the school year no longer exists. Ask the class treasurer to publish/update the link.</p>';
+        card.innerHTML = '<div class="auth-brand"><div class="mark">4A</div><div class="txt">Class Cash Book</div></div><p class="helper">This link isn\'t published yet, or the school year no longer exists. Ask the class treasurer to publish/update the link.</p>';
         return;
       }
       card.innerHTML = renderPublicSummaryHTML(doc.data());
     }, err=>{
-      card.innerHTML = '<div class="auth-brand"><div class="mark">K</div><div class="txt">Class Cash Book</div></div><p class="helper">Could not load this report: '+esc(err.message)+'</p>';
+      card.innerHTML = '<div class="auth-brand"><div class="mark">4A</div><div class="txt">Class Cash Book</div></div><p class="helper">Could not load this report: '+esc(err.message)+'</p>';
     });
   }catch(e){
     card.innerHTML = '<p class="helper">Could not load this report: '+esc(e.message)+'</p>';
