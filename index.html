@@ -3901,7 +3901,11 @@ function printKegiatanTable(){
 </style>
 </head><body>
 <div class="kop">
-  <div class="kop-mark">${(namaKelas||'K').substring(0,2).toUpperCase()}</div>
+  <div class="kop-mark">${(()=>{
+    const m = (namaKelas||'').match(/\d+[A-Za-z]*/);
+    if(m) return m[0].substring(0,3).toUpperCase();
+    return (namaKelas||'K').substring(0,2).toUpperCase();
+  })()}</div>
   <div>
     <div class="kop-sekolah">${esc(namaSekolah)}</div>
     <div class="kop-sub">${esc(namaKelas)}${label ? ' &nbsp;·&nbsp; School Year ' + esc(label) : ''}</div>
