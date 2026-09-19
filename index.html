@@ -4572,9 +4572,108 @@ function buildBankLedgerHTML(forPrint){
 function cetakLaporanSaldoKas(){
   const rows = buildMutasiBank();
   if(rows.length===0){ toast('No transactions to print yet','err'); return; }
-  document.getElementById('printOrientationOverride')?.remove();
-  document.getElementById('printArea').innerHTML = `<div style="padding:6mm;">${buildBankLedgerHTML(true)}</div>`;
-  setTimeout(()=> window.print(), 300);
+  const ta = currentTA();
+  const namaSekolah = ta?.namaSekolah || 'Class Cash Book';
+  const namaKelas   = ta?.namaKelas   || '';
+  const label       = ta?.label       || '';
+  const bendahara   = ta?.bendahara   || '';
+  const tanggalCetak = new Date().toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'});
+  const trs = rows.map(r=>`
+    <tr>
+      <td style="padding:7px 10px;border-bottom:1px solid #e5e7eb;">${formatTanggalPanjang(r.tanggal)}</td>
+      <td style="padding:7px 10px;border-bottom:1px solid #e5e7eb;">${esc(r.keterangan)}</td>
+      <td style="padding:7px 10px;border-bottom:1px solid #e5e7eb;text-align:right;font-family:monospace;color:#15803D;">${r.arah==='in' ? rupiah(r.jumlah) : ''}</td>
+      <td style="padding:7px 10px;border-bottom:1px solid #e5e7eb;text-align:right;font-family:monospace;color:#B91C1C;">${r.arah==='out' ? rupiah(r.jumlah) : ''}</td>
+      <td style="padding:7px 10px;border-bottom:1px solid #e5e7eb;text-align:right;font-family:monospace;font-weight:600;color:#003F80;">${rupiah(r.saldo)}</td>
+    </tr>`).join('');
+  const saldoAkhir = saldoBankSaatIni();
+  const win = window.open('','_blank','width=900,height=700');
+  win.document.write(`<!DOCTYPE html>
+<html lang="id"><head><meta charset="UTF-8">
+<title>Cash Balance — ${namaKelas} ${label}</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Segoe UI',Arial,sans-serif;background:#fff;color:#1a1a2e;padding:32px 40px;}
+  .kop{display:flex;align-items:center;gap:18px;padding-bottom:16px;border-bottom:3px solid #003F80;margin-bottom:24px;}
+  .kop-mark{width:48px;height:48px;border-radius:10px;background:#003F80;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:#fff;flex-shrink:0;}
+  .kop-sekolah{font-size:18px;font-weight:700;color:#003F80;line-height:1.2;}
+  .kop-sub{font-size:12px;color:#5B7FA6;margin-top:3px;}
+  .doc-title{font-size:15px;font-weight:700;color:#003F80;margin-bottom:4px;}
+  .doc-meta{font-size:12px;color:#6b7280;}
+  .stats{display:flex;gap:16px;margin-bottom:20px;}
+  .stat-box{flex:1;border:1px solid #DDEEFF;border-radius:8px;padding:12px 14px;background:#F0F5FF;}
+  .stat-label{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#5B7FA6;font-weight:700;}
+  .stat-value{font-size:18px;font-weight:700;font-family:monospace;color:#003F80;margin-top:4px;}
+  table{width:100%;border-collapse:collapse;}
+  thead tr{background:#003F80;}
+  thead th{padding:10px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#fff;font-weight:700;}
+  thead th.right{text-align:right;}
+  tbody tr:hover{background:#F8FBFF;}
+  tfoot td{padding:10px;font-weight:700;background:#EAF3FF;border-top:2px solid #003F80;font-size:13px;}
+  .sign-area{display:flex;justify-content:flex-end;margin-top:48px;}
+  .sign-box{text-align:center;min-width:200px;}
+  .sign-line{margin-top:48px;border-top:1px solid #003F80;padding-top:4px;font-size:12px;font-weight:600;color:#003F80;}
+  .sign-role{font-size:11px;color:#6b7280;margin-top:2px;}
+  .footer-note{margin-top:28px;font-size:10px;color:#9ca3af;text-align:center;border-top:1px solid #e5e7eb;padding-top:12px;}
+  @media print{body{padding:20px 24px;}@page{size:A4;margin:12mm;}}
+</style>
+</head><body>
+<div class="kop">
+  <div class="kop-mark">4A</div>
+  <div>
+    <div class="kop-sekolah">${esc(namaSekolah)}</div>
+    <div class="kop-sub">${esc(namaKelas)}${label ? ' &nbsp;·&nbsp; School Year ' + esc(label) : ''}</div>
+  </div>
+  <div style="margin-left:auto;text-align:right;">
+    <div class="doc-title">Cash Balance Report</div>
+    <div class="doc-meta">Printed: ${tanggalCetak}</div>
+  </div>
+</div>
+<div class="stats">
+  <div class="stat-box">
+    <div class="stat-label">Opening Balance</div>
+    <div class="stat-value">${rupiah(saldoBank.saldoAwal||0)}</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-label">Total Cash In</div>
+    <div class="stat-value" style="color:#15803D;">${rupiah(rows.filter(r=>r.arah==='in').reduce((s,r)=>s+r.jumlah,0))}</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-label">Total Cash Out</div>
+    <div class="stat-value" style="color:#B91C1C;">${rupiah(rows.filter(r=>r.arah==='out').reduce((s,r)=>s+r.jumlah,0))}</div>
+  </div>
+  <div class="stat-box" style="background:#003F80;">
+    <div class="stat-label" style="color:#B3D9FF;">Current Balance</div>
+    <div class="stat-value" style="color:#fff;">${rupiah(saldoAkhir)}</div>
+  </div>
+</div>
+<table>
+  <thead><tr>
+    <th>Date</th><th>Description</th>
+    <th class="right">Cash In</th><th class="right">Cash Out</th><th class="right">Balance</th>
+  </tr></thead>
+  <tbody>
+    <tr><td colspan="4" style="padding:7px 10px;color:#6b7280;font-size:12px;">Opening Balance</td>
+        <td style="padding:7px 10px;text-align:right;font-family:monospace;font-weight:600;color:#003F80;">${rupiah(saldoBank.saldoAwal||0)}</td></tr>
+    ${trs}
+  </tbody>
+  <tfoot><tr>
+    <td colspan="4">Current Balance</td>
+    <td style="text-align:right;font-family:monospace;color:#003F80;">${rupiah(saldoAkhir)}</td>
+  </tr></tfoot>
+</table>
+<div class="sign-area">
+  <div class="sign-box">
+    <div style="font-size:12px;color:#6b7280;">${tanggalCetak}</div>
+    <div class="sign-line">${esc(bendahara || 'Class Treasurer')}</div>
+    <div class="sign-role">Class Treasurer</div>
+  </div>
+</div>
+<div class="footer-note">Generated by Class Cash Book &nbsp;·&nbsp; ${esc(namaSekolah)} &nbsp;·&nbsp; ${esc(label)}</div>
+</body></html>`);
+  win.document.close();
+  win.focus();
+  setTimeout(()=>{ win.print(); }, 400);
 }
 async function unduhLaporanSaldoKasGambar(){
   const rows = buildMutasiBank();
