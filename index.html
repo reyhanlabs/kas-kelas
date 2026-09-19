@@ -449,6 +449,7 @@
   /* ===== Print receipt ===== */
   #printArea{display:none;}
   @media print{
+  #printKegiatanArea{ display:block !important; }
     html, body{background:#fff !important; height:auto !important;}
     body *{visibility:hidden;}
     #printArea, #printArea *{visibility:visible;}
@@ -565,7 +566,7 @@
 <!-- ================= LOGIN SCREEN ================= -->
 <div class="auth-screen" id="loginScreen">
   <div class="auth-card">
-    <div class="auth-brand"><div class="mark">4A</div><div class="txt">Class Cash Book</div></div>
+    <div class="auth-brand"><div class="mark">K</div><div class="txt">Class Cash Book</div></div>
     <div class="auth-sub">Log in with an account already registered by the class admin. Don't have an account yet? Contact your class admin/treasurer.</div>
     <div class="field">
       <label>Email</label>
@@ -584,7 +585,7 @@
 <!-- ================= NO ACCESS SCREEN ================= -->
 <div class="auth-screen" id="noAccessScreen" style="display:none;">
   <div class="auth-card">
-    <div class="auth-brand"><div class="mark">4A</div><div class="txt">Class Cash Book</div></div>
+    <div class="auth-brand"><div class="mark">K</div><div class="txt">Class Cash Book</div></div>
     <p style="font-size:13.5px; color:var(--ink-soft); line-height:1.6;">
       The account <b id="noAccessEmail"></b> has logged in successfully, but has not been given access to the class cash data.
       Ask the admin to add this email in the <b>Manage Users</b> menu.
@@ -603,7 +604,7 @@
   <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="toggleMobileSidebar(false)"></div>
   <aside class="sidebar" id="sidebarEl">
     <div class="brand">
-      <div class="brand-mark">4A</div>
+      <div class="brand-mark">K</div>
       <div class="brand-text">
         <div class="t1">Class Cash Book</div>
         <div class="t2" id="sbNamaKelas">Class Cash</div>
@@ -1203,7 +1204,13 @@
         </div>
 
         <div class="card">
-          <h2>Activities (Kegiatan)</h2>
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
+            <h2 style="margin:0;">Activities (Kegiatan)</h2>
+            <button class="btn btn-outline btn-sm" onclick="printKegiatanTable()" style="display:flex;align-items:center;gap:6px;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V3h12v6"/><rect x="4" y="9" width="16" height="8" rx="1.5"/><path d="M6 14h12v7H6z"/></svg>
+              Print Activities
+            </button>
+          </div>
           <p class="helper">Activities are what you actually pick when entering an expense &mdash; each one is mapped to an account above, e.g. "Market Day 2025" &rarr; account <code class="inl">6900-00-012</code>.</p>
           <div id="kegiatanTable"></div>
           <button class="btn btn-outline" style="margin-top:10px;" onclick="openKegiatanModal()">+ Add Activity</button>
@@ -3839,6 +3846,109 @@ function renderKegiatanTable(){
     <table><thead><tr><th>Activity</th><th>Linked Account</th><th class="right">Total Spent</th><th class="center">Action</th></tr></thead>
     <tbody>${rows}</tbody></table>`;
 }
+function printKegiatanTable(){
+  const ta = currentTA();
+  const list = currentKegiatanList();
+  const namaSekolah = ta?.namaSekolah || 'Class Cash Book';
+  const namaKelas   = ta?.namaKelas   || '';
+  const label       = ta?.label       || '';
+  const bendahara   = ta?.bendahara   || '';
+  const rows = list.map((k,i)=>{
+    const a = findAkun(k.akunId);
+    const pengeluaranK = state.pengeluaran.filter(p=>p.kegiatanId===k.id);
+    const totalSpent   = pengeluaranK.reduce((sum,p)=>sum+Number(p.nominal||0),0);
+    return `<tr>
+      <td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;text-align:center;color:#6b7280;">${i+1}</td>
+      <td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;font-weight:600;color:#003F80;">
+        ${esc(k.nama)}${k.isDefault ? ' <span style="font-size:10px;background:#EAF3FF;color:#0369A1;padding:1px 7px;border-radius:10px;font-weight:700;">Default</span>' : ''}
+      </td>
+      <td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;font-family:monospace;font-size:12px;color:#374151;">${a ? esc(a.kode)+' — '+esc(a.nama) : '—'}</td>
+      <td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;text-align:right;font-family:monospace;color:#374151;">${pengeluaranK.length > 0 ? rupiah(totalSpent) : '—'}</td>
+      <td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;text-align:center;color:#6b7280;">${pengeluaranK.length || '—'}</td>
+    </tr>`;
+  }).join('');
+  const totalAll = list.reduce((sum,k)=>{
+    return sum + state.pengeluaran.filter(p=>p.kegiatanId===k.id).reduce((s,p)=>s+Number(p.nominal||0),0);
+  },0);
+  const tanggalCetak = new Date().toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'});
+  const win = window.open('','_blank','width=900,height=700');
+  win.document.write(`<!DOCTYPE html>
+<html lang="id"><head><meta charset="UTF-8">
+<title>Activities — ${namaKelas} ${label}</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Segoe UI',Arial,sans-serif;background:#fff;color:#1a1a2e;padding:32px 40px;}
+  .kop{display:flex;align-items:center;gap:18px;padding-bottom:16px;border-bottom:3px solid #003F80;margin-bottom:20px;}
+  .kop-mark{width:48px;height:48px;border-radius:10px;background:#003F80;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:#fff;flex-shrink:0;}
+  .kop-sekolah{font-size:18px;font-weight:700;color:#003F80;line-height:1.2;}
+  .kop-sub{font-size:12px;color:#5B7FA6;margin-top:3px;}
+  .doc-title{font-size:15px;font-weight:700;color:#003F80;margin-bottom:4px;}
+  .doc-meta{font-size:12px;color:#6b7280;}
+  table{width:100%;border-collapse:collapse;margin-top:18px;}
+  thead tr{background:#003F80;}
+  thead th{padding:10px 10px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#fff;font-weight:700;}
+  thead th.right{text-align:right;}
+  thead th.center{text-align:center;}
+  tbody tr:hover{background:#F0F5FF;}
+  tbody tr:last-child td{border-bottom:none;}
+  tfoot tr{background:#F0F5FF;}
+  tfoot td{padding:10px 10px;font-weight:700;font-size:13px;border-top:2px solid #003F80;}
+  .badge-default{font-size:10px;background:#EAF3FF;color:#0369A1;padding:1px 7px;border-radius:10px;font-weight:700;}
+  .sign-area{display:flex;justify-content:flex-end;margin-top:48px;}
+  .sign-box{text-align:center;min-width:200px;}
+  .sign-line{margin-top:48px;border-top:1px solid #003F80;padding-top:4px;font-size:12px;font-weight:600;color:#003F80;}
+  .sign-role{font-size:11px;color:#6b7280;margin-top:2px;}
+  .footer-note{margin-top:32px;font-size:10px;color:#9ca3af;text-align:center;border-top:1px solid #e5e7eb;padding-top:12px;}
+  @media print{body{padding:20px 24px;}@page{size:A4;margin:12mm;}}
+</style>
+</head><body>
+<div class="kop">
+  <div class="kop-mark">K</div>
+  <div>
+    <div class="kop-sekolah">${esc(namaSekolah)}</div>
+    <div class="kop-sub">${esc(namaKelas)}${label ? ' &nbsp;·&nbsp; School Year ' + esc(label) : ''}</div>
+  </div>
+  <div style="margin-left:auto;text-align:right;">
+    <div class="doc-title">Activities (Kegiatan)</div>
+    <div class="doc-meta">Printed: ${tanggalCetak}</div>
+  </div>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th class="center" style="width:40px;">No</th>
+      <th>Activity Name</th>
+      <th>Linked Account</th>
+      <th class="right">Total Spent</th>
+      <th class="center">Transactions</th>
+    </tr>
+  </thead>
+  <tbody>${rows}</tbody>
+  <tfoot>
+    <tr>
+      <td colspan="3" style="padding:10px 10px;font-weight:700;font-size:13px;">Grand Total</td>
+      <td style="text-align:right;padding:10px 10px;font-family:monospace;font-weight:700;font-size:14px;color:#003F80;">${rupiah(totalAll)}</td>
+      <td style="text-align:center;padding:10px 10px;color:#6b7280;">${list.length} activities</td>
+    </tr>
+  </tfoot>
+</table>
+
+<div class="sign-area">
+  <div class="sign-box">
+    <div style="font-size:12px;color:#6b7280;">${tanggalCetak}</div>
+    <div class="sign-line">${esc(bendahara || 'Class Treasurer')}</div>
+    <div class="sign-role">Class Treasurer</div>
+  </div>
+</div>
+
+<div class="footer-note">Generated by Class Cash Book &nbsp;·&nbsp; ${esc(namaSekolah)} &nbsp;·&nbsp; ${esc(label)}</div>
+</body></html>`);
+  win.document.close();
+  win.focus();
+  setTimeout(()=>{ win.print(); }, 400);
+}
+
 function findDefaultKegiatan(){ return currentKegiatanList().find(k=>k.isDefault) || null; }
 async function setKegiatanDefault(id){
   try{
