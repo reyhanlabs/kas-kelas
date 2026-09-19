@@ -4580,51 +4580,79 @@ function cetakLaporanSaldoKas(){
   if(rows.length===0){ toast('No transactions to print yet','err'); return; }
   const ta = currentTA();
   const tanggalCetak = new Date().toLocaleString('en-US', {dateStyle:'long', timeStyle:'short'});
+  const saldoAkhir = saldoBankSaatIni();
   const trs = rows.map(r=>`
     <tr>
       <td>${formatTanggalPanjang(r.tanggal)}</td>
       <td>${esc(r.keterangan)}</td>
-      <td class="right num">${r.arah==='in' ? rupiah(r.jumlah) : '-'}</td>
-      <td class="right num">${r.arah==='out' ? rupiah(r.jumlah) : '-'}</td>
-      <td class="right num">${rupiah(r.saldo)}</td>
+      <td style="text-align:right;font-family:monospace;">${r.arah==='in' ? rupiah(r.jumlah) : ''}</td>
+      <td style="text-align:right;font-family:monospace;">${r.arah==='out' ? rupiah(r.jumlah) : ''}</td>
+      <td style="text-align:right;font-family:monospace;font-weight:700;">${rupiah(r.saldo)}</td>
     </tr>`).join('');
-  const saldoAkhir = saldoBankSaatIni();
-  const html = `
-    <div class="ledger-report-head">
-      <h2>Cash Balance — ${esc(ta?.namaKelas || ta?.label || 'Class Cash')}</h2>
-      <div class="sub1">${esc(ta?.namaSekolah || '')}</div>
-      <div class="sub2">School Year ${esc(ta?.label||'-')} &middot; Printed ${tanggalCetak}</div>
-    </div>
-    <div class="ledger-account">
-      <div class="ledger-account-head">
-        <span>Cash Balance Mutation</span>
-        <span>${rupiah(saldoAkhir)}</span>
-      </div>
-      <div class="ledger-table-scroll">
-        <table>
-          <thead><tr>
-            <th>Date</th>
-            <th>Description</th>
-            <th class="right">Cash In</th>
-            <th class="right">Cash Out</th>
-            <th class="right">Balance</th>
-          </tr></thead>
-          <tbody>
-            <tr><td colspan="4" class="helper">Opening Balance:</td><td class="right num">${rupiah(saldoBank.saldoAwal||0)}</td></tr>
-            ${trs}
-          </tbody>
-          <tfoot><tr><td colspan="4">Current Balance</td><td class="right num">${rupiah(saldoAkhir)}</td></tr></tfoot>
-        </table>
-      </div>
-    </div>
-    <div class="ledger-grandtotal">
-      <span>Current Balance:</span>
-      <span class="amt">${rupiah(saldoAkhir)}</span>
-    </div>`;
-  document.getElementById('printOrientationOverride')?.remove();
-  document.getElementById('printArea').innerHTML = `<div style="padding:6mm;">${html}</div>`;
-  setTimeout(()=> window.print(), 300);
+  const win = window.open('','_blank','width=1100,height=800');
+  win.document.write(`<!DOCTYPE html>
+<html lang="id"><head><meta charset="UTF-8">
+<title>Cash Balance — ${esc(ta?.namaKelas||'')} ${esc(ta?.label||'')}</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',Arial,sans-serif;color:#131A26;background:#fff;padding:28px 36px;}
+.report-head{text-align:center;margin-bottom:20px;}
+.report-head h2{font-size:18px;font-weight:700;color:#003F80;margin-bottom:2px;}
+.report-head .sub1{font-size:13px;color:#5B6B80;}
+.report-head .sub2{font-size:11.5px;color:#5B6B80;margin-top:2px;}
+.ledger-account{margin-bottom:22px;border:1px solid #DDEEFF;border-radius:8px;overflow:hidden;}
+.ledger-head{background:#EAF3FF;color:#003F80;padding:8px 12px;font-weight:700;font-size:13px;display:flex;justify-content:space-between;gap:10px;}
+table{width:100%;border-collapse:collapse;font-size:12.5px;}
+th{text-align:left;background:#F7FAFC;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#5B6B80;padding:9px 10px;border-bottom:2px solid #DDEEFF;white-space:nowrap;}
+th.right{text-align:right;}
+td{padding:8px 10px;border-bottom:1px solid #DDEEFF;vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:#F8FBFF;}
+tfoot td{font-weight:700;background:#F0F5FF;border-top:2px solid #DDEEFF;}
+.grandtotal{display:flex;justify-content:flex-end;gap:12px;align-items:baseline;margin-top:14px;font-size:15px;color:#131A26;}
+.grandtotal .amt{font-family:monospace;font-weight:700;font-size:19px;color:#003F80;}
+.helper{font-size:11.5px;color:#5B6B80;}
+@media print{body{padding:16px 20px;}@page{size:A4;margin:10mm;}tr{page-break-inside:avoid;}}
+</style>
+</head><body>
+<div class="report-head">
+  <h2>Cash Balance — ${esc(ta?.namaKelas || ta?.label || 'Class Cash')}</h2>
+  <div class="sub1">${esc(ta?.namaSekolah || '')}</div>
+  <div class="sub2">School Year ${esc(ta?.label||'-')} &middot; Printed ${tanggalCetak}</div>
+</div>
+<div class="ledger-account">
+  <div class="ledger-head">
+    <span>Cash Balance Mutation</span>
+    <span>${rupiah(saldoAkhir)}</span>
+  </div>
+  <table>
+    <thead><tr>
+      <th>Date</th>
+      <th>Description</th>
+      <th class="right">Cash In</th>
+      <th class="right">Cash Out</th>
+      <th class="right">Balance</th>
+    </tr></thead>
+    <tbody>
+      <tr><td colspan="4" class="helper">Opening Balance:</td><td style="text-align:right;font-family:monospace;font-weight:700;">${rupiah(saldoBank.saldoAwal||0)}</td></tr>
+      ${trs}
+    </tbody>
+    <tfoot><tr>
+      <td colspan="4">Current Balance</td>
+      <td style="text-align:right;font-family:monospace;">${rupiah(saldoAkhir)}</td>
+    </tr></tfoot>
+  </table>
+</div>
+<div class="grandtotal">
+  <span>Current Balance:</span>
+  <span class="amt">${rupiah(saldoAkhir)}</span>
+</div>
+</body></html>`);
+  win.document.close();
+  win.focus();
+  setTimeout(()=>{ win.print(); }, 400);
 }
+
 async function unduhLaporanSaldoKasGambar(){
   const rows = buildMutasiBank();
   if(rows.length===0){ toast('No transactions to save as image yet','err'); return; }
