@@ -555,6 +555,18 @@
   .guide-steps{counter-reset:gstep; padding-left:26px; margin:10px 0;}
   .guide-steps li{list-style:none; position:relative; padding-left:6px; margin-bottom:10px;}
   .guide-steps li::before{counter-increment:gstep; content:counter(gstep); position:absolute; left:-26px; top:0; width:19px; height:19px; background:var(--navy); color:#fff; border-radius:50%; font-size:10.5px; font-weight:700; display:flex; align-items:center; justify-content:center;}
+
+  /* === Attachment / Cloudinary Upload === */
+  .attach-box{border:1.5px dashed #DDEEFF;border-radius:8px;padding:10px 12px;background:#F8FBFF;display:flex;align-items:center;gap:10px;flex-wrap:wrap;cursor:pointer;transition:border-color .15s;}
+  .attach-box:hover{border-color:#0094DA;background:#EAF3FF;}
+  .attach-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:6px;border:1px solid #DDEEFF;background:#fff;color:#0369A1;font-size:12.5px;font-weight:600;cursor:pointer;flex-shrink:0;}
+  .attach-btn:hover{background:#EAF3FF;}
+  .attach-preview{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;}
+  .attach-thumb{position:relative;width:60px;height:60px;border-radius:6px;overflow:hidden;border:1px solid #DDEEFF;flex-shrink:0;}
+  .attach-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+  .attach-thumb .rm{position:absolute;top:1px;right:1px;width:16px;height:16px;border-radius:50%;background:rgba(239,68,68,0.85);color:#fff;border:none;cursor:pointer;font-size:10px;display:flex;align-items:center;justify-content:center;line-height:1;}
+  .attach-label{font-size:12px;color:#5B7FA6;}
+  .attach-uploading{font-size:12px;color:#0094DA;font-weight:600;}
   .guide-card h3{font-size:16px; margin:0 0 8px 0; color:var(--navy); scroll-margin-top:14px;}
   .guide-card p, .guide-card li{font-size:13.5px;}
   .guide-card table{font-size:13px;}
@@ -806,6 +818,20 @@
           </div>
 
           <div class="field">
+            <label>Attachment (optional) — foto bukti transfer</label>
+            <div class="attach-box" onclick="triggerUpload('bayarAttachInput','bayarAttachUrls','bayarAttachPreview')">
+              <button class="attach-btn" type="button">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                Upload Foto
+              </button>
+              <span class="attach-label" id="bayarAttachLabel">Foto bukti transfer (jpg, png, pdf)</span>
+            </div>
+            <input type="file" id="bayarAttachInput" accept="image/*,application/pdf" multiple style="display:none" onchange="handleAttachUpload(this,'bayarAttachUrls','bayarAttachPreview','bayarAttachLabel')">
+            <div class="attach-preview" id="bayarAttachPreview"></div>
+            <input type="hidden" id="bayarAttachUrls" value="">
+          </div>
+
+          <div class="field">
             <label>Total Amount</label>
             <div class="mono" id="bayarTotalPreview" style="font-size:20px; font-weight:700; color:var(--navy);">Rp 0</div>
           </div>
@@ -978,6 +1004,16 @@
           <div class="field">
             <label>Description</label>
             <input type="text" id="pengeluaranKeterangan" placeholder="e.g. Oasis gallon refill + bank admin fee">
+          </div>
+          <div class="field">
+            <label>Attachment (optional) — foto nota/struk</label>
+            <div class="attach-box" onclick="triggerUpload('pengeluaranAttachInput','pengeluaranAttachUrls','pengeluaranAttachPreview')">
+              <button class="attach-btn" type="button">📎 Pilih Foto</button>
+              <span class="attach-label" id="pengeluaranAttachLabel">Klik untuk upload foto nota/struk</span>
+            </div>
+            <input type="file" id="pengeluaranAttachInput" accept="image/*,application/pdf" multiple style="display:none" onchange="handleAttachUpload(this,'pengeluaranAttachUrls','pengeluaranAttachPreview','pengeluaranAttachLabel')">
+            <div class="attach-preview" id="pengeluaranAttachPreview"></div>
+            <input type="hidden" id="pengeluaranAttachUrls" value="">
           </div>
           <p class="helper">Reference No. is generated automatically (e.g. <span class="mono" id="pengeluaranNoRefPreview">CD000001</span>) once saved.</p>
           <button class="btn btn-primary" id="pengeluaranSaveBtn" onclick="simpanPengeluaran()">Save Expense</button>
@@ -1657,6 +1693,19 @@ service cloud.firestore {
       <label>Notes (optional)</label>
       <input type="text" id="editBayarKeterangan" placeholder="e.g. paid directly by parent">
     </div>
+    <div class="field">
+      <label>Attachment — foto bukti transfer</label>
+      <div class="attach-box" onclick="triggerUpload('editBayarAttachInput','editBayarAttachUrls','editBayarAttachPreview')">
+        <button class="attach-btn" type="button">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          Upload / Ganti Foto
+        </button>
+        <span class="attach-label" id="editBayarAttachLabel">Foto bukti transfer (jpg, png, pdf)</span>
+      </div>
+      <input type="file" id="editBayarAttachInput" accept="image/*,application/pdf" multiple style="display:none" onchange="handleAttachUpload(this,'editBayarAttachUrls','editBayarAttachPreview','editBayarAttachLabel')">
+      <div class="attach-preview" id="editBayarAttachPreview"></div>
+      <input type="hidden" id="editBayarAttachUrls" value="">
+    </div>
     <div class="modal-foot">
       <button class="btn btn-outline" onclick="closeModal('modalEditBayar')">Cancel</button>
       <button class="btn btn-primary" onclick="simpanEditPembayaran()">Save Changes</button>
@@ -1758,6 +1807,19 @@ service cloud.firestore {
     <div class="field">
       <label>Description</label>
       <input type="text" id="editPengeluaranKeterangan" placeholder="e.g. Oasis gallon refill">
+    </div>
+    <div class="field">
+      <label>Attachment — foto nota/struk</label>
+      <div class="attach-box" onclick="triggerUpload('editPengeluaranAttachInput','editPengeluaranAttachUrls','editPengeluaranAttachPreview')">
+        <button class="attach-btn" type="button">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          Upload / Ganti Foto
+        </button>
+        <span class="attach-label" id="editPengeluaranAttachLabel">Foto nota / struk belanja (jpg, png, pdf)</span>
+      </div>
+      <input type="file" id="editPengeluaranAttachInput" accept="image/*,application/pdf" multiple style="display:none" onchange="handleAttachUpload(this,'editPengeluaranAttachUrls','editPengeluaranAttachPreview','editPengeluaranAttachLabel')">
+      <div class="attach-preview" id="editPengeluaranAttachPreview"></div>
+      <input type="hidden" id="editPengeluaranAttachUrls" value="">
     </div>
     <div class="modal-foot">
       <button class="btn btn-outline" onclick="closeModal('modalEditPengeluaran')">Cancel</button>
@@ -1876,6 +1938,20 @@ service cloud.firestore {
 
 <!-- Print area for receipt -->
 <div id="printArea"></div>
+
+<!-- Attachment Viewer Modal -->
+<div class="overlay" id="modalAttach" onclick="if(event.target===this)closeModal('modalAttach')">
+  <div class="modal wide">
+    <div class="modal-head">
+      <h3>Lampiran</h3>
+      <button class="icon-btn" onclick="closeModal('modalAttach')">✕</button>
+    </div>
+    <div id="attachViewerContent" style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;padding:8px 0;"></div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeModal('modalAttach')">Tutup</button>
+    </div>
+  </div>
+</div>
 
 <!-- Public read-only "share with parents" viewer (no login). Shown only when the URL has ?public=<schoolYearId> -->
 <div class="auth-screen public-view-screen" id="publicViewScreen" style="display:none;">
@@ -3084,6 +3160,108 @@ function updateBayarTotal(){
   const total = nominal * bayarSelectedMonths.size;
   document.getElementById('bayarTotalPreview').textContent = rupiah(total);
 }
+
+/* ============================================================
+   CLOUDINARY ATTACHMENT — Upload foto ke Cloudinary
+   Cloud: amrieproject | Preset: amrieproject (unsigned)
+   ============================================================ */
+const CLOUDINARY_CLOUD = 'amrieproject';
+const CLOUDINARY_PRESET = 'amrieproject';
+const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/auto/upload`;
+
+function triggerUpload(inputId, urlsId, previewId){
+  document.getElementById(inputId).click();
+}
+
+async function uploadToCloudinary(file){
+  const fd = new FormData();
+  fd.append('file', file);
+  fd.append('upload_preset', CLOUDINARY_PRESET);
+  fd.append('folder', 'kas-kelas');
+  const res = await fetch(CLOUDINARY_URL, { method:'POST', body:fd });
+  if(!res.ok) throw new Error('Upload failed: ' + res.statusText);
+  const data = await res.json();
+  return data.secure_url;
+}
+
+async function handleAttachUpload(input, urlsId, previewId, labelId){
+  const files = Array.from(input.files);
+  if(!files.length) return;
+  const label = document.getElementById(labelId);
+  label.textContent = `Uploading ${files.length} file...`;
+  label.className = 'attach-uploading';
+  const existingRaw = document.getElementById(urlsId).value;
+  const existing = existingRaw ? existingRaw.split(',').filter(Boolean) : [];
+  try{
+    const newUrls = await Promise.all(files.map(f => uploadToCloudinary(f)));
+    const all = existing.concat(newUrls);
+    document.getElementById(urlsId).value = all.join(',');
+    renderAttachPreview(previewId, all, urlsId, labelId);
+    label.textContent = `${all.length} file terlampir`;
+    label.className = 'attach-label';
+    toast('Upload berhasil!', 'ok');
+  }catch(e){
+    label.textContent = 'Upload gagal — coba lagi';
+    label.className = 'attach-label';
+    toast('Upload gagal: ' + e.message, 'err');
+  }
+  input.value = '';
+}
+
+function renderAttachPreview(previewId, urls, urlsId, labelId){
+  const el = document.getElementById(previewId);
+  el.innerHTML = urls.map((url, i) => {
+    const isPdf = url.toLowerCase().includes('.pdf') || url.includes('/raw/');
+    return `<div class="attach-thumb">
+      ${isPdf
+        ? `<a href="${url}" target="_blank" style="display:flex;align-items:center;justify-content:center;height:100%;background:#EAF3FF;text-decoration:none;font-size:20px;">📄</a>`
+        : `<a href="${url}" target="_blank"><img src="${url}" loading="lazy"></a>`
+      }
+      <button class="rm" title="Hapus" onclick="removeAttach(${i}, '${urlsId}', '${previewId}', '${labelId}')">✕</button>
+    </div>`;
+  }).join('');
+}
+
+
+function showAttachModal(urls){
+  const el = document.getElementById('attachViewerContent');
+  el.innerHTML = urls.map(url=>{
+    const isPdf = url.toLowerCase().includes('.pdf') || url.includes('/raw/');
+    if(isPdf) return `<a href="${url}" target="_blank" style="display:flex;flex-direction:column;align-items:center;gap:6px;text-decoration:none;color:var(--navy);padding:16px 24px;border:1px solid var(--paper-line);border-radius:8px;background:#EAF3FF;">
+      <span style="font-size:36px;">📄</span>
+      <span style="font-size:12px;font-weight:600;">Buka PDF</span>
+    </a>`;
+    return `<a href="${url}" target="_blank" style="display:block;border-radius:8px;overflow:hidden;border:1px solid var(--paper-line);">
+      <img src="${url}" style="max-width:280px;max-height:320px;object-fit:contain;display:block;background:#f9f9f9;">
+    </a>`;
+  }).join('');
+  openModal('modalAttach');
+}
+function removeAttach(idx, urlsId, previewId, labelId){
+  const raw = document.getElementById(urlsId).value;
+  const urls = raw.split(',').filter(Boolean);
+  urls.splice(idx, 1);
+  document.getElementById(urlsId).value = urls.join(',');
+  const label = document.getElementById(labelId);
+  label.textContent = urls.length ? `${urls.length} file terlampir` : 'Klik untuk upload foto';
+  label.className = 'attach-label';
+  renderAttachPreview(previewId, urls, urlsId, labelId);
+}
+
+function resetAttachField(urlsId, previewId, labelId, defaultLabel){
+  document.getElementById(urlsId).value = '';
+  document.getElementById(previewId).innerHTML = '';
+  document.getElementById(labelId).textContent = defaultLabel;
+  document.getElementById(labelId).className = 'attach-label';
+}
+
+function loadAttachPreview(urls, previewId, urlsId, labelId){
+  if(!urls || !urls.length) return;
+  document.getElementById(urlsId).value = urls.join(',');
+  document.getElementById(labelId).textContent = `${urls.length} file terlampir`;
+  renderAttachPreview(previewId, urls, urlsId, labelId);
+}
+
 async function simpanPembayaran(){
   const studentId = document.getElementById('bayarSiswaSelect').value;
   const ta = currentTA();
@@ -3100,11 +3278,13 @@ async function simpanPembayaran(){
   const bulanList = Array.from(bayarSelectedMonths)
     .map(bulan => ({ bulan, tahun: tahunUntukBulan(ta?.label, bulan) }))
     .sort((a,b)=> PERIODE_URUT.indexOf(a.bulan) - PERIODE_URUT.indexOf(b.bulan));
+  const attachUrls = (document.getElementById('bayarAttachUrls').value||'').split(',').filter(Boolean);
   const obj = {
     studentId, bulanList,
     nominalPerBulan: nominal,
     total: nominal * bulanList.length,
     tanggal, metode, keterangan,
+    attachUrls: attachUrls.length ? attachUrls : [],
     createdAt: Date.now()
   };
   try{
@@ -3114,6 +3294,7 @@ async function simpanPembayaran(){
     sendFonnteWA(pesanNotifPembayaran('Added', obj, s, ta));
     bayarSelectedMonths = new Set();
     document.getElementById('bayarKeterangan').value = '';
+    resetAttachField('bayarAttachUrls','bayarAttachPreview','bayarAttachLabel','Klik untuk upload foto bukti transfer');
     onBayarSiswaChange();
     renderRiwayatTable();
   }catch(e){ toast('Failed to save payment: '+e.message,'err'); }
@@ -3129,8 +3310,10 @@ function renderRiwayatTable(){
   }
   const rows = list.map(p=>{
     const s = findSiswa(p.studentId);
+    const attachBadgeBayar = p.attachUrls && p.attachUrls.length
+      ? `<span title="Lihat ${p.attachUrls.length} lampiran" style="cursor:pointer;margin-left:5px;display:inline-flex;align-items:center;gap:2px;background:#EAF3FF;border:1px solid #DDEEFF;border-radius:4px;padding:1px 5px;font-size:11px;color:#0369A1;font-weight:600;" onclick='showAttachModal(${JSON.stringify(p.attachUrls)})'><svg width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.5'><path d='M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z'/><circle cx='12' cy='13' r='4'/></svg>${p.attachUrls.length}</span>` : '';
     return `<tr>
-      <td>${esc(s?.nama || '(student deleted)')}</td>
+      <td>${esc(s?.nama || '(student deleted)')}${attachBadgeBayar}</td>
       <td>${esc(formatBulanTahunText(p, false))}</td>
       <td class="right num">${rupiah(p.total)}</td>
       <td>${formatTanggalPanjang(p.tanggal)}</td>
@@ -3182,6 +3365,8 @@ function editPembayaran(id){
     </div>`;
   }).join('');
   updateEditBayarTotal();
+  resetAttachField('editBayarAttachUrls','editBayarAttachPreview','editBayarAttachLabel','Klik untuk upload / ganti foto');
+  if(p.attachUrls && p.attachUrls.length) loadAttachPreview(p.attachUrls,'editBayarAttachPreview','editBayarAttachUrls','editBayarAttachLabel');
   openModal('modalEditBayar');
 }
 function toggleEditBulanChip(bulan, lockedByOther){
@@ -3211,11 +3396,13 @@ async function simpanEditPembayaran(){
   const bulanList = Array.from(editBayarSelectedMonths)
     .map(bulan => ({ bulan, tahun: tahunUntukBulan(ta?.label, bulan) }))
     .sort((a,b)=> PERIODE_URUT.indexOf(a.bulan) - PERIODE_URUT.indexOf(b.bulan));
+  const editAttachUrls = (document.getElementById('editBayarAttachUrls').value||'').split(',').filter(Boolean);
   const obj = {
     bulanList,
     nominalPerBulan: nominal,
     total: nominal * bulanList.length,
-    tanggal, metode, keterangan
+    tanggal, metode, keterangan,
+    attachUrls: editAttachUrls
   };
   try{
     await dbUpdatePembayaran(id, obj);
@@ -4069,7 +4256,8 @@ async function simpanPengeluaran(){
   if(!keterangan){ toast('Description is required','err'); return; }
   if(nominal<=0){ toast('Amount must be greater than 0','err'); return; }
   const noRef = generateNoRefPengeluaran();
-  const obj = { kegiatanId, noRef, tanggal, keterangan, nominal, createdAt: Date.now() };
+  const attachUrls = (document.getElementById('pengeluaranAttachUrls').value||'').split(',').filter(Boolean);
+  const obj = { kegiatanId, noRef, tanggal, keterangan, nominal, attachUrls: attachUrls.length ? attachUrls : [], createdAt: Date.now() };
   try{
     await dbAddPengeluaran(obj);
     toast('Expense recorded successfully','ok');
@@ -4082,6 +4270,7 @@ async function simpanPengeluaran(){
     document.getElementById('pengeluaranKeterangan').value = '';
     document.getElementById('pengeluaranNominal').value = '';
     document.getElementById('pengeluaranNoRefPreview').textContent = generateNoRefPengeluaran();
+    resetAttachField('pengeluaranAttachUrls','pengeluaranAttachPreview','pengeluaranAttachLabel','Klik untuk upload foto nota/struk');
     renderRiwayatPengeluaranTable();
   }catch(e){ toast('Failed to save expense: '+e.message,'err'); }
 }
@@ -4101,12 +4290,14 @@ function renderRiwayatPengeluaranTable(){
   const rows = list.map(p=>{
     const k = findKegiatan(p.kegiatanId);
     const a = k ? findAkun(k.akunId) : null;
+    const attachBadgePeng = p.attachUrls && p.attachUrls.length
+      ? `<span title="Lihat ${p.attachUrls.length} lampiran" style="cursor:pointer;margin-left:5px;display:inline-flex;align-items:center;gap:2px;background:#EAF3FF;border:1px solid #DDEEFF;border-radius:4px;padding:1px 5px;font-size:11px;color:#0369A1;font-weight:600;" onclick='showAttachModal(${JSON.stringify(p.attachUrls)})'><svg width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.5'><path d='M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z'/><circle cx='12' cy='13' r='4'/></svg>${p.attachUrls.length}</span>` : '';
     return `<tr>
       <td class="mono">${esc(p.noRef||'-')}</td>
       <td>${formatTanggalPanjang(p.tanggal)}</td>
       <td>${esc(k?.nama || '(activity deleted)')}</td>
       <td class="mono">${a ? esc(a.kode) : '-'}</td>
-      <td>${esc(p.keterangan)}</td>
+      <td>${esc(p.keterangan)}${attachBadgePeng}</td>
       <td class="right num">${rupiah(p.nominal)}</td>
       <td class="center">
         <div class="action-btns"><button class="icon-btn" title="Edit" onclick='editPengeluaran("${p.id}")'>✎</button>
@@ -4128,6 +4319,8 @@ function editPengeluaran(id){
   document.getElementById('editPengeluaranTanggal').value = p.tanggal||'';
   document.getElementById('editPengeluaranNominal').value = p.nominal||0;
   document.getElementById('editPengeluaranKeterangan').value = p.keterangan||'';
+  resetAttachField('editPengeluaranAttachUrls','editPengeluaranAttachPreview','editPengeluaranAttachLabel','Klik untuk upload / ganti foto');
+  if(p.attachUrls && p.attachUrls.length) loadAttachPreview(p.attachUrls,'editPengeluaranAttachPreview','editPengeluaranAttachUrls','editPengeluaranAttachLabel');
   openModal('modalEditPengeluaran');
 }
 async function simpanEditPengeluaran(){
@@ -4141,7 +4334,8 @@ async function simpanEditPengeluaran(){
   if(nominal<=0){ toast('Amount must be greater than 0','err'); return; }
   if(!keterangan){ toast('Description is required','err'); return; }
   try{
-    await dbUpdatePengeluaran(id, { kegiatanId, tanggal, nominal, keterangan });
+    const editPengAttachUrls = (document.getElementById('editPengeluaranAttachUrls').value||'').split(',').filter(Boolean);
+    await dbUpdatePengeluaran(id, { kegiatanId, tanggal, nominal, keterangan, attachUrls: editPengAttachUrls });
     toast('Expense updated','ok');
     const p = state.pengeluaran.find(x=>x.id===id);
     logAudit('edit','pengeluaran', `${p?.noRef||id} — ${keterangan} (${rupiah(nominal)})`);
