@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Class Cash Book</title>
 <link rel="manifest" href="./manifest.json">
-<meta name="theme-color" content="#14213D">
+<meta name="theme-color" content="#003F80">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -21,24 +21,24 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
   :root{
-    --navy:#14213D;
-    --navy-deep:#0A1120;
-    --paper:#F7FAFC;
-    --paper-line:#E1E8F0;
+    --navy:#003F80;
+    --navy-deep:#001A40;
+    --paper:#F0F5FF;
+    --paper-line:#DDEEFF;
     --ink:#131A26;
     --ink-soft:#5B6B80;
-    --gold:#22D3EE;
-    --gold-soft:#DFF7FF;
-    --green:#10B981;
-    --green-soft:#D1FAE5;
-    --maroon:#EF4444;
-    --maroon-soft:#FEE2E2;
+    --gold:#0094DA;
+    --gold-soft:#EAF3FF;
+    --green:#27AE60;
+    --green-soft:#E8FAF0;
+    --maroon:#E53E3E;
+    --maroon-soft:#FEE8E8;
     --radius:10px;
-    --shadow: 0 1px 2px rgba(20,33,61,0.08), 0 6px 20px rgba(20,33,61,0.10);
-    --teal:#22D3EE; --teal-soft:#CFFAFE;
-    --pink:#3B82F6; --pink-soft:#DBEAFE;
-    --purple:#818CF8; --purple-soft:#E0E7FF;
-    --blue:#22D3EE; --blue-soft:#CFFAFE;
+    --shadow: 0 1px 2px rgba(0,63,128,0.08), 0 6px 20px rgba(0,63,128,0.10);
+    --teal:#0094DA; --teal-soft:#EAF3FF;
+    --pink:#27AE60; --pink-soft:#E8FAF0;
+    --purple:#0070CC; --purple-soft:#D6EEFF;
+    --blue:#0094DA; --blue-soft:#EAF3FF;
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
@@ -58,7 +58,7 @@
   /* ===== Auth screens ===== */
   .auth-screen{
     min-height:100vh; display:flex; align-items:center; justify-content:center;
-    background:radial-gradient(ellipse at top, #22D3EE 0%, var(--navy-deep) 60%);
+    background:radial-gradient(ellipse at top, #0094DA 0%, var(--navy-deep) 60%);
     padding:20px;
   }
   .auth-card{
@@ -78,8 +78,9 @@
   .sidebar{
     width:236px;
     flex-shrink:0;
-    background:linear-gradient(180deg, var(--navy) 0%, var(--navy-deep) 100%);
-    color:#D7DEE8;
+    background:#ffffff;
+    color:#131A26;
+    border-right:1.5px solid #DDEEFF;
     padding:22px 14px;
     display:flex;
     flex-direction:column;
@@ -98,54 +99,120 @@
     width:34px;height:34px;border-radius:8px;
     background:var(--gold);
     display:flex;align-items:center;justify-content:center;
-    font-family:'Fraunces',serif; font-weight:700; color:#0A1120; font-size:17px;
+    font-family:'Fraunces',serif; font-weight:700; color:#ffffff; font-size:17px;
     flex-shrink:0;
   }
-  .brand-text .t1{font-family:'Fraunces',serif; font-size:15.5px; font-weight:700; line-height:1.2; color:#fff;}
-  .brand-text .t2{font-size:11px; color:#8CA0B8; margin-top:1px; font-weight:500;}
+  .brand-text .t1{font-family:'Fraunces',serif; font-size:15.5px; font-weight:700; line-height:1.2; color:#003F80;}
+  .brand-text .t2{font-size:11px; color:#5B7FA6; margin-top:1px; font-weight:500;}
 
   .ta-switcher{
-    padding:10px 8px; margin-bottom:12px; border-radius:9px; background:rgba(255,255,255,0.06);
-    border:1px solid rgba(255,255,255,0.12);
+    padding:10px 8px; margin-bottom:12px; border-radius:9px; background:#F0F5FF;
+    border:1px solid #DDEEFF;
   }
-  .ta-switcher label{font-size:10px; text-transform:uppercase; letter-spacing:.05em; color:#8CA0B8; margin-bottom:5px; display:block; font-weight:700;}
+  .ta-switcher label{font-size:10px; text-transform:uppercase; letter-spacing:.05em; color:#5B7FA6; margin-bottom:5px; display:block; font-weight:700;}
   .ta-switcher select{
-    width:100%; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.16); color:#fff;
+    width:100%; background:#ffffff; border:1px solid #DDEEFF; color:#003F80;
     font-size:12.5px; padding:6px 8px; border-radius:6px; margin-bottom:6px; font-weight:600;
   }
   .ta-switcher select option{color:#111;}
   .ta-add-btn{
-    width:100%; background:none; border:1px dashed rgba(34,211,238,0.4); color:var(--gold);
+    width:100%; background:none; border:1px dashed rgba(0,148,218,0.6); color:#0094DA;
     font-size:11.5px; padding:5px; border-radius:6px; cursor:pointer; font-weight:600;
   }
-  .ta-add-btn:hover{background:rgba(34,211,238,0.08); color:#7EE8FA;}
+  .ta-add-btn:hover{background:rgba(0,148,218,0.08); color:#0070CC;}
 
   nav.tabs{display:flex; flex-direction:column; gap:3px; flex:1; min-height:0; overflow-y:auto; padding-right:2px;}
   nav.tabs::-webkit-scrollbar{width:6px;}
-  nav.tabs::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15); border-radius:10px;}
+  nav.tabs::-webkit-scrollbar-thumb{background:rgba(0,63,128,0.15); border-radius:10px;}
   nav.tabs::-webkit-scrollbar-track{background:transparent;}
   .tab-btn{
     display:flex; align-items:center; gap:10px;
     padding:10px 12px; border-radius:8px; cursor:pointer;
-    color:#A9B8CB; font-size:13.5px; font-weight:500;
+    color:#5B7FA6; font-size:13.5px; font-weight:500;
     border:none; background:transparent; text-align:left; width:100%;
     transition:background .15s, color .15s;
   }
   .tab-btn svg{width:17px;height:17px; flex-shrink:0; opacity:.85;}
-  .tab-btn:hover{background:rgba(255,255,255,0.06); color:#fff;}
-  .tab-btn.active{background:rgba(34,211,238,0.14); color:#7EE8FA; border-left:3px solid var(--gold); padding-left:9px;}
-  .tab-btn.active svg{opacity:1; color:var(--gold);}
+  .tab-btn:hover{background:rgba(0,148,218,0.07); color:#003F80;}
+  .tab-btn.active{background:rgba(0,148,218,0.12); color:#003F80; border-left:3px solid #0094DA; padding-left:9px;}
+  .tab-btn.active svg{opacity:1; color:#0094DA;}
+  /* === Aksen warna per menu item — dengan background === */
+
+  /* Background default (selalu tampil, soft) */
+  .tab-btn[data-tab="dashboard"]        { background:#EFF8FF; color:#0369A1; border-radius:8px; }
+  .tab-btn[data-tab="siswa"]            { background:#F5F0FF; color:#6D28D9; border-radius:8px; }
+  .tab-btn[data-tab="pembayaran"]       { background:#ECFDF5; color:#047857; border-radius:8px; }
+  .tab-btn[data-tab="cetak"]            { background:#FFFBEB; color:#B45309; border-radius:8px; }
+  .tab-btn[data-tab="laporan"]          { background:#ECFEFF; color:#0E7490; border-radius:8px; }
+  .tab-btn[data-tab="penerimaanLain"]   { background:#F0FDF4; color:#15803D; border-radius:8px; }
+  .tab-btn[data-tab="pengeluaran"]      { background:#FFF1F2; color:#B91C1C; border-radius:8px; }
+  .tab-btn[data-tab="laporanPengeluaran"] { background:#FFF7ED; color:#C2410C; border-radius:8px; }
+  .tab-btn[data-tab="saldoKas"]         { background:#F0F9FF; color:#0369A1; border-radius:8px; }
+  .tab-btn[data-tab="users"]            { background:#FAF5FF; color:#7E22CE; border-radius:8px; }
+  .tab-btn[data-tab="auditLog"]         { background:#F8FAFC; color:#475569; border-radius:8px; }
+  .tab-btn[data-tab="pengaturan"]       { background:#EEF2FF; color:#4338CA; border-radius:8px; }
+  .tab-btn[data-tab="guide"]            { background:#FDF2F8; color:#BE185D; border-radius:8px; }
+
+  /* Warna ikon per menu */
+  .tab-btn[data-tab="dashboard"] svg        { color:#0094DA; }
+  .tab-btn[data-tab="siswa"] svg            { color:#8B5CF6; }
+  .tab-btn[data-tab="pembayaran"] svg       { color:#10B981; }
+  .tab-btn[data-tab="cetak"] svg            { color:#F59E0B; }
+  .tab-btn[data-tab="laporan"] svg          { color:#06B6D4; }
+  .tab-btn[data-tab="penerimaanLain"] svg   { color:#22C55E; }
+  .tab-btn[data-tab="pengeluaran"] svg      { color:#EF4444; }
+  .tab-btn[data-tab="laporanPengeluaran"] svg { color:#F97316; }
+  .tab-btn[data-tab="saldoKas"] svg         { color:#0EA5E9; }
+  .tab-btn[data-tab="users"] svg            { color:#A855F7; }
+  .tab-btn[data-tab="auditLog"] svg         { color:#64748B; }
+  .tab-btn[data-tab="pengaturan"] svg       { color:#6366F1; }
+  .tab-btn[data-tab="guide"] svg            { color:#EC4899; }
+
+  /* State aktif: lebih pekat + border kiri tebal */
+  .tab-btn.active { border-radius:8px; padding-left:9px; font-weight:600; }
+  .tab-btn.active[data-tab="dashboard"]        { background:#DBEFFE; color:#0369A1; border-left:3px solid #0094DA; }
+  .tab-btn.active[data-tab="siswa"]            { background:#EDE9FE; color:#6D28D9; border-left:3px solid #8B5CF6; }
+  .tab-btn.active[data-tab="pembayaran"]       { background:#D1FAE5; color:#047857; border-left:3px solid #10B981; }
+  .tab-btn.active[data-tab="cetak"]            { background:#FEF3C7; color:#B45309; border-left:3px solid #F59E0B; }
+  .tab-btn.active[data-tab="laporan"]          { background:#CFFAFE; color:#0E7490; border-left:3px solid #06B6D4; }
+  .tab-btn.active[data-tab="penerimaanLain"]   { background:#DCFCE7; color:#15803D; border-left:3px solid #22C55E; }
+  .tab-btn.active[data-tab="pengeluaran"]      { background:#FFE4E6; color:#B91C1C; border-left:3px solid #EF4444; }
+  .tab-btn.active[data-tab="laporanPengeluaran"] { background:#FFEDD5; color:#C2410C; border-left:3px solid #F97316; }
+  .tab-btn.active[data-tab="saldoKas"]         { background:#E0F2FE; color:#0369A1; border-left:3px solid #0EA5E9; }
+  .tab-btn.active[data-tab="users"]            { background:#F3E8FF; color:#7E22CE; border-left:3px solid #A855F7; }
+  .tab-btn.active[data-tab="auditLog"]         { background:#F1F5F9; color:#475569; border-left:3px solid #64748B; }
+  .tab-btn.active[data-tab="pengaturan"]       { background:#E0E7FF; color:#4338CA; border-left:3px solid #6366F1; }
+  .tab-btn.active[data-tab="guide"]            { background:#FCE7F3; color:#BE185D; border-left:3px solid #EC4899; }
+
+  /* Hover: sedikit lebih gelap dari default */
+  .tab-btn[data-tab="dashboard"]:hover        { background:#DBEFFE; }
+  .tab-btn[data-tab="siswa"]:hover            { background:#EDE9FE; }
+  .tab-btn[data-tab="pembayaran"]:hover       { background:#D1FAE5; }
+  .tab-btn[data-tab="cetak"]:hover            { background:#FEF3C7; }
+  .tab-btn[data-tab="laporan"]:hover          { background:#CFFAFE; }
+  .tab-btn[data-tab="penerimaanLain"]:hover   { background:#DCFCE7; }
+  .tab-btn[data-tab="pengeluaran"]:hover      { background:#FFE4E6; }
+  .tab-btn[data-tab="laporanPengeluaran"]:hover { background:#FFEDD5; }
+  .tab-btn[data-tab="saldoKas"]:hover         { background:#E0F2FE; }
+  .tab-btn[data-tab="users"]:hover            { background:#F3E8FF; }
+  .tab-btn[data-tab="auditLog"]:hover         { background:#F1F5F9; }
+  .tab-btn[data-tab="pengaturan"]:hover       { background:#E0E7FF; }
+  .tab-btn[data-tab="guide"]:hover            { background:#FCE7F3; }
+
+  /* svg aktif: opacity penuh */
+  .tab-btn.active svg { opacity:1; }
+
   .sidebar-foot{
-    font-size:10.5px; color:#8CA0B8; padding:10px 8px 0 8px;
-    border-top:1px solid rgba(255,255,255,0.12); margin-top:10px;
+    font-size:10.5px; color:#5B7FA6; padding:10px 8px 0 8px;
+    border-top:1px solid #DDEEFF; margin-top:10px;
   }
   .conn-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;position:relative;top:-1px;}
-  .conn-dot.on{background:#2DE8A8;}
+  .conn-dot.on{background:#0094DA;}
   .conn-dot.off{background:#FF8A8A;}
   .who-row{display:flex; align-items:center; justify-content:space-between; margin-top:8px;}
-  .who-row .email{font-size:11px; color:#A9B8CB; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:150px;}
-  .logout-btn{background:none;border:none;color:#7EE8FA;font-size:11px;cursor:pointer; text-decoration:underline;}
-  .role-badge{font-size:9.5px; text-transform:uppercase; letter-spacing:.05em; background:rgba(34,211,238,0.18); color:var(--gold); padding:1px 6px; border-radius:10px; margin-left:5px; font-weight:700;}
+  .who-row .email{font-size:11px; color:#5B7FA6; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:150px;}
+  .logout-btn{background:none;border:none;color:#0094DA;font-size:11px;cursor:pointer; text-decoration:underline;}
+  .role-badge{font-size:9.5px; text-transform:uppercase; letter-spacing:.05em; background:rgba(0,148,218,0.12); color:#0070CC; padding:1px 6px; border-radius:10px; margin-left:5px; font-weight:700;}
 
   /* ===== Mobile topbar + off-canvas sidebar ===== */
   .mobile-topbar{
@@ -233,7 +300,7 @@
   .card h2{font-size:16px; margin:0 0 14px 0; color:var(--navy); display:flex; align-items:center; gap:8px;}
   .card h2 .badge{
     font-family:'Public Sans'; font-size:10.5px; font-weight:700; text-transform:uppercase;
-    letter-spacing:.04em; background:var(--gold-soft); color:#0A1120; padding:2px 8px; border-radius:20px;
+    letter-spacing:.04em; background:var(--gold-soft); color:#003F80; padding:2px 8px; border-radius:20px;
   }
   .card details > summary{cursor:pointer; list-style:none;}
   .card details > summary::-webkit-details-marker{display:none;}
@@ -292,8 +359,8 @@
     font-size:13px; font-weight:600; font-family:'Public Sans'; transition:all .15s;
   }
   .btn-primary{background:var(--navy); color:#fff;}
-  .btn-primary:hover{background:#0A1120;}
-  .btn-gold{background:var(--gold); color:#0A1120;}
+  .btn-primary:hover{background:#002D6B;}
+  .btn-gold{background:var(--gold); color:#ffffff;}
   .btn-gold:hover{background:#0EA5C7;}
   .btn-outline{background:#fff; border-color:var(--paper-line); color:var(--navy);}
   .btn-outline:hover{background:#f5f1e6;}
@@ -395,7 +462,7 @@
     box-shadow:0 6px 24px rgba(20,33,61,0.14);
   }
   .r2-top{
-    background:linear-gradient(135deg, #7C4FA8 0%, #9B4E8A 100%);
+    background:linear-gradient(135deg, #003F80 0%, #0057A8 100%);
     color:#fff; padding:9mm 9mm 7mm 9mm; position:relative;
   }
   .r2-brand{display:flex; align-items:center; gap:8px; margin-bottom:10mm;}
@@ -406,11 +473,11 @@
   }
   .r2-mark img{ width:100%; height:100%; object-fit:contain; display:block; }
   .r2-school{font-family:'Fraunces',serif; font-size:14.5px; font-weight:700; line-height:1.2;}
-  .r2-class{font-size:10.5px; color:#FCE4F3; margin-top:1px;}
+  .r2-class{font-size:10.5px; color:#B3D9FF; margin-top:1px;}
   .r2-title-row{display:flex; justify-content:space-between; align-items:flex-end;}
   .r2-title{font-family:'Fraunces',serif; font-size:20px; font-weight:700; letter-spacing:.01em;}
-  .r2-title-sub{font-size:10px; color:#FCE4F3; text-transform:uppercase; letter-spacing:.08em; margin-top:2px;}
-  .r2-no{font-family:'JetBrains Mono'; font-size:10.5px; color:#FCE4F3; text-align:right;}
+  .r2-title-sub{font-size:10px; color:#B3D9FF; text-transform:uppercase; letter-spacing:.08em; margin-top:2px;}
+  .r2-no{font-family:'JetBrains Mono'; font-size:10.5px; color:#B3D9FF; text-align:right;}
   .r2-perf{
     position:relative; height:0; border-top:2px dashed rgba(20,33,61,0.18);
   }
@@ -423,12 +490,12 @@
   @media print{ .r2-perf::before, .r2-perf::after{ background:#fff; } }
   .r2-body{padding:8mm 9mm 9mm 9mm;}
   .r2-amount-box{
-    background:#FBEAF7; border-radius:10px; padding:5mm 6mm; text-align:center; margin-bottom:6mm; position:relative;
+    background:#EAF3FF; border-radius:10px; padding:5mm 6mm; text-align:center; margin-bottom:6mm; position:relative;
   }
   .r2-amount-label{font-size:10.5px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.06em; font-weight:700;}
-  .r2-amount-value{font-family:'JetBrains Mono'; font-size:26px; font-weight:700; color:#6B3F94; margin-top:2px;}
+  .r2-amount-value{font-family:'JetBrains Mono'; font-size:26px; font-weight:700; color:#003F80; margin-top:2px;}
   .r2-grid{display:grid; grid-template-columns:1fr 1fr; gap:0 5mm;}
-  .r2-item{padding:2.6mm 0; border-bottom:1px dotted #EDDCEE;}
+  .r2-item{padding:2.6mm 0; border-bottom:1px dotted #DDEEFF;}
   .r2-item.full{grid-column:1 / -1;}
   .r2-item-label{display:block; font-size:9.5px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.04em;}
   .r2-item-value{display:block; font-size:12.5px; font-weight:600; color:var(--ink); margin-top:1px;}
@@ -439,7 +506,7 @@
   .r2-stamp{
     position:absolute; top:6mm; right:9mm; transform:rotate(-9deg);
     width:78px; height:78px; border-radius:50%; z-index:1; pointer-events:none;
-    border:3px solid #FCE4F3; color:#FCE4F3; display:flex; align-items:center; justify-content:center;
+    border:3px solid #B3D9FF; color:#B3D9FF; display:flex; align-items:center; justify-content:center;
     font-family:'Fraunces',serif; font-weight:700; font-size:11px; text-align:center;
     line-height:1.15; letter-spacing:.03em; background:rgba(255,255,255,0.08);
   }
@@ -448,7 +515,7 @@
   ::-webkit-scrollbar-thumb{background:#d9d2bf; border-radius:8px;}
 
   .helper{font-size:11.5px; color:var(--ink-soft); margin-top:4px;}
-  .config-box{background:#EAFBFF; border:1.5px dashed var(--gold); border-radius:8px; padding:14px 16px; margin-bottom:16px; font-size:12.5px; color:#0A1120;}
+  .config-box{background:#EAF3FF; border:1.5px dashed var(--gold); border-radius:8px; padding:14px 16px; margin-bottom:16px; font-size:12.5px; color:#001A40;}
   code.inl{background:#DCF5F1; padding:1px 5px; border-radius:4px; font-family:'JetBrains Mono'; font-size:11.5px;}
 
   /* ===== Expense ledger report ===== */
@@ -456,7 +523,7 @@
   .ledger-account:last-child{margin-bottom:0;}
   .ledger-table-scroll{overflow-x:auto; -webkit-overflow-scrolling:touch;}
   .ledger-table-scroll table{min-width:520px;}
-  .ledger-account-head{background:var(--gold-soft); color:#0A1120; padding:8px 12px; font-weight:700; font-size:13px; display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap;}
+  .ledger-account-head{background:var(--gold-soft); color:#003F80; padding:8px 12px; font-weight:700; font-size:13px; display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap;}
   .ledger-account table{font-size:12.5px;}
   .ledger-account table td:first-child, .ledger-account table th:first-child{white-space:nowrap;}
   .ledger-account th{background:#faf8f2;}
@@ -780,7 +847,7 @@
             <div class="sub">Summary of cash payment status for all students in this school year</div>
           </div>
           <div style="display:flex; gap:10px; align-items:center;">
-            <span class="pill" id="rekapPeriodeBadge" style="background:var(--gold-soft); color:#0A1120;">-</span>
+            <span class="pill" id="rekapPeriodeBadge" style="background:var(--gold-soft); color:#003F80;">-</span>
             <button class="btn btn-outline" onclick="cetakLaporanKasMasuk()">🖨 Print Report</button>
             <button class="btn btn-outline" onclick="exportRekapCSV()">⬇ Export CSV</button>
           </div>
@@ -4451,7 +4518,7 @@ function renderPengaturanTab(){
       : "✅ Connected to this app's built-in Firebase project — data is synced in realtime to everyone who opens this link.";
   }else if(forcedLocal){
     badge.textContent = 'Local Mode (forced)';
-    badge.style.background = 'var(--gold-soft)'; badge.style.color = '#0A1120';
+    badge.style.background = 'var(--gold-soft)'; badge.style.color = '#003F80';
     statusText.innerHTML = 'ℹ️ Firebase has been manually disabled on this device. Data is only stored in this browser.';
   }else{
     badge.textContent = 'Local Mode (fallback)';
@@ -4505,7 +4572,7 @@ function renderFonnteSettingsUI(){
     statusText.textContent = '⚠️ Enabled, but Token and/or Recipient Number(s) are still empty — notifications will not be sent yet.';
   }else{
     badge.textContent = 'Off';
-    badge.style.background = 'var(--gold-soft)'; badge.style.color = '#0A1120';
+    badge.style.background = 'var(--gold-soft)'; badge.style.color = '#003F80';
     statusText.textContent = '';
   }
 }
