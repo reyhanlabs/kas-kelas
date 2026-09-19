@@ -3859,9 +3859,7 @@ function printKegiatanTable(){
     const totalSpent   = pengeluaranK.reduce((sum,p)=>sum+Number(p.nominal||0),0);
     return `<tr>
       <td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;text-align:center;color:#6b7280;">${i+1}</td>
-      <td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;font-weight:600;color:#003F80;">
-        ${esc(k.nama)}${k.isDefault ? ' <span style="font-size:10px;background:#EAF3FF;color:#0369A1;padding:1px 7px;border-radius:10px;font-weight:700;">Default</span>' : ''}
-      </td>
+      <td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;color:#1a1a2e;">${esc(k.nama)}</td>
       <td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;font-family:monospace;font-size:12px;color:#374151;">${a ? esc(a.kode)+' — '+esc(a.nama) : '—'}</td>
       <td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;text-align:right;font-family:monospace;color:#374151;">${pengeluaranK.length > 0 ? rupiah(totalSpent) : '—'}</td>
       <td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;text-align:center;color:#6b7280;">${pengeluaranK.length || '—'}</td>
@@ -3903,7 +3901,7 @@ function printKegiatanTable(){
 </style>
 </head><body>
 <div class="kop">
-  <div class="kop-mark">K</div>
+  <div class="kop-mark">${(namaKelas||'K').substring(0,2).toUpperCase()}</div>
   <div>
     <div class="kop-sekolah">${esc(namaSekolah)}</div>
     <div class="kop-sub">${esc(namaKelas)}${label ? ' &nbsp;·&nbsp; School Year ' + esc(label) : ''}</div>
