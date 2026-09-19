@@ -4397,8 +4397,9 @@ function cetakLaporanPengeluaran(){
   const { groups, grandTotal } = buildLedgerGroups();
   if(groups.length===0){ toast('No expenses to print yet','err'); return; }
   const ta = currentTA();
-  document.getElementById('printArea').innerHTML = `<div style="padding:0;">${buildLedgerReportHTML(groups, grandTotal, ta, true)}</div>`;
-  setTimeout(()=> window.print(), 80);
+  document.getElementById('printOrientationOverride')?.remove();
+  document.getElementById('printArea').innerHTML = `<div style="padding:6mm;">${buildLedgerReportHTML(groups, grandTotal, ta, true)}</div>`;
+  setTimeout(()=> window.print(), 300);
 }
 async function unduhLaporanPengeluaranGambar(){
   const { groups, grandTotal } = buildLedgerGroups();
@@ -4571,8 +4572,9 @@ function buildBankLedgerHTML(forPrint){
 function cetakLaporanSaldoKas(){
   const rows = buildMutasiBank();
   if(rows.length===0){ toast('No transactions to print yet','err'); return; }
-  document.getElementById('printArea').innerHTML = `<div style="padding:0;">${buildBankLedgerHTML(true)}</div>`;
-  setTimeout(()=> window.print(), 80);
+  document.getElementById('printOrientationOverride')?.remove();
+  document.getElementById('printArea').innerHTML = `<div style="padding:6mm;">${buildBankLedgerHTML(true)}</div>`;
+  setTimeout(()=> window.print(), 300);
 }
 async function unduhLaporanSaldoKasGambar(){
   const rows = buildMutasiBank();
