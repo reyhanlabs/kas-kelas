@@ -370,9 +370,12 @@
   .btn-block{width:100%; justify-content:center;}
   .btn:disabled{opacity:.5; cursor:not-allowed;}
   .icon-btn{
-    background:none;border:none;cursor:pointer;color:var(--ink-soft);padding:4px;border-radius:5px;
+    background:none;border:none;cursor:pointer;color:var(--ink-soft);padding:5px;border-radius:5px;
+    display:inline-flex;align-items:center;justify-content:center;font-size:14px;line-height:1;
+    width:28px;height:28px;
   }
-  .icon-btn:hover{background:#f1ede1; color:var(--navy);}
+  .icon-btn:hover{background:#EAF3FF; color:var(--navy);}
+  .action-btns{display:flex;align-items:center;justify-content:center;gap:2px;flex-wrap:nowrap;}
 
   input, select, textarea{
     font-family:'Public Sans'; font-size:13.5px; padding:8px 10px;
@@ -2963,9 +2966,9 @@ function renderSiswaTable(){
       <td>${esc(s.noHp||'-')}</td>
       <td class="right num">${rupiah(nominalUntukSiswa(s))} ${ (s.nominalKhusus===undefined||s.nominalKhusus===null||s.nominalKhusus==='') ? '<span class="helper">(default)</span>' : ''}</td>
       <td class="center">
-        <button class="icon-btn" title="Edit" onclick='editSiswa("${s.id}")'>✎</button>
+        <div class="action-btns"><button class="icon-btn" title="Edit" onclick='editSiswa("${s.id}")'>✎</button>
         <button class="icon-btn" title="Delete" onclick='deleteSiswaConfirm("${s.id}", "${esc(s.nama)}")'>🗑</button>
-      </td>
+      </div></td>
     </tr>`).join('');
   document.getElementById('siswaTable').innerHTML = `
     <div class="table-scroll">
@@ -3127,9 +3130,11 @@ function renderRiwayatTable(){
       <td>${formatTanggalPanjang(p.tanggal)}</td>
       <td>${esc(p.metode)}</td>
       <td class="center">
-        <button class="icon-btn" title="Print Receipt" onclick='cetakBukti("${p.id}")'>🖨</button>
-        <button class="icon-btn" title="Edit" onclick='editPembayaran("${p.id}")'>✎</button>
-        <button class="icon-btn" title="Delete" onclick='deletePembayaranConfirm("${p.id}")'>🗑</button>
+        <div class="action-btns">
+          <button class="icon-btn" title="Print Receipt" onclick='cetakBukti("${p.id}")'>🖨</button>
+          <button class="icon-btn" title="Edit" onclick='editPembayaran("${p.id}")'>✎</button>
+          <button class="icon-btn" title="Delete" onclick='deletePembayaranConfirm("${p.id}")'>🗑</button>
+        </div>
       </td>
     </tr>`;
   }).join('');
@@ -3756,9 +3761,9 @@ function renderAkunTable(){
       <td>${esc(a.nama)}</td>
       <td class="center">${jmlKegiatan}</td>
       <td class="center">
-        <button class="icon-btn" title="Edit" onclick='editAkun("${a.id}")'>✎</button>
+        <div class="action-btns"><button class="icon-btn" title="Edit" onclick='editAkun("${a.id}")'>✎</button>
         <button class="icon-btn" title="Delete" onclick='deleteAkunConfirm("${a.id}")'>🗑</button>
-      </td>
+      </div></td>
     </tr>`;
   }).join('');
   document.getElementById('akunTable').innerHTML = `
@@ -3991,9 +3996,9 @@ function renderRiwayatPengeluaranTable(){
       <td>${esc(p.keterangan)}</td>
       <td class="right num">${rupiah(p.nominal)}</td>
       <td class="center">
-        <button class="icon-btn" title="Edit" onclick='editPengeluaran("${p.id}")'>✎</button>
+        <div class="action-btns"><button class="icon-btn" title="Edit" onclick='editPengeluaran("${p.id}")'>✎</button>
         <button class="icon-btn" title="Delete" onclick='deletePengeluaranConfirm("${p.id}")'>🗑</button>
-      </td>
+      </div></td>
     </tr>`;
   }).join('');
   document.getElementById('riwayatPengeluaranTable').innerHTML = `
@@ -4127,9 +4132,9 @@ function renderRiwayatPenerimaanLainTable(){
       <td>${esc(p.metode||'-')}</td>
       <td class="right num" style="color:var(--green); font-weight:600;">${rupiah(p.nominal)}</td>
       <td class="center">
-        <button class="icon-btn" title="Edit" onclick='editPenerimaanLain("${p.id}")'>✎</button>
+        <div class="action-btns"><button class="icon-btn" title="Edit" onclick='editPenerimaanLain("${p.id}")'>✎</button>
         <button class="icon-btn" title="Delete" onclick='deletePenerimaanLainConfirm("${p.id}")'>🗑</button>
-      </td>
+      </div></td>
     </tr>`;
   }).join('');
   document.getElementById('riwayatPenerimaanLainTable').innerHTML = `
