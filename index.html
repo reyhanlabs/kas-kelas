@@ -147,6 +147,7 @@
   .tab-btn[data-tab="penerimaanLain"]   { background:#F0FDF4; color:#15803D; border-radius:8px; }
   .tab-btn[data-tab="pengeluaran"]      { background:#FFF1F2; color:#B91C1C; border-radius:8px; }
   .tab-btn[data-tab="laporanPengeluaran"] { background:#FFF7ED; color:#C2410C; border-radius:8px; }
+  .tab-btn[data-tab="budgetReport"]     { background:#FEFCE8; color:#A16207; border-radius:8px; }
   .tab-btn[data-tab="saldoKas"]         { background:#F0F9FF; color:#0369A1; border-radius:8px; }
   .tab-btn[data-tab="users"]            { background:#FAF5FF; color:#7E22CE; border-radius:8px; }
   .tab-btn[data-tab="auditLog"]         { background:#F8FAFC; color:#475569; border-radius:8px; }
@@ -162,6 +163,7 @@
   .tab-btn[data-tab="penerimaanLain"] svg   { color:#22C55E; }
   .tab-btn[data-tab="pengeluaran"] svg      { color:#EF4444; }
   .tab-btn[data-tab="laporanPengeluaran"] svg { color:#F97316; }
+  .tab-btn[data-tab="budgetReport"] svg     { color:#EAB308; }
   .tab-btn[data-tab="saldoKas"] svg         { color:#0EA5E9; }
   .tab-btn[data-tab="users"] svg            { color:#A855F7; }
   .tab-btn[data-tab="auditLog"] svg         { color:#64748B; }
@@ -178,6 +180,7 @@
   .tab-btn.active[data-tab="penerimaanLain"]   { background:#DCFCE7; color:#15803D; border-left:3px solid #22C55E; }
   .tab-btn.active[data-tab="pengeluaran"]      { background:#FFE4E6; color:#B91C1C; border-left:3px solid #EF4444; }
   .tab-btn.active[data-tab="laporanPengeluaran"] { background:#FFEDD5; color:#C2410C; border-left:3px solid #F97316; }
+  .tab-btn.active[data-tab="budgetReport"]     { background:#FEF9C3; color:#A16207; border-left:3px solid #EAB308; }
   .tab-btn.active[data-tab="saldoKas"]         { background:#E0F2FE; color:#0369A1; border-left:3px solid #0EA5E9; }
   .tab-btn.active[data-tab="users"]            { background:#F3E8FF; color:#7E22CE; border-left:3px solid #A855F7; }
   .tab-btn.active[data-tab="auditLog"]         { background:#F1F5F9; color:#475569; border-left:3px solid #64748B; }
@@ -193,6 +196,7 @@
   .tab-btn[data-tab="penerimaanLain"]:hover   { background:#DCFCE7; }
   .tab-btn[data-tab="pengeluaran"]:hover      { background:#FFE4E6; }
   .tab-btn[data-tab="laporanPengeluaran"]:hover { background:#FFEDD5; }
+  .tab-btn[data-tab="budgetReport"]:hover     { background:#FEF9C3; }
   .tab-btn[data-tab="saldoKas"]:hover         { background:#E0F2FE; }
   .tab-btn[data-tab="users"]:hover            { background:#F3E8FF; }
   .tab-btn[data-tab="auditLog"]:hover         { background:#F1F5F9; }
@@ -425,6 +429,7 @@
   }
   .toast.err{background:var(--maroon);}
   .toast.ok{background:var(--green);}
+  .toast.warn{background:#B45309;}
   @keyframes slidein{from{transform:translateY(8px); opacity:0;} to{transform:translateY(0); opacity:1;}}
 
   .month-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:8px;}
@@ -664,6 +669,10 @@
       <button class="tab-btn" data-tab="laporanPengeluaran">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3h9l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M15 3v5h5"/><path d="M8 13h8"/><path d="M8 17h5"/></svg>
         Expense Ledger
+      </button>
+      <button class="tab-btn" data-tab="budgetReport">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M22 20H2"/></svg>
+        Budget vs Actual
       </button>
       <button class="tab-btn" data-tab="saldoKas">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2.5" y="6" width="19" height="13" rx="2"/><path d="M2.5 10h19"/><circle cx="17" cy="14.5" r="1.6"/></svg>
@@ -1052,6 +1061,28 @@
         <div class="grid-stats" id="pengeluaranStatGrid"></div>
 
         <div id="ledgerReportBody"></div>
+      </section>
+
+      <!-- ================= BUDGET VS ACTUAL ================= -->
+      <section id="tab-budgetReport" class="tab-panel" style="display:none;">
+        <div class="topbar">
+          <div>
+            <h1>Budget vs Actual</h1>
+            <div class="sub">Planned budget per activity compared with actual expenses (realisasi)</div>
+          </div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button class="btn btn-outline" onclick="cetakLaporanBudget()">🖨 Print Report</button>
+            <button class="btn btn-outline" onclick="exportBudgetCSV()">⬇ Export CSV</button>
+          </div>
+        </div>
+
+        <div class="grid-stats" id="budgetStatGrid"></div>
+
+        <div class="card">
+          <h2>Budget vs Actual per Activity</h2>
+          <p class="helper">Set each activity's budget under Settings &rarr; Activities. Activities without a budget are listed but not counted in the totals.</p>
+          <div id="budgetReportTable"></div>
+        </div>
       </section>
 
       <!-- ================= CASH BALANCE ================= -->
@@ -1779,6 +1810,11 @@ service cloud.firestore {
       <label>Linked Account</label>
       <select id="kegiatanAkunId"></select>
     </div>
+    <div class="field">
+      <label>Budget (optional)</label>
+      <input type="number" id="kegiatanBudget" placeholder="e.g. 1000000" min="0">
+      <p class="helper">Used for the Budget vs Actual report. You'll get a warning if expenses go over budget, but they can still be saved.</p>
+    </div>
     <div class="modal-foot">
       <button class="btn btn-outline" onclick="closeModal('modalKegiatan')">Cancel</button>
       <button class="btn btn-primary" onclick="saveKegiatan()">Save</button>
@@ -2050,13 +2086,13 @@ function formatTanggalPanjang(dateStr){
   if(!y || !m || !d || !BULAN[m-1]) return esc(dateStr);
   return `${d} ${BULAN[m-1]} ${y}`;
 }
-function toast(msg, type=""){
+function toast(msg, type="", ms=3200){
   const wrap = document.getElementById('toastWrap');
   const el = document.createElement('div');
   el.className = 'toast' + (type?(' '+type):'');
   el.textContent = msg;
   wrap.appendChild(el);
-  setTimeout(()=>{ el.remove(); }, 3200);
+  setTimeout(()=>{ el.remove(); }, ms);
 }
 function currentTA(){ return tahunAjaranList.find(t=>t.id===currentTahunAjaranId) || null; }
 function nominalUntukSiswa(siswaObj){
@@ -2119,6 +2155,7 @@ function switchTab(tab){
   if(tab==='penerimaanLain') renderPenerimaanLainTab();
   if(tab==='pengeluaran') renderPengeluaranTab();
   if(tab==='laporanPengeluaran') renderLaporanPengeluaranTab();
+  if(tab==='budgetReport') renderBudgetReportTab();
   if(tab==='saldoKas') renderSaldoKasTab();
   if(tab==='users') renderUsersTable();
   if(tab==='auditLog') renderAuditLogTable();
@@ -4024,7 +4061,8 @@ function renderKegiatanTable(){
     return `<tr>
       <td>${esc(k.nama)} ${k.isDefault ? '<span class="pill lunas">Default</span>' : ''}</td>
       <td class="mono">${a ? esc(a.kode)+' — '+esc(a.nama) : '<span class="helper">(account deleted)</span>'}</td>
-      <td class="right">${pengeluaranK.length>0 ? `${rupiah(totalSpent)} <span class="helper">(${pengeluaranK.length} transaction${pengeluaranK.length>1?'s':''})</span>` : '<span class="helper">—</span>'}</td>
+      <td class="right">${Number(k.budget||0)>0 ? rupiah(k.budget) : '<span class="helper">—</span>'}</td>
+      <td class="right"${Number(k.budget||0)>0 && totalSpent>Number(k.budget) ? ' style="color:var(--maroon); font-weight:600;"' : ''}>${pengeluaranK.length>0 ? `${rupiah(totalSpent)} <span class="helper">(${pengeluaranK.length} transaction${pengeluaranK.length>1?'s':''})</span>` : '<span class="helper">—</span>'}</td>
       <td class="center">
         ${k.isDefault ? '' : `<button class="icon-btn" title="Set as Default for Expense Entry" onclick='setKegiatanDefault("${k.id}")'>⭐</button>`}
         <button class="icon-btn" title="Edit" onclick='editKegiatan("${k.id}")'>✎</button>
@@ -4033,7 +4071,7 @@ function renderKegiatanTable(){
     </tr>`;
   }).join('');
   document.getElementById('kegiatanTable').innerHTML = `
-    <table><thead><tr><th>Activity</th><th>Linked Account</th><th class="right">Total Spent</th><th class="center">Action</th></tr></thead>
+    <table><thead><tr><th>Activity</th><th>Linked Account</th><th class="right">Budget</th><th class="right">Total Spent</th><th class="center">Action</th></tr></thead>
     <tbody>${rows}</tbody></table>`;
 }
 function printKegiatanTable(){
@@ -4166,6 +4204,7 @@ function openKegiatanModal(){
   document.getElementById('modalKegiatanTitle').textContent = 'Add Activity';
   document.getElementById('kegiatanId').value = '';
   document.getElementById('kegiatanNama').value = '';
+  document.getElementById('kegiatanBudget').value = '';
   populateAkunSelect(document.getElementById('kegiatanAkunId'), null);
   openModal('modalKegiatan');
 }
@@ -4175,6 +4214,7 @@ function editKegiatan(id){
   document.getElementById('modalKegiatanTitle').textContent = 'Edit Activity';
   document.getElementById('kegiatanId').value = k.id;
   document.getElementById('kegiatanNama').value = k.nama||'';
+  document.getElementById('kegiatanBudget').value = Number(k.budget||0) > 0 ? k.budget : '';
   populateAkunSelect(document.getElementById('kegiatanAkunId'), k.akunId);
   openModal('modalKegiatan');
 }
@@ -4184,7 +4224,9 @@ async function saveKegiatan(){
   const akunId = document.getElementById('kegiatanAkunId').value;
   if(!nama){ toast('Activity name is required','err'); return; }
   if(!akunId){ toast('Please select a linked account','err'); return; }
-  const obj = { nama, akunId };
+  const budget = Number(document.getElementById('kegiatanBudget').value)||0;
+  if(budget<0){ toast('Budget cannot be negative','err'); return; }
+  const obj = { nama, akunId, budget };
   try{
     if(id){ await dbUpdateKegiatan(id, obj); toast('Activity updated','ok'); logAudit('edit','kegiatan', nama); }
     else{
@@ -4250,6 +4292,22 @@ function populateKegiatanSelect(selectEl, selectedId){
     return `<option value="${k.id}" ${k.id===selectedId?'selected':''}>${label}</option>`;
   }).join('');
 }
+/* Budget check: returns a warning object when saving this amount would push the activity over its budget, otherwise null.
+   Computed BEFORE the save so it doesn't depend on when Firestore's snapshot refreshes state. Expenses are never blocked. */
+function cekBudgetKegiatan(kegiatanId, nominalBaru, excludeExpenseId){
+  const k = findKegiatan(kegiatanId);
+  const budget = Number(k?.budget||0);
+  if(!k || budget<=0) return null;
+  const existing = state.pengeluaran
+    .filter(p=>p.kegiatanId===kegiatanId && p.id!==excludeExpenseId)
+    .reduce((sum,p)=>sum+Number(p.nominal||0),0);
+  const total = existing + Number(nominalBaru||0);
+  return total>budget ? { nama:k.nama, total, budget, over: total-budget } : null;
+}
+function tampilkanPeringatanBudget(w){
+  if(!w) return;
+  toast(`⚠ "${w.nama}" is over budget by ${rupiah(w.over)} (${rupiah(w.total)} spent of ${rupiah(w.budget)}). Saved anyway.`, 'warn', 7000);
+}
 async function simpanPengeluaran(){
   const kegiatanId = document.getElementById('pengeluaranKegiatanId').value;
   const tanggal = document.getElementById('pengeluaranTanggal').value;
@@ -4262,9 +4320,11 @@ async function simpanPengeluaran(){
   const noRef = generateNoRefPengeluaran();
   const attachUrls = (document.getElementById('pengeluaranAttachUrls').value||'').split(',').filter(Boolean);
   const obj = { kegiatanId, noRef, tanggal, keterangan, nominal, attachUrls: attachUrls.length ? attachUrls : [], createdAt: Date.now() };
+  const budgetWarn = cekBudgetKegiatan(kegiatanId, nominal);
   try{
     await dbAddPengeluaran(obj);
     toast('Expense recorded successfully','ok');
+    tampilkanPeringatanBudget(budgetWarn);
     logAudit('add','pengeluaran', `${noRef} — ${keterangan} (${rupiah(nominal)})`);
     {
       const k = findKegiatan(kegiatanId);
@@ -4339,8 +4399,10 @@ async function simpanEditPengeluaran(){
   if(!keterangan){ toast('Description is required','err'); return; }
   try{
     const editPengAttachUrls = (document.getElementById('editPengeluaranAttachUrls').value||'').split(',').filter(Boolean);
+    const budgetWarn = cekBudgetKegiatan(kegiatanId, nominal, id);
     await dbUpdatePengeluaran(id, { kegiatanId, tanggal, nominal, keterangan, attachUrls: editPengAttachUrls });
     toast('Expense updated','ok');
+    tampilkanPeringatanBudget(budgetWarn);
     const p = state.pengeluaran.find(x=>x.id===id);
     logAudit('edit','pengeluaran', `${p?.noRef||id} — ${keterangan} (${rupiah(nominal)})`);
     {
@@ -4533,6 +4595,146 @@ function buildLedgerGroups(){
   const grandTotal = groups.reduce((sum,g)=>sum+g.total,0);
   return { groups, grandTotal };
 }
+/* ============================================================
+   BUDGET VS ACTUAL REPORT (per activity, current school year)
+   ============================================================ */
+function buildBudgetReport(){
+  const rows = currentKegiatanList().map(k=>{
+    const a = findAkun(k.akunId);
+    const items = state.pengeluaran.filter(p=>p.kegiatanId===k.id);
+    const actual = items.reduce((sum,p)=>sum+Number(p.nominal||0),0);
+    const budget = Number(k.budget||0);
+    return {
+      k, a, budget, actual, count: items.length,
+      remaining: budget - actual,
+      pct: budget>0 ? Math.round(actual/budget*100) : null,
+      status: budget<=0 ? 'none' : (actual>budget ? 'over' : 'ok')
+    };
+  }).sort((x,y)=> ((x.a?.kode||'').localeCompare(y.a?.kode||'')) || (x.k.nama||'').localeCompare(y.k.nama||''));
+  const budgeted = rows.filter(r=>r.budget>0);
+  const totals = {
+    budget: budgeted.reduce((s,r)=>s+r.budget,0),
+    actual: budgeted.reduce((s,r)=>s+r.actual,0),
+    overCount: budgeted.filter(r=>r.status==='over').length
+  };
+  totals.remaining = totals.budget - totals.actual;
+  return { rows, totals, budgetedCount: budgeted.length };
+}
+function budgetStatusLabel(status){
+  return status==='over' ? 'Over budget' : status==='ok' ? 'Within budget' : 'No budget set';
+}
+function renderBudgetReportTab(){
+  const { rows, totals, budgetedCount } = buildBudgetReport();
+  const ta = currentTA();
+  document.getElementById('budgetStatGrid').innerHTML = `
+    <div class="stat"><div class="label">School Year</div><div class="value" style="font-size:16px;">${esc(ta?.label||'-')}</div></div>
+    <div class="stat"><div class="label">Total Budget</div><div class="value mono">${rupiah(totals.budget)}</div></div>
+    <div class="stat"><div class="label">Actual Spent (budgeted activities)</div><div class="value mono maroon">${rupiah(totals.actual)}</div></div>
+    <div class="stat"><div class="label">${totals.remaining<0 ? 'Over Budget By' : 'Remaining Budget'}</div><div class="value mono ${totals.remaining<0?'maroon':'green'}">${rupiah(Math.abs(totals.remaining))}</div></div>
+    <div class="stat"><div class="label">Activities Over Budget</div><div class="value">${totals.overCount} <span class="helper">of ${budgetedCount}</span></div></div>
+  `;
+  autoFitStatValues(document.getElementById('budgetStatGrid'));
+  const box = document.getElementById('budgetReportTable');
+  if(rows.length===0){
+    box.innerHTML = emptyState('No activities yet. Add an activity (with a budget) under Settings → Activities.');
+    return;
+  }
+  const trs = rows.map(r=>`
+    <tr>
+      <td>${esc(r.k.nama)}</td>
+      <td class="mono">${r.a ? esc(r.a.kode) : '-'}</td>
+      <td class="right num">${r.budget>0 ? rupiah(r.budget) : '<span class="helper">—</span>'}</td>
+      <td class="right num">${rupiah(r.actual)}</td>
+      <td class="right num" style="${r.budget>0 ? 'color:'+(r.remaining<0?'var(--maroon)':'var(--green)')+'; font-weight:600;' : ''}">${r.budget>0 ? rupiah(r.remaining) : '<span class="helper">—</span>'}</td>
+      <td class="right num">${r.pct!==null ? r.pct+'%' : '<span class="helper">—</span>'}</td>
+      <td class="center">${r.status==='over' ? '<span class="pill belum">Over budget</span>' : r.status==='ok' ? '<span class="pill lunas">Within budget</span>' : '<span class="helper">No budget set</span>'}</td>
+    </tr>`).join('');
+  box.innerHTML = `
+    <div class="table-scroll">
+      <table><thead><tr><th>Activity</th><th>Account</th><th class="right">Budget</th><th class="right">Actual</th><th class="right">Remaining</th><th class="right">% Used</th><th class="center">Status</th></tr></thead>
+      <tbody>${trs}</tbody>
+      <tfoot><tr style="font-weight:700; background:#faf6ec;">
+        <td colspan="2">Total (activities with a budget)</td>
+        <td class="right num">${rupiah(totals.budget)}</td>
+        <td class="right num">${rupiah(totals.actual)}</td>
+        <td class="right num">${rupiah(totals.remaining)}</td>
+        <td class="right num">${totals.budget>0 ? Math.round(totals.actual/totals.budget*100)+'%' : '—'}</td>
+        <td></td>
+      </tr></tfoot></table>
+    </div>`;
+}
+function cetakLaporanBudget(){
+  const { rows, totals } = buildBudgetReport();
+  if(rows.length===0){ toast('No activities to print yet','err'); return; }
+  const ta = currentTA();
+  const tanggalCetak = new Date().toLocaleString('en-US', {dateStyle:'long', timeStyle:'short'});
+  const mono = 'text-align:right;font-family:monospace;';
+  const trs = rows.map(r=>`
+    <tr>
+      <td>${esc(r.k.nama)}</td>
+      <td>${r.a ? esc(r.a.kode) : '-'}</td>
+      <td style="${mono}">${r.budget>0 ? rupiah(r.budget) : '—'}</td>
+      <td style="${mono}">${rupiah(r.actual)}</td>
+      <td style="${mono}${r.budget>0 && r.remaining<0 ? 'color:#B91C1C;font-weight:700;' : ''}">${r.budget>0 ? rupiah(r.remaining) : '—'}</td>
+      <td style="${mono}">${r.pct!==null ? r.pct+'%' : '—'}</td>
+      <td style="text-align:center;${r.status==='over' ? 'color:#B91C1C;font-weight:700;' : ''}">${budgetStatusLabel(r.status)}</td>
+    </tr>`).join('');
+  const win = window.open('','_blank','width=1100,height=800');
+  win.document.write(`<!DOCTYPE html>
+<html lang="id"><head><meta charset="UTF-8">
+<title>Budget vs Actual — ${esc(ta?.namaKelas||'')} ${esc(ta?.label||'')}</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',Arial,sans-serif;color:#131A26;background:#fff;padding:28px 36px;}
+.report-head{text-align:center;margin-bottom:20px;}
+.report-head h2{font-size:18px;font-weight:700;color:#003F80;margin-bottom:2px;}
+.report-head .sub1{font-size:13px;color:#5B6B80;}
+.report-head .sub2{font-size:11.5px;color:#5B6B80;margin-top:2px;}
+table{width:100%;border-collapse:collapse;font-size:12.5px;}
+th{text-align:left;background:#F7FAFC;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#5B6B80;padding:9px 10px;border-bottom:2px solid #DDEEFF;white-space:nowrap;}
+th.right{text-align:right;} th.center{text-align:center;}
+td{padding:8px 10px;border-bottom:1px solid #DDEEFF;vertical-align:middle;}
+tfoot td{font-weight:700;background:#F0F5FF;border-top:2px solid #DDEEFF;}
+.note{font-size:11.5px;color:#5B6B80;margin-top:12px;}
+@media print{body{padding:16px 20px;}@page{size:A4 landscape;margin:10mm;}tr{page-break-inside:avoid;}}
+</style>
+</head><body>
+<div class="report-head">
+  <h2>Budget vs Actual — ${esc(ta?.namaKelas || ta?.label || 'Class Cash')}</h2>
+  <div class="sub1">${esc(ta?.namaSekolah || '')}</div>
+  <div class="sub2">School Year ${esc(ta?.label||'-')} &middot; Printed ${tanggalCetak}</div>
+</div>
+<table>
+  <thead><tr><th>Activity</th><th>Account</th><th class="right">Budget</th><th class="right">Actual</th><th class="right">Remaining</th><th class="right">% Used</th><th class="center">Status</th></tr></thead>
+  <tbody>${trs}</tbody>
+  <tfoot><tr>
+    <td colspan="2">Total (activities with a budget)</td>
+    <td style="${mono}">${rupiah(totals.budget)}</td>
+    <td style="${mono}">${rupiah(totals.actual)}</td>
+    <td style="${mono}">${rupiah(totals.remaining)}</td>
+    <td style="${mono}">${totals.budget>0 ? Math.round(totals.actual/totals.budget*100)+'%' : '—'}</td>
+    <td></td>
+  </tr></tfoot>
+</table>
+<div class="note">Activities without a budget are listed for reference but are not counted in the totals.</div>
+</body></html>`);
+  win.document.close();
+  win.focus();
+  setTimeout(()=>{ win.print(); }, 400);
+}
+function exportBudgetCSV(){
+  const { rows, totals } = buildBudgetReport();
+  if(rows.length===0){ toast('No activities to export yet','err'); return; }
+  const ta = currentTA();
+  const out = [['Activity','Account Code','Account Name','Budget','Actual','Remaining','% Used','Status']];
+  rows.forEach(r=>{
+    out.push([r.k.nama, r.a?.kode||'', r.a?.nama||'', r.budget>0?r.budget:'', r.actual, r.budget>0?r.remaining:'', r.pct!==null?r.pct+'%':'', budgetStatusLabel(r.status)]);
+  });
+  out.push(['Total (activities with a budget)','','',totals.budget,totals.actual,totals.remaining,totals.budget>0?Math.round(totals.actual/totals.budget*100)+'%':'','']);
+  downloadCSV(`budget-vs-actual-${safeFileName(ta?.namaKelas||ta?.label||'class')}.csv`, out);
+  toast('CSV downloaded','ok');
+}
+
 function renderLaporanPengeluaranTab(){
   const { groups, grandTotal } = buildLedgerGroups();
   const ta = currentTA();
