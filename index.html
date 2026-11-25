@@ -1072,6 +1072,8 @@
           </div>
           <div style="display:flex; gap:8px; flex-wrap:wrap;">
             <button class="btn btn-outline" onclick="cetakLaporanBudget()">🖨 Print Report</button>
+            <button class="btn btn-outline" onclick="exportBudgetPDF()">📄 Export PDF</button>
+            <button class="btn btn-outline" onclick="exportBudgetImage()">🖼️ Save as Image (HD)</button>
             <button class="btn btn-outline" onclick="exportBudgetCSV()">⬇ Export CSV</button>
           </div>
         </div>
@@ -4721,6 +4723,129 @@ tfoot td{font-weight:700;background:#F0F5FF;border-top:2px solid #DDEEFF;}
   win.document.close();
   win.focus();
   setTimeout(()=>{ win.print(); }, 400);
+}
+/* ---------- Budget vs Actual: export to Image / PDF ---------- */
+function buildBudgetExportHTML(rows, totals, ta){
+  const tgl = new Date().toLocaleString('en-US', {dateStyle:'long', timeStyle:'short'});
+  const num = 'text-align:right;font-family:\'JetBrains Mono\',monospace;white-space:nowrap;';
+  const card = (label, value, color)=>`
+    <div style="flex:1;min-width:0;background:#fff;border:1px solid #FFD6DC;border-top:3px solid #F77F8B;border-radius:8px;padding:10px 12px;">
+      <div style="font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:#5B6B80;">${label}</div>
+      <div style="font-size:15px;font-weight:700;margin-top:4px;font-family:'JetBrains Mono',monospace;color:${color||'#131A26'};">${value}</div>
+    </div>`;
+  const trs = rows.map(r=>{
+    const over = r.status==='over';
+    const bar = r.pct!==null ? `
+      <div style="height:5px;background:#F3E3E7;border-radius:3px;margin-top:5px;">
+        <div style="height:5px;width:${Math.min(r.pct,100)}%;background:${over?'#E53E3E':'#27AE60'};border-radius:3px;"></div>
+      </div>` : '';
+    return `<tr class="bx-row">
+      <td style="padding:9px 10px;border-bottom:1px solid #F3DDE2;">${esc(r.k.nama)}</td>
+      <td style="padding:9px 10px;border-bottom:1px solid #F3DDE2;font-family:'JetBrains Mono',monospace;">${r.a ? esc(r.a.kode) : '-'}</td>
+      <td style="padding:9px 10px;border-bottom:1px solid #F3DDE2;${num}">${r.budget>0 ? rupiah(r.budget) : '—'}</td>
+      <td style="padding:9px 10px;border-bottom:1px solid #F3DDE2;${num}">${rupiah(r.actual)}</td>
+      <td style="padding:9px 10px;border-bottom:1px solid #F3DDE2;${num}${r.budget>0 ? 'font-weight:700;color:'+(r.remaining<0?'#E53E3E':'#27AE60')+';' : ''}">${r.budget>0 ? rupiah(r.remaining) : '—'}</td>
+      <td style="padding:9px 10px;border-bottom:1px solid #F3DDE2;width:110px;"><div style="${num}">${r.pct!==null ? r.pct+'%' : '—'}</div>${bar}</td>
+      <td style="padding:9px 10px;border-bottom:1px solid #F3DDE2;text-align:center;white-space:nowrap;font-weight:600;color:${over?'#E53E3E':(r.status==='ok'?'#27AE60':'#5B6B80')};">${budgetStatusLabel(r.status)}</td>
+    </tr>`;
+  }).join('');
+  const th = (t, a)=>`<th style="text-align:${a||'left'};background:#FFF0F3;color:#5B6B80;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;padding:9px 10px;border-bottom:2px solid #FFD6DC;white-space:nowrap;">${t}</th>`;
+  return `
+  <div style="font-family:'Public Sans',Arial,sans-serif;color:#131A26;background:#fff;padding:28px 32px;width:1100px;">
+    <div style="text-align:center;margin-bottom:18px;">
+      <div style="font-family:'Fraunces',serif;font-size:22px;font-weight:700;color:#C2415A;">Budget vs Actual — ${esc(ta?.namaKelas || ta?.label || 'Class Cash')}</div>
+      <div style="font-size:13px;color:#5B6B80;margin-top:2px;">${esc(ta?.namaSekolah || '')}</div>
+      <div style="font-size:11.5px;color:#5B6B80;margin-top:2px;">School Year ${esc(ta?.label||'-')} &middot; Generated ${tgl}</div>
+    </div>
+    <div style="display:flex;gap:10px;margin-bottom:16px;">
+      ${card('Total Budget', rupiah(totals.budget))}
+      ${card('Actual Spent', rupiah(totals.actual), '#E53E3E')}
+      ${card(totals.remaining<0 ? 'Over Budget By' : 'Remaining Budget', rupiah(Math.abs(totals.remaining)), totals.remaining<0 ? '#E53E3E' : '#27AE60')}
+      ${card('Activities Over Budget', String(totals.overCount))}
+    </div>
+    <table style="width:100%;border-collapse:collapse;font-size:12.5px;">
+      <thead><tr>${th('Activity')}${th('Account')}${th('Budget','right')}${th('Actual','right')}${th('Remaining','right')}${th('% Used','right')}${th('Status','center')}</tr></thead>
+      <tbody>${trs}</tbody>
+      <tfoot><tr class="bx-row" style="font-weight:700;background:#FFF0F3;">
+        <td colspan="2" style="padding:10px;border-top:2px solid #FFD6DC;">Total (activities with a budget)</td>
+        <td style="padding:10px;border-top:2px solid #FFD6DC;${num}">${rupiah(totals.budget)}</td>
+        <td style="padding:10px;border-top:2px solid #FFD6DC;${num}">${rupiah(totals.actual)}</td>
+        <td style="padding:10px;border-top:2px solid #FFD6DC;${num}">${rupiah(totals.remaining)}</td>
+        <td style="padding:10px;border-top:2px solid #FFD6DC;${num}">${totals.budget>0 ? Math.round(totals.actual/totals.budget*100)+'%' : '—'}</td>
+        <td style="border-top:2px solid #FFD6DC;"></td>
+      </tr></tfoot>
+    </table>
+    <div style="font-size:11px;color:#5B6B80;margin-top:12px;">Activities without a budget are listed for reference but are not counted in the totals.</div>
+  </div>`;
+}
+/* Renders the report off-screen and returns { canvas, bounds } (bounds = row bottoms in canvas px, used to avoid cutting rows across PDF pages). */
+async function renderBudgetReportCanvas(){
+  const { rows, totals } = buildBudgetReport();
+  if(rows.length===0){ toast('No activities to export yet','err'); return null; }
+  if(typeof html2canvas === 'undefined'){
+    toast('Export library not loaded yet. Check your internet connection then reload the page.','err');
+    return null;
+  }
+  const SCALE = 2;
+  const holder = document.createElement('div');
+  holder.style.cssText = 'position:fixed;left:-99999px;top:0;background:#fff;';
+  holder.innerHTML = buildBudgetExportHTML(rows, totals, currentTA());
+  document.body.appendChild(holder);
+  try{
+    if(document.fonts && document.fonts.ready){ await document.fonts.ready; }
+    await new Promise(r=>setTimeout(r, 80));
+    const top = holder.getBoundingClientRect().top;
+    const bounds = [...holder.querySelectorAll('.bx-row')].map(tr=> Math.round((tr.getBoundingClientRect().bottom - top) * SCALE));
+    const canvas = await html2canvas(holder, {scale:SCALE, backgroundColor:'#ffffff', useCORS:true});
+    return { canvas, bounds };
+  }catch(e){
+    toast('Failed to generate export: '+e.message, 'err');
+    return null;
+  }finally{
+    holder.remove();
+  }
+}
+async function exportBudgetImage(){
+  toast('Generating image…');
+  const out = await renderBudgetReportCanvas();
+  if(!out) return;
+  const ta = currentTA();
+  const link = document.createElement('a');
+  link.download = `budget-vs-actual-${safeFileName(ta?.namaKelas||ta?.label||'class')}.png`;
+  link.href = out.canvas.toDataURL('image/png');
+  link.click();
+  toast('Budget vs Actual image downloaded','ok');
+}
+async function exportBudgetPDF(){
+  if(!window.jspdf){ toast('PDF library not loaded yet. Check your internet connection then reload the page.','err'); return; }
+  toast('Generating PDF…');
+  const out = await renderBudgetReportCanvas();
+  if(!out) return;
+  const { canvas, bounds } = out;
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF({orientation:'landscape', unit:'mm', format:'a4'});
+  const margin = 10, usableW = 297 - margin*2, usableH = 210 - margin*2;
+  const mmPerPx = usableW / canvas.width;
+  const pageHpx = Math.floor(usableH / mmPerPx);
+  let y = 0, page = 0;
+  while(y < canvas.height){
+    let end = Math.min(y + pageHpx, canvas.height);
+    if(end < canvas.height){
+      // snap the page break to the last full row that still fits, so no row is cut in half
+      const fits = bounds.filter(b => b > y + pageHpx*0.4 && b <= end);
+      if(fits.length) end = Math.max(...fits);
+    }
+    if(end <= y) end = Math.min(y + pageHpx, canvas.height);
+    const slice = document.createElement('canvas');
+    slice.width = canvas.width; slice.height = end - y;
+    slice.getContext('2d').drawImage(canvas, 0, y, canvas.width, end - y, 0, 0, canvas.width, end - y);
+    if(page > 0) pdf.addPage();
+    pdf.addImage(slice.toDataURL('image/jpeg', 0.95), 'JPEG', margin, margin, usableW, (end - y) * mmPerPx);
+    y = end; page++;
+  }
+  const ta = currentTA();
+  pdf.save(`budget-vs-actual-${safeFileName(ta?.namaKelas||ta?.label||'class')}.pdf`);
+  toast('Budget vs Actual PDF downloaded','ok');
 }
 function exportBudgetCSV(){
   const { rows, totals } = buildBudgetReport();
